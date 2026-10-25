@@ -29,9 +29,13 @@ h1 span{color:var(--btc)}
 .panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px;display:grid;grid-template-columns:minmax(0,260px) minmax(0,1fr);gap:22px}
 @media (max-width:640px){.panel{grid-template-columns:minmax(0,1fr)}}
 .ctrl{display:flex;flex-direction:column;gap:10px}
-label{font:500 12px/1 var(--f-body);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
-input[type=date]{font:500 17px var(--f-data);color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 12px;width:100%;min-height:46px}
-input[type=date]:focus-visible,.chip:focus-visible{outline:2px solid var(--btc);outline-offset:2px}
+.lbl{font:500 12px/1 var(--f-body);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.dsel{display:grid;grid-template-columns:minmax(0,.8fr) minmax(0,1.4fr) minmax(0,1.1fr);gap:6px}
+.dsel select{font:500 16px var(--f-data);color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 8px;min-height:46px;width:100%;min-width:0}
+.steps{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.steps .chip{border-radius:10px}
+.hint{font-size:12px;color:var(--muted);margin:0}
+select:focus-visible,.chip:focus-visible{outline:2px solid var(--btc);outline-offset:2px}
 .chips{display:flex;flex-wrap:wrap;gap:8px}
 .chip{font:500 13px var(--f-body);color:var(--ink);background:transparent;border:1px solid var(--line);border-radius:999px;padding:7px 12px;cursor:pointer;min-height:34px}
 .chip:hover{border-color:var(--btc)}
@@ -68,17 +72,22 @@ footer a{color:inherit}
 
   <section class="panel" aria-label="Berekening voor een datum">
     <div class="ctrl">
-      <label for="d">Kies een datum</label>
-      <input id="d" type="date" min="2009-01-04" max="2034-12-31">
+      <span class="lbl" id="lbl-date">Kies een datum</span>
+      <div class="dsel" role="group" aria-labelledby="lbl-date">
+        <select id="dd" aria-label="Dag"></select>
+        <select id="mm" aria-label="Maand"></select>
+        <select id="yy" aria-label="Jaar"></select>
+      </div>
+      <div class="steps">
+        <button class="chip" type="button" id="y-prev" aria-label="Eén jaar terug">− 1 jaar</button>
+        <button class="chip" type="button" id="y-next" aria-label="Eén jaar vooruit">+ 1 jaar</button>
+      </div>
       <div class="chips" role="group" aria-label="Snelkeuze">
         <button class="chip" type="button" data-date="today">Vandaag</button>
         <button class="chip" type="button" data-date="2030-01-01">1 jan 2030</button>
-        <button class="chip" type="button" data-date="2031-01-01">1 jan 2031</button>
-        <button class="chip" type="button" data-date="2032-01-01">1 jan 2032</button>
-        <button class="chip" type="button" data-date="2033-01-01">1 jan 2033</button>
-        <button class="chip" type="button" data-date="2034-01-01">1 jan 2034</button>
         <button class="chip" type="button" data-date="2034-12-31">Eind 2034</button>
       </div>
+      <p class="hint">Of tik in de grafiek op een moment.</p>
       <p class="err" id="err" role="alert"></p>
     </div>
     <div class="res" aria-live="polite">
@@ -166,7 +175,7 @@ function render(){
 function setDate(ms){
   if(isNaN(ms)){ $('err').textContent='Vul een geldige datum in.'; return; }
   if(ms<GEN+DAY||ms>END){ $('err').textContent='Kies een datum tussen 4 januari 2009 en 31 december 2034.'; return; }
-  $('err').textContent=''; sel=ms; $('d').value=iso(ms); render();
+  $('err').textContent=''; sel=ms; syncSelects(ms); render();
 }
 
 function buildChart(){
@@ -201,8 +210,18 @@ function buildChart(){
   });
 }
 
-$('d').addEventListener('change',e=>setDate(parseIso(e.target.value)));
-$('d').addEventListener('input',()=>{$('err').textContent=''});
+const MONTHS=['januari','februari','maart','april','mei','juni','juli','augustus','september','oktober','november','december'];
+const dim=(y,m)=>new Date(Date.UTC(y,m+1,0)).getUTCDate();
+const opt=(el,v,t)=>{const o=document.createElement('option');o.value=v;o.textContent=t;el.appendChild(o)};
+MONTHS.forEach((n,i)=>opt($('mm'),i,n));
+for(let y=2009;y<=2034;y++)opt($('yy'),y,y);
+function fillDays(y,m){const el=$('dd'),keep=+el.value||1,n=dim(y,m);el.textContent='';for(let d=1;d<=n;d++)opt(el,d,d);el.value=Math.min(keep,n)}
+function syncSelects(ms){const d=new Date(ms),y=d.getUTCFullYear(),m=d.getUTCMonth();$('yy').value=y;$('mm').value=m;fillDays(y,m);$('dd').value=d.getUTCDate()}
+function fromSelects(){const y=+$('yy').value,m=+$('mm').value;fillDays(y,m);setDate(Date.UTC(y,m,+$('dd').value))}
+['dd','mm','yy'].forEach(id=>$(id).addEventListener('change',fromSelects));
+const shiftYear=k=>{const d=new Date(sel),y=d.getUTCFullYear()+k,m=d.getUTCMonth();setDate(Date.UTC(y,m,Math.min(d.getUTCDate(),dim(y,m))))};
+$('y-prev').addEventListener('click',()=>shiftYear(-1));
+$('y-next').addEventListener('click',()=>shiftYear(1));
 chips.forEach(b=>b.addEventListener('click',()=>setDate(chipMs(b))));
 
 setDate(TODAY);
