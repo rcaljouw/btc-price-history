@@ -59,6 +59,61 @@ select:focus-visible,.chip:focus-visible{outline:2px solid var(--btc);outline-of
 .canvas{position:relative;height:min(62vh,440px);min-height:300px}
 footer{font-size:12px;color:var(--muted);display:flex;flex-direction:column;gap:4px}
 footer a{color:inherit}
+.view{display:flex;flex-direction:column;gap:18px}
+.tabs{display:inline-flex;gap:4px;padding:4px;background:var(--surface);border:1px solid var(--line);border-radius:12px;align-self:flex-start}
+.tab{font:500 14px var(--f-body);color:var(--muted);background:transparent;border:0;border-radius:9px;padding:9px 16px;cursor:pointer;min-height:40px}
+.tab[aria-selected="true"]{background:var(--btc);color:#fff}
+.tab:focus-visible,.seg button:focus-visible,.fld input:focus-visible,.fld select:focus-visible{outline:2px solid var(--btc);outline-offset:2px}
+.fire-grid{display:grid;grid-template-columns:minmax(0,300px) minmax(0,1fr);gap:18px;align-items:start}
+@media (max-width:760px){.fire-grid{grid-template-columns:minmax(0,1fr)}}
+.form{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:16px}
+.form h2{font:600 13px/1 var(--f-body);letter-spacing:.06em;text-transform:uppercase;color:var(--btc);margin:0}
+.fgroup{display:flex;flex-direction:column;gap:10px;border-top:1px solid var(--line);padding-top:14px}
+.fgroup:first-of-type{border-top:0;padding-top:0}
+.fld{display:flex;flex-direction:column;gap:6px}
+.fld label{font:500 12px/1.2 var(--f-body);color:var(--muted)}
+.fld .in{display:flex;align-items:center;background:var(--bg);border:1px solid var(--line);border-radius:10px;min-height:44px}
+.fld .in input,.fld select{font:500 16px var(--f-data);color:var(--ink);background:transparent;border:0;padding:10px 12px;width:100%;min-width:0}
+.fld select{background:var(--bg);border:1px solid var(--line);border-radius:10px;min-height:44px}
+.fld .in input:focus{outline:none}
+.fld .u{font:400 13px var(--f-data);color:var(--muted);padding-right:12px}
+.fld.bad .in{border-color:var(--warn)}
+.fld .msg{font-size:12px;color:var(--warn);margin:0}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:4px;padding:3px;background:var(--bg);border:1px solid var(--line);border-radius:10px}
+.seg button{font:500 13px var(--f-body);color:var(--muted);background:transparent;border:0;border-radius:8px;padding:8px 6px;cursor:pointer;min-height:36px}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:inset 0 0 0 1px var(--line)}
+.check{display:flex;gap:8px;align-items:center;font-size:13px;color:var(--ink)}
+.check input{width:18px;height:18px;accent-color:var(--btc)}
+.out{display:flex;flex-direction:column;gap:18px;min-width:0}
+.headline{font:500 clamp(18px,2.6vw,22px)/1.4 var(--f-display);margin:0;text-wrap:balance}
+.headline b{color:var(--btc);font-weight:600}
+.scen{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
+.sc{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:10px;cursor:pointer;text-align:left;font:inherit;color:inherit}
+.sc[aria-pressed="true"]{border-color:var(--btc);box-shadow:inset 0 0 0 1px var(--btc)}
+.sc-top{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.sc-name{font:600 15px var(--f-display)}
+.sc-key{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
+.sc .big2{font:600 26px/1 var(--f-display);font-variant-numeric:tabular-nums;margin:0}
+.sc dl{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:0}
+.sc dt{font:500 11px/1.2 var(--f-body);color:var(--muted)}
+.sc dd{margin:2px 0 0;font:500 14px var(--f-data);font-variant-numeric:tabular-nums}
+.state{font:500 11px/1 var(--f-body);border-radius:999px;padding:5px 9px}
+.state.ok{background:color-mix(in srgb,var(--good) 16%,transparent);color:var(--good)}
+.state.no{background:color-mix(in srgb,var(--warn) 16%,transparent);color:var(--warn)}
+.charts2{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px}
+.chart-box h3{font:600 14px var(--f-display);margin:2px 4px 8px}
+.canvas.sm{height:260px;min-height:0}
+.tbl-wrap{background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow-x:auto}
+.tbl-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;padding:14px 14px 4px}
+.tbl-head h3{font:600 14px var(--f-display);margin:0}
+table{border-collapse:collapse;width:100%;font:400 13px var(--f-data);font-variant-numeric:tabular-nums}
+th,td{padding:8px 12px;text-align:right;white-space:nowrap;border-bottom:1px solid var(--line)}
+th{font:500 11px/1.3 var(--f-body);color:var(--muted);text-transform:uppercase;letter-spacing:.04em;position:sticky;top:0;background:var(--surface)}
+th:first-child,td:first-child{text-align:left}
+tr.start td{background:color-mix(in srgb,var(--btc) 8%,transparent)}
+tr.empty td{color:var(--muted)}
+.note{font-size:12px;color:var(--muted);margin:0;max-width:70ch}
 </style>
 
 <div class="wrap">
@@ -70,6 +125,12 @@ footer a{color:inherit}
     <span class="tag">Conservatieve versie</span>
   </header>
 
+  <div class="tabs" role="tablist" aria-label="Weergave">
+    <button class="tab" role="tab" id="tab-model" aria-controls="view-model" aria-selected="true">Model</button>
+    <button class="tab" role="tab" id="tab-fire" aria-controls="view-fire" aria-selected="false">FIRE-plan</button>
+  </div>
+
+  <div class="view" id="view-model" role="tabpanel" aria-labelledby="tab-model">
   <section class="panel" aria-label="Berekening voor een datum">
     <div class="ctrl">
       <span class="lbl" id="lbl-date">Kies een datum</span>
@@ -113,6 +174,64 @@ footer a{color:inherit}
     </div>
     <div class="canvas"><canvas id="chart" role="img" aria-label="Logaritmische grafiek van de bitcoin-koers met de conservatieve Power Law en een band van 0,5 tot 2 keer het model, doorgetrokken tot eind 2034. De gekozen datum is gemarkeerd.">Bitcoin-koers versus conservatieve Power Law.</canvas></div>
   </section>
+  </div>
+
+  <div class="view" id="view-fire" role="tabpanel" aria-labelledby="tab-fire" hidden>
+    <div class="fire-grid">
+      <form class="form" id="fire-form" novalidate>
+        <div class="fgroup">
+          <h2>Je stack</h2>
+          <div class="fld" id="f-btc-w"><label for="f-btc">Bitcoin (BTC)</label>
+            <div class="in"><input id="f-btc" inputmode="decimal" autocomplete="off" value="1"><span class="u">BTC</span></div>
+            <p class="msg" hidden>Vul een positief aantal BTC in.</p></div>
+          <div class="fld"><label for="f-start">Eerste opnamejaar</label><select id="f-start"></select></div>
+        </div>
+        <div class="fgroup">
+          <h2>Opnames</h2>
+          <div class="seg" role="group" aria-label="Opnamemethode">
+            <button type="button" data-mode="decl" aria-pressed="true">Aflopend %</button>
+            <button type="button" data-mode="pct" aria-pressed="false">Vast %</button>
+            <button type="button" data-mode="usd" aria-pressed="false">Vast $</button>
+          </div>
+          <div id="m-decl" class="row2">
+            <div class="fld" id="f-p0-w"><label for="f-p0">Startpercentage</label><div class="in"><input id="f-p0" inputmode="decimal" value="10"><span class="u">%</span></div><p class="msg" hidden>0–100%</p></div>
+            <div class="fld" id="f-p1-w"><label for="f-p1">Eindpercentage</label><div class="in"><input id="f-p1" inputmode="decimal" value="3"><span class="u">%</span></div><p class="msg" hidden>0–100%</p></div>
+            <div class="fld" id="f-pn-w" style="grid-column:1/-1"><label for="f-pn">Afbouwen in</label><div class="in"><input id="f-pn" inputmode="numeric" value="20"><span class="u">jaar</span></div><p class="msg" hidden>1–30 jaar</p></div>
+          </div>
+          <div id="m-pct" hidden>
+            <div class="fld" id="f-pf-w"><label for="f-pf">Percentage per jaar</label><div class="in"><input id="f-pf" inputmode="decimal" value="4"><span class="u">%</span></div><p class="msg" hidden>0–100%</p></div>
+          </div>
+          <div id="m-usd" hidden>
+            <div class="fld" id="f-usd-w"><label for="f-usd">Bedrag per jaar</label><div class="in"><span class="u" style="padding:0 0 0 12px">$</span><input id="f-usd" inputmode="decimal" value="60000"></div><p class="msg" hidden>Vul een bedrag in.</p></div>
+            <label class="check"><input type="checkbox" id="f-usd-real" checked>Meegroeien met inflatie</label>
+          </div>
+        </div>
+        <div class="fgroup">
+          <h2>Bijstellen</h2>
+          <div class="fld" id="f-inf-w"><label for="f-inf">Inflatie per jaar</label><div class="in"><input id="f-inf" inputmode="decimal" value="2"><span class="u">%</span></div><p class="msg" hidden>0–20%</p></div>
+          <div class="row2">
+            <div class="fld" id="f-min-w"><label for="f-min">Minimaal per jaar</label><div class="in"><span class="u" style="padding:0 0 0 12px">$</span><input id="f-min" inputmode="decimal" placeholder="geen"></div><p class="msg" hidden>Ongeldig bedrag</p></div>
+            <div class="fld" id="f-max-w"><label for="f-max">Maximaal per jaar</label><div class="in"><span class="u" style="padding:0 0 0 12px">$</span><input id="f-max" inputmode="decimal" placeholder="geen"></div><p class="msg" hidden>Ongeldig bedrag</p></div>
+          </div>
+          <p class="note">Minimum en maximum gelden in dollars van nu en groeien mee met de inflatie.</p>
+        </div>
+      </form>
+
+      <div class="out">
+        <p class="headline" id="fire-head">–</p>
+        <div class="scen" id="scen" role="group" aria-label="Scenario"></div>
+        <div class="charts2">
+          <section class="chart-box"><h3>Opname per jaar</h3><div class="canvas sm"><canvas id="ch-w" role="img" aria-label="Lijngrafiek van de jaarlijkse opname in dollars per scenario.">Jaarlijkse opname per scenario.</canvas></div></section>
+          <section class="chart-box"><h3>Bitcoin over</h3><div class="canvas sm"><canvas id="ch-b" role="img" aria-label="Lijngrafiek van de resterende bitcoin per scenario.">Resterende bitcoin per scenario.</canvas></div></section>
+        </div>
+        <div class="tbl-wrap">
+          <div class="tbl-head"><h3 id="tbl-title">Per jaar</h3><span class="note" id="tbl-note"></span></div>
+          <table><thead><tr><th>Jaar</th><th>Koers 1 jan</th><th>Groei</th><th>Opname %</th><th>Opname</th><th id="th-real">In $ van nu</th><th>Cumulatief</th><th>BTC over</th><th>Waarde</th></tr></thead><tbody id="tbody"></tbody></table>
+        </div>
+        <p class="note">Koers per jaar = je conservatieve Power Law op 1 januari, maal de scenariofactor. Opnames vinden plaats op 1 januari tegen die koers. Zonder belasting. Een scenario, geen voorspelling of financieel advies.</p>
+      </div>
+    </div>
+  </div>
 
   <footer>
     <span id="fresh">Koersdata laden…</span>
@@ -130,10 +249,10 @@ const daysOf=ms=>Math.round((ms-GEN)/DAY);
 const toYear=ms=>{const d=new Date(ms),y=d.getUTCFullYear(),s=Date.UTC(y,0,1);return y+(ms-s)/(Date.UTC(y+1,0,1)-s)};
 const iso=ms=>new Date(ms).toISOString().slice(0,10);
 const parseIso=s=>{const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(s||'');return m?Date.UTC(+m[1],+m[2]-1,+m[3]):NaN};
-const usd=new Intl.NumberFormat('nl-NL',{style:'currency',currency:'USD',maximumFractionDigits:0});
-const usd2=new Intl.NumberFormat('nl-NL',{style:'currency',currency:'USD',maximumFractionDigits:2});
+const usd=new Intl.NumberFormat('nl-NL',{style:'currency',currency:'USD',currencyDisplay:'narrowSymbol',maximumFractionDigits:0});
+const usd2=new Intl.NumberFormat('nl-NL',{style:'currency',currency:'USD',currencyDisplay:'narrowSymbol',maximumFractionDigits:2});
 const num=new Intl.NumberFormat('nl-NL');
-const money=v=>v<100?usd2.format(v):usd.format(v);
+const money=v=>v>0&&v<100?usd2.format(v):usd.format(v);
 const longDate=ms=>new Date(ms).toLocaleDateString('nl-NL',{day:'numeric',month:'long',year:'numeric',timeZone:'UTC'});
 const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
 const $=id=>document.getElementById(id);
@@ -239,7 +358,161 @@ fetch('data/btc-usd-daily.csv',{cache:'no-cache'}).then(r=>{if(!r.ok)throw new E
 });
 
 const mq=matchMedia('(prefers-color-scheme: dark)');
-const rebuild=()=>{if(chart){chart.destroy();buildChart();render()}};
+/* ---------- FIRE-plan ---------- */
+const SC=[
+  {f:.5,name:'Bodem',key:'0,5× model',col:'--band-line',dash:[6,4]},
+  {f:1,name:'Model',key:'1× model',col:'--btc',dash:[]},
+  {f:2,name:'Bovenkant',key:'2× model',col:'--price',dash:[2,3]}];
+const NOWY=new Date().getUTCFullYear(), Y0=NOWY+1, Y1=NOWY+30;
+const priceJan=(y,f)=>model(daysOf(Date.UTC(y,0,1)))*f;
+const btcFmt=v=>v.toLocaleString('nl-NL',{minimumFractionDigits:4,maximumFractionDigits:4});
+const pct1=v=>(v*100).toLocaleString('nl-NL',{minimumFractionDigits:1,maximumFractionDigits:1})+'%';
+const compact=v=>v>=1e6?'$ '+(v/1e6).toLocaleString('nl-NL',{maximumFractionDigits:v>=1e7?0:1})+' mln':money(v);
+function pnum(s){
+  if(s==null)return null; let t=String(s).trim().replace(/[\s$%€]/g,'');
+  if(t==='')return null;
+  if(t.includes(','))t=t.replace(/\./g,'').replace(',','.');
+  else if(/^\d{1,3}(\.\d{3})+$/.test(t))t=t.replace(/\./g,'');
+  const n=Number(t); return isFinite(n)?n:NaN;
+}
+let mode='decl', scSel=1, wChart=null, bChart=null, lastRes=null;
+const fStart=$('f-start');
+for(let y=Y0;y<=Y1;y++)opt(fStart,y,y);
+fStart.value=Math.min(Math.max(2030,Y0),Y1);
+
+const FIELDS=['f-btc','f-start','f-p0','f-p1','f-pn','f-pf','f-usd','f-inf','f-min','f-max'];
+function saveState(){try{const o={mode,scSel};FIELDS.forEach(id=>o[id]=$(id).value);o.real=$('f-usd-real').checked;localStorage.setItem('bpl-fire',JSON.stringify(o))}catch(e){}}
+function loadState(){try{const o=JSON.parse(localStorage.getItem('bpl-fire')||'null');if(!o)return;FIELDS.forEach(id=>{if(o[id]!=null)$(id).value=o[id]});if(['decl','pct','usd'].includes(o.mode))mode=o.mode;if([0,1,2].includes(o.scSel))scSel=o.scSel;if(typeof o.real==='boolean')$('f-usd-real').checked=o.real;if(!fStart.value)fStart.value=Math.min(Math.max(2030,Y0),Y1)}catch(e){}}
+
+function field(id,{min=0,max=Infinity,optional=false,int=false}={}){
+  const w=$(id+'-w'),v=pnum($(id).value);
+  let ok=v===null?optional:(!isNaN(v)&&v>=min&&v<=max&&(!int||Number.isInteger(v)));
+  if(id==='f-btc'&&v===0)ok=false;
+  if(w){w.classList.toggle('bad',!ok);const m=w.querySelector('.msg');if(m)m.hidden=ok}
+  return {ok,v:v===null||isNaN(v)?null:v};
+}
+function readInputs(){
+  const r={mode,start:+fStart.value,real:$('f-usd-real').checked},checks=[];
+  const g=(k,id,o)=>{const x=field(id,o);r[k]=x.v;checks.push(x.ok)};
+  g('btc','f-btc',{min:0});
+  g('inf','f-inf',{min:0,max:20});
+  g('min','f-min',{min:0,optional:true});
+  g('max','f-max',{min:0,optional:true});
+  ['f-p0','f-p1','f-pn','f-pf','f-usd'].forEach(id=>{const w=$(id+'-w');w.classList.remove('bad');w.querySelector('.msg').hidden=true});
+  if(mode==='decl'){g('p0','f-p0',{min:0,max:100});g('p1','f-p1',{min:0,max:100});g('n','f-pn',{min:1,max:30,int:true})}
+  if(mode==='pct')g('pf','f-pf',{min:0,max:100});
+  if(mode==='usd')g('usd','f-usd',{min:0});
+  if(r.min!=null&&r.max!=null&&r.min>r.max){$('f-max-w').classList.add('bad');const m=$('f-max-w').querySelector('.msg');m.textContent='Moet ≥ minimum zijn';m.hidden=false;checks.push(false)}
+  else $('f-max-w').querySelector('.msg').textContent='Ongeldig bedrag';
+  return checks.every(Boolean)?r:null;
+}
+function rateFor(k,r){
+  if(r.mode==='pct')return r.pf/100;
+  const p0=r.p0/100,p1=r.p1/100,n=r.n;
+  if(k>=n-1||n===1)return k>=n-1?p1:p0;
+  const t=k/(n-1);
+  return (p0>0&&p1>0)?p0*Math.pow(p1/p0,t):p0+(p1-p0)*t;
+}
+function simulate(f,r){
+  const rows=[];let btc=r.btc,cum=0,cumReal=0,dep=null,first=null,firstReal=null,near=0,nearN=0,lastW=null;
+  for(let y=Y0;y<=Y1;y++){
+    const P=priceJan(y,f),growth=P/priceJan(y-1,f)-1,inf=Math.pow(1+r.inf/100,y-NOWY);
+    let W=0,pct=0;
+    if(y>=r.start&&btc>0){
+      const V=btc*P;
+      W=r.mode==='usd'?(r.real?r.usd*inf:r.usd):V*rateFor(y-r.start,r);
+      if(r.min!=null)W=Math.max(W,r.min*inf);
+      if(r.max!=null)W=Math.min(W,r.max*inf);
+      if(W>=V){W=V}
+      pct=V>0?W/V:0;
+      btc-=W/P; if(btc<1e-9){btc=0;if(dep===null)dep=y}
+      if(W>0){cum+=W;cumReal+=W/inf;lastW=y;if(first===null){first=W;firstReal=W/inf}if(nearN<10){near+=W;nearN++}}
+    }
+    rows.push({y,P,growth,pct,W,Wr:W/inf,cum,btc,V:btc*P,start:y===r.start,pre:y<r.start});
+  }
+  return {rows,dep,first,firstReal,avg:nearN?near/nearN:0,nearN,total:cum,totalReal:cumReal,lastW,endBtc:btc,endV:rows[rows.length-1].V};
+}
+
+function renderFire(){
+  const r=readInputs(); if(!r)return;
+  saveState();
+  const res=SC.map(s=>simulate(s.f,r)); lastRes={r,res};
+  const s=res[scSel], sc=SC[scSel];
+  const btcTxt=r.btc.toLocaleString('nl-NL',{maximumFractionDigits:8});
+  $('fire-head').innerHTML='';
+  const h=$('fire-head');
+  const add=(t,b)=>{const el=document.createElement(b?'b':'span');el.textContent=t;h.appendChild(el)};
+  add('Met '+btcTxt+' BTC en opnames vanaf '+r.start+' is je eerste opname in het scenario '+sc.name.toLowerCase()+' ');
+  add(s.first!=null?money(s.first):'$ 0',true);
+  add(r.inf>0&&s.firstReal!=null?' (≈ '+money(s.firstReal)+' in dollars van nu). ':'. ');
+  add(s.dep?'Je stack is op in '+s.dep+'.':'Je stack houdt het vol tot na '+Y1+', met nog '+btcFmt(s.endBtc)+' BTC over.');
+  const box=$('scen');box.textContent='';
+  SC.forEach((c,i)=>{
+    const x=res[i],b=document.createElement('button');b.type='button';b.className='sc';b.setAttribute('aria-pressed',String(i===scSel));
+    b.innerHTML='<div class="sc-top"><span class="sc-name"></span><span class="state"></span></div><span class="sc-key"><i class="sw"></i><span></span></span><p class="big2"></p><dl><div><dt>Gem. eerste '+(x.nearN||10)+' jaar</dt><dd class="a"></dd></div><div><dt>Totaal opgenomen</dt><dd class="t"></dd></div><div><dt>BTC eind '+Y1+'</dt><dd class="e"></dd></div><div><dt>Waarde eind '+Y1+'</dt><dd class="v"></dd></div></dl>';
+    b.querySelector('.sc-name').textContent=c.name;
+    const st=b.querySelector('.state');st.className='state '+(x.dep?'no':'ok');st.textContent=x.dep?'Op in '+x.dep:'Houdt stand';
+    const sw=b.querySelector('.sw');sw.style.borderTopColor=css(c.col);if(c.dash.length)sw.style.borderTopStyle=c.f<1?'dashed':'dotted';
+    b.querySelector('.sc-key span').textContent=c.key;
+    b.querySelector('.big2').textContent=x.first!=null?money(x.first):'–';
+    b.querySelector('.big2').insertAdjacentHTML('beforeend','<span style="font:400 12px var(--f-body);color:var(--muted);display:block;margin-top:4px">eerste opname '+r.start+'</span>');
+    b.querySelector('.a').textContent=compact(x.avg);b.querySelector('.t').textContent=compact(x.total);
+    b.querySelector('.e').textContent=btcFmt(x.endBtc);b.querySelector('.v').textContent=compact(x.endV);
+    b.addEventListener('click',()=>{scSel=i;renderFire()});
+    box.appendChild(b);
+  });
+  $('tbl-title').textContent='Per jaar · '+sc.name+' ('+sc.key+')';
+  $('tbl-note').textContent=s.dep?'Stack op in '+s.dep:'';
+  const real=r.inf>0; $('th-real').hidden=!real;
+  const tb=$('tbody');tb.textContent='';
+  s.rows.forEach(w=>{
+    const tr=document.createElement('tr');if(w.start)tr.className='start';else if(w.pre||(!w.W&&w.btc===0))tr.className='empty';
+    const cells=[w.y,money(w.P),pct1(w.growth),w.W?pct1(w.pct):'–',w.W?money(w.W):'–',w.W?money(w.Wr):'–',w.cum?money(w.cum):'–',btcFmt(w.btc),money(w.V)];
+    cells.forEach((c,j)=>{if(j===5&&!real)return;const td=document.createElement('td');td.textContent=c;tr.appendChild(td)});
+    tb.appendChild(tr);
+  });
+  drawFire();
+}
+
+function drawFire(){
+  if(!lastRes||$('view-fire').hidden||!window.Chart)return;
+  const {res}=lastRes, years=res[0].rows.map(w=>w.y), muted=css('--muted'), grid=css('--line');
+  const ds=(get)=>SC.map((c,i)=>({label:c.name+' ('+c.key+')',data:res[i].rows.map(get),borderColor:css(c.col),borderWidth:i===scSel?2.5:1.5,borderDash:c.dash,pointRadius:0,spanGaps:false,tension:0}));
+  const common=(ytype,fmt)=>({responsive:true,maintainAspectRatio:false,animation:false,interaction:{mode:'index',intersect:false},
+    plugins:{legend:{display:false},tooltip:{callbacks:{label:t=>t.dataset.label+': '+fmt(t.parsed.y)}}},
+    scales:{x:{ticks:{color:muted,maxRotation:0,autoSkip:true,maxTicksLimit:7},grid:{display:false},border:{color:grid}},
+      y:{type:ytype,ticks:{color:muted,maxTicksLimit:6,callback:v=>ytype==='logarithmic'?([1e3,1e4,1e5,1e6,1e7,1e8].includes(v)?compact(v):''):btcFmt(v).replace(/0+$/,'').replace(/,$/,'')},grid:{color:grid},border:{display:false},beginAtZero:ytype!=='logarithmic'}}});
+  const wData=ds(w=>w.W>0?w.W:null), bData=ds(w=>w.btc);
+  if(wChart){wChart.data.datasets=wData;wChart.update('none')}else wChart=new Chart($('ch-w'),{type:'line',data:{labels:years,datasets:wData},options:common('logarithmic',money)});
+  if(bChart){bChart.data.datasets=bData;bChart.update('none')}else bChart=new Chart($('ch-b'),{type:'line',data:{labels:years,datasets:bData},options:common('linear',v=>btcFmt(v)+' BTC')});
+}
+
+function setMode(m){mode=m;document.querySelectorAll('.seg [data-mode]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.mode===m)));$('m-decl').hidden=m!=='decl';$('m-pct').hidden=m!=='pct';$('m-usd').hidden=m!=='usd';renderFire()}
+document.querySelectorAll('.seg [data-mode]').forEach(b=>b.addEventListener('click',()=>setMode(b.dataset.mode)));
+$('fire-form').addEventListener('input',renderFire);
+$('fire-form').addEventListener('change',renderFire);
+$('fire-form').addEventListener('submit',e=>e.preventDefault());
+
+function showView(v){
+  const fire=v==='fire';
+  $('view-fire').hidden=!fire;$('view-model').hidden=fire;
+  $('tab-fire').setAttribute('aria-selected',String(fire));$('tab-model').setAttribute('aria-selected',String(!fire));
+  try{history.replaceState(null,'','#'+(fire?'fire':'model'))}catch(e){}
+  if(fire)drawFire();else if(chart)chart.resize();
+}
+$('tab-model').addEventListener('click',()=>showView('model'));
+$('tab-fire').addEventListener('click',()=>showView('fire'));
+
+loadState();
+setMode(mode);
+if(location.hash==='#fire')showView('fire');
+window.addEventListener('load',()=>{if(!$('view-fire').hidden)drawFire()});
+
+const rebuild=()=>{
+  if(chart){chart.destroy();buildChart();render()}
+  if(wChart){wChart.destroy();wChart=null}if(bChart){bChart.destroy();bChart=null}
+  if(lastRes)renderFire();
+};
 mq.addEventListener&&mq.addEventListener('change',rebuild);
 new MutationObserver(rebuild).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
 })();
