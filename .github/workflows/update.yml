@@ -1,0 +1,38 @@
+name: Update BTC price data
+
+on:
+  schedule:
+    - cron: "15 1 * * *"   # daily at 01:15 UTC, after the daily close
+  workflow_dispatch:         # allows a manual run (used for the first backfill)
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update-data
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Fetch missing days
+        run: python scripts/update.py
+
+      - name: Commit if changed
+        run: |
+          if git diff --quiet; then
+            echo "No new data."
+            exit 0
+          fi
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/btc-usd-daily.csv
+          git commit -m "data: update BTC/USD daily ($(date -u +%F))"
+          git push
