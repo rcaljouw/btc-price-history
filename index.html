@@ -71,9 +71,13 @@ footer a{color:inherit}
       <label for="d">Kies een datum</label>
       <input id="d" type="date" min="2009-01-04" max="2034-12-31">
       <div class="chips" role="group" aria-label="Snelkeuze">
-        <button class="chip" id="c-today" type="button">Vandaag</button>
-        <button class="chip" id="c-2030" type="button">1 jan 2030</button>
-        <button class="chip" id="c-2034" type="button">Eind 2034</button>
+        <button class="chip" type="button" data-date="today">Vandaag</button>
+        <button class="chip" type="button" data-date="2030-01-01">1 jan 2030</button>
+        <button class="chip" type="button" data-date="2031-01-01">1 jan 2031</button>
+        <button class="chip" type="button" data-date="2032-01-01">1 jan 2032</button>
+        <button class="chip" type="button" data-date="2033-01-01">1 jan 2033</button>
+        <button class="chip" type="button" data-date="2034-01-01">1 jan 2034</button>
+        <button class="chip" type="button" data-date="2034-12-31">Eind 2034</button>
       </div>
       <p class="err" id="err" role="alert"></p>
     </div>
@@ -128,6 +132,8 @@ const $=id=>document.getElementById(id);
 let prices=new Map(), lastMs=null, chart=null, sel=null;
 const now=new Date(), TODAY=Date.UTC(now.getUTCFullYear(),now.getUTCMonth(),now.getUTCDate());
 const END=Date.UTC(2034,11,31);
+const chips=[...document.querySelectorAll('.chip[data-date]')];
+const chipMs=b=>b.dataset.date==='today'?TODAY:parseIso(b.dataset.date);
 
 function render(){
   if(sel==null) return;
@@ -148,10 +154,7 @@ function render(){
   }else{
     $('r-price').textContent='–'; $('r-ratio').textContent='–'; $('r-ratio').style.color='';
   }
-  ['c-today','c-2030','c-2034'].forEach(id=>$(id).setAttribute('aria-pressed','false'));
-  if(sel===TODAY)$('c-today').setAttribute('aria-pressed','true');
-  if(sel===Date.UTC(2030,0,1))$('c-2030').setAttribute('aria-pressed','true');
-  if(sel===END)$('c-2034').setAttribute('aria-pressed','true');
+  chips.forEach(b=>b.setAttribute('aria-pressed',String(chipMs(b)===sel)));
   if(chart){
     const x=toYear(sel);
     chart.data.datasets[4].data=[{x,y:m}];
@@ -200,9 +203,7 @@ function buildChart(){
 
 $('d').addEventListener('change',e=>setDate(parseIso(e.target.value)));
 $('d').addEventListener('input',()=>{$('err').textContent=''});
-$('c-today').addEventListener('click',()=>setDate(TODAY));
-$('c-2030').addEventListener('click',()=>setDate(Date.UTC(2030,0,1)));
-$('c-2034').addEventListener('click',()=>setDate(END));
+chips.forEach(b=>b.addEventListener('click',()=>setDate(chipMs(b))));
 
 setDate(TODAY);
 
