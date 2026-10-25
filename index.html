@@ -1,3 +1,5 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Bitcoin Power Law</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -18,6 +20,8 @@
   --bg:#0f131a; --surface:#171c25; --ink:#e9edf3; --muted:#98a2b3; --line:#283041;
   --btc:#f59a2e; --price:#6f97ff; --band:rgba(152,162,179,.14); --band-line:#6b7486; --good:#4cc38a; --warn:#fb8c4a; color-scheme:dark}
 *{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0}
 body{background:var(--bg);color:var(--ink);font:400 15px/1.55 var(--f-body);
   padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 32px}
 .wrap{max-width:980px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
@@ -184,7 +188,10 @@ tr.empty td{color:var(--muted)}
           <div class="fld" id="f-btc-w"><label for="f-btc">Bitcoin (BTC)</label>
             <div class="in"><input id="f-btc" inputmode="decimal" autocomplete="off" value="1"><span class="u">BTC</span></div>
             <p class="msg" hidden>Vul een positief aantal BTC in.</p></div>
-          <div class="fld"><label for="f-start">Eerste opnamejaar</label><select id="f-start"></select></div>
+          <div class="row2">
+            <div class="fld"><label for="f-start">Eerste opnamejaar</label><select id="f-start"></select></div>
+            <div class="fld" id="f-yrs-w"><label for="f-yrs">Aantal jaren opnemen</label><div class="in"><input id="f-yrs" inputmode="numeric" autocomplete="off" value="25"><span class="u">jaar</span></div><p class="msg" hidden>1–40 jaar</p></div>
+          </div>
         </div>
         <div class="fgroup">
           <h2>Opnames</h2>
@@ -380,7 +387,7 @@ const fStart=$('f-start');
 for(let y=Y0;y<=Y1;y++)opt(fStart,y,y);
 fStart.value=Math.min(Math.max(2030,Y0),Y1);
 
-const FIELDS=['f-btc','f-start','f-p0','f-p1','f-pn','f-pf','f-usd','f-inf','f-min','f-max'];
+const FIELDS=['f-btc','f-start','f-yrs','f-p0','f-p1','f-pn','f-pf','f-usd','f-inf','f-min','f-max'];
 function saveState(){try{const o={mode,scSel};FIELDS.forEach(id=>o[id]=$(id).value);o.real=$('f-usd-real').checked;localStorage.setItem('bpl-fire',JSON.stringify(o))}catch(e){}}
 function loadState(){try{const o=JSON.parse(localStorage.getItem('bpl-fire')||'null');if(!o)return;FIELDS.forEach(id=>{if(o[id]!=null)$(id).value=o[id]});if(['decl','pct','usd'].includes(o.mode))mode=o.mode;if([0,1,2].includes(o.scSel))scSel=o.scSel;if(typeof o.real==='boolean')$('f-usd-real').checked=o.real;if(!fStart.value)fStart.value=Math.min(Math.max(2030,Y0),Y1)}catch(e){}}
 
@@ -395,6 +402,7 @@ function readInputs(){
   const r={mode,start:+fStart.value,real:$('f-usd-real').checked},checks=[];
   const g=(k,id,o)=>{const x=field(id,o);r[k]=x.v;checks.push(x.ok)};
   g('btc','f-btc',{min:0});
+  g('yrs','f-yrs',{min:1,max:40,int:true});
   g('inf','f-inf',{min:0,max:20});
   g('min','f-min',{min:0,optional:true});
   g('max','f-max',{min:0,optional:true});
@@ -414,8 +422,9 @@ function rateFor(k,r){
   return (p0>0&&p1>0)?p0*Math.pow(p1/p0,t):p0+(p1-p0)*t;
 }
 function simulate(f,r){
-  const rows=[];let btc=r.btc,cum=0,cumReal=0,dep=null,first=null,firstReal=null,near=0,nearN=0,lastW=null;
-  for(let y=Y0;y<=Y1;y++){
+  const END=r.start+r.yrs-1;
+  const rows=[];let btc=r.btc,cum=0,cumReal=0,dep=null,first=null,firstReal=null,nW=0,lastW=null;
+  for(let y=Y0;y<=END;y++){
     const P=priceJan(y,f),growth=P/priceJan(y-1,f)-1,inf=Math.pow(1+r.inf/100,y-NOWY);
     let W=0,pct=0;
     if(y>=r.start&&btc>0){
@@ -426,11 +435,11 @@ function simulate(f,r){
       if(W>=V){W=V}
       pct=V>0?W/V:0;
       btc-=W/P; if(btc<1e-9){btc=0;if(dep===null)dep=y}
-      if(W>0){cum+=W;cumReal+=W/inf;lastW=y;if(first===null){first=W;firstReal=W/inf}if(nearN<10){near+=W;nearN++}}
+      if(W>0){cum+=W;cumReal+=W/inf;lastW=y;nW++;if(first===null){first=W;firstReal=W/inf}}
     }
     rows.push({y,P,growth,pct,W,Wr:W/inf,cum,btc,V:btc*P,start:y===r.start,pre:y<r.start});
   }
-  return {rows,dep,first,firstReal,avg:nearN?near/nearN:0,nearN,total:cum,totalReal:cumReal,lastW,endBtc:btc,endV:rows[rows.length-1].V};
+  return {rows,end:END,dep,first,firstReal,avg:nW?cum/nW:0,nW,total:cum,totalReal:cumReal,lastW,endBtc:btc,endV:rows[rows.length-1].V};
 }
 
 function renderFire(){
@@ -445,13 +454,13 @@ function renderFire(){
   add('Met '+btcTxt+' BTC en opnames vanaf '+r.start+' is je eerste opname in het scenario '+sc.name.toLowerCase()+' ');
   add(s.first!=null?money(s.first):'$ 0',true);
   add(r.inf>0&&s.firstReal!=null?' (≈ '+money(s.firstReal)+' in dollars van nu). ':'. ');
-  add(s.dep?'Je stack is op in '+s.dep+'.':'Je stack houdt het vol tot na '+Y1+', met nog '+btcFmt(s.endBtc)+' BTC over.');
+  add(s.dep?'Je stack is op in '+s.dep+', '+(s.end-s.dep)+' jaar voor het einde van je opnameperiode.':'Je stack houdt het vol t/m '+s.end+' ('+r.yrs+' jaar opnemen), met dan nog '+btcFmt(s.endBtc)+' BTC over.');
   const box=$('scen');box.textContent='';
   SC.forEach((c,i)=>{
     const x=res[i],b=document.createElement('button');b.type='button';b.className='sc';b.setAttribute('aria-pressed',String(i===scSel));
-    b.innerHTML='<div class="sc-top"><span class="sc-name"></span><span class="state"></span></div><span class="sc-key"><i class="sw"></i><span></span></span><p class="big2"></p><dl><div><dt>Gem. eerste '+(x.nearN||10)+' jaar</dt><dd class="a"></dd></div><div><dt>Totaal opgenomen</dt><dd class="t"></dd></div><div><dt>BTC eind '+Y1+'</dt><dd class="e"></dd></div><div><dt>Waarde eind '+Y1+'</dt><dd class="v"></dd></div></dl>';
+    b.innerHTML='<div class="sc-top"><span class="sc-name"></span><span class="state"></span></div><span class="sc-key"><i class="sw"></i><span></span></span><p class="big2"></p><dl><div><dt>Gem. per jaar ('+x.nW+' jr)</dt><dd class="a"></dd></div><div><dt>Totaal opgenomen</dt><dd class="t"></dd></div><div><dt>BTC eind '+x.end+'</dt><dd class="e"></dd></div><div><dt>Waarde eind '+x.end+'</dt><dd class="v"></dd></div></dl>';
     b.querySelector('.sc-name').textContent=c.name;
-    const st=b.querySelector('.state');st.className='state '+(x.dep?'no':'ok');st.textContent=x.dep?'Op in '+x.dep:'Houdt stand';
+    const st=b.querySelector('.state');st.className='state '+(x.dep?'no':'ok');st.textContent=x.dep?'Op in '+x.dep:'Houdt stand t/m '+x.end;
     const sw=b.querySelector('.sw');sw.style.borderTopColor=css(c.col);if(c.dash.length)sw.style.borderTopStyle=c.f<1?'dashed':'dotted';
     b.querySelector('.sc-key span').textContent=c.key;
     b.querySelector('.big2').textContent=x.first!=null?money(x.first):'–';
@@ -483,8 +492,8 @@ function drawFire(){
     scales:{x:{ticks:{color:muted,maxRotation:0,autoSkip:true,maxTicksLimit:7},grid:{display:false},border:{color:grid}},
       y:{type:ytype,ticks:{color:muted,maxTicksLimit:6,callback:v=>ytype==='logarithmic'?([1e3,1e4,1e5,1e6,1e7,1e8].includes(v)?compact(v):''):btcFmt(v).replace(/0+$/,'').replace(/,$/,'')},grid:{color:grid},border:{display:false},beginAtZero:ytype!=='logarithmic'}}});
   const wData=ds(w=>w.W>0?w.W:null), bData=ds(w=>w.btc);
-  if(wChart){wChart.data.datasets=wData;wChart.update('none')}else wChart=new Chart($('ch-w'),{type:'line',data:{labels:years,datasets:wData},options:common('logarithmic',money)});
-  if(bChart){bChart.data.datasets=bData;bChart.update('none')}else bChart=new Chart($('ch-b'),{type:'line',data:{labels:years,datasets:bData},options:common('linear',v=>btcFmt(v)+' BTC')});
+  if(wChart){wChart.data.labels=years;wChart.data.datasets=wData;wChart.update('none')}else wChart=new Chart($('ch-w'),{type:'line',data:{labels:years,datasets:wData},options:common('logarithmic',money)});
+  if(bChart){bChart.data.labels=years;bChart.data.datasets=bData;bChart.update('none')}else bChart=new Chart($('ch-b'),{type:'line',data:{labels:years,datasets:bData},options:common('linear',v=>btcFmt(v)+' BTC')});
 }
 
 function setMode(m){mode=m;document.querySelectorAll('.seg [data-mode]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.mode===m)));$('m-decl').hidden=m!=='decl';$('m-pct').hidden=m!=='pct';$('m-usd').hidden=m!=='usd';renderFire()}
