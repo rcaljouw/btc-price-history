@@ -1,0 +1,226 @@
+<title>Bitcoin Power Law</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600&family=IBM+Plex+Sans:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one calm column — date + result panel on top, chart below, small print last */
+:root{
+  --bg:#f3f5f8; --surface:#ffffff; --ink:#141a24; --muted:#5d6676; --line:#dfe3ea;
+  --btc:#f2860f; --price:#2350c8; --band:rgba(93,102,118,.14); --band-line:#8a93a3; --good:#1f8a5b; --warn:#c2410c;
+  --f-display:"Outfit",ui-sans-serif,system-ui,sans-serif;
+  --f-body:"IBM Plex Sans",ui-sans-serif,system-ui,sans-serif;
+  --f-data:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0f131a; --surface:#171c25; --ink:#e9edf3; --muted:#98a2b3; --line:#283041;
+  --btc:#f59a2e; --price:#6f97ff; --band:rgba(152,162,179,.14); --band-line:#6b7486; --good:#4cc38a; --warn:#fb8c4a; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f131a; --surface:#171c25; --ink:#e9edf3; --muted:#98a2b3; --line:#283041;
+  --btc:#f59a2e; --price:#6f97ff; --band:rgba(152,162,179,.14); --band-line:#6b7486; --good:#4cc38a; --warn:#fb8c4a; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:400 15px/1.55 var(--f-body);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 32px}
+.wrap{max-width:980px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+header{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap}
+h1{font:600 clamp(26px,5vw,34px)/1.1 var(--f-display);margin:0;letter-spacing:-.01em;text-wrap:balance}
+h1 span{color:var(--btc)}
+.tag{font:500 11px/1 var(--f-body);letter-spacing:.08em;text-transform:uppercase;color:var(--btc);border:1px solid var(--btc);border-radius:999px;padding:6px 10px}
+.formula{font:400 13px/1.4 var(--f-data);color:var(--muted);margin:6px 0 0}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px;display:grid;grid-template-columns:minmax(0,260px) minmax(0,1fr);gap:22px}
+@media (max-width:640px){.panel{grid-template-columns:minmax(0,1fr)}}
+.ctrl{display:flex;flex-direction:column;gap:10px}
+label{font:500 12px/1 var(--f-body);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+input[type=date]{font:500 17px var(--f-data);color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 12px;width:100%;min-height:46px}
+input[type=date]:focus-visible,.chip:focus-visible{outline:2px solid var(--btc);outline-offset:2px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{font:500 13px var(--f-body);color:var(--ink);background:transparent;border:1px solid var(--line);border-radius:999px;padding:7px 12px;cursor:pointer;min-height:34px}
+.chip:hover{border-color:var(--btc)}
+.chip[aria-pressed="true"]{background:var(--btc);border-color:var(--btc);color:#fff}
+.err{font-size:13px;color:var(--warn);min-height:1em;margin:0}
+.res{display:flex;flex-direction:column;gap:12px;min-width:0}
+.res-top{display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.res-date{font:500 15px var(--f-body);color:var(--muted)}
+.pill{font:500 12px/1 var(--f-body);border-radius:999px;padding:5px 10px;background:var(--band);color:var(--muted)}
+.big{font:600 clamp(34px,7vw,48px)/1 var(--f-display);font-variant-numeric:tabular-nums;color:var(--btc);margin:0}
+.sub{font:400 13px var(--f-body);color:var(--muted);margin:-4px 0 0}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}
+.cell{border-top:1px solid var(--line);padding-top:8px}
+.cell dt{font:500 11px/1.2 var(--f-body);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.cell dd{margin:4px 0 0;font:500 17px/1.2 var(--f-data);font-variant-numeric:tabular-nums}
+.chart-box{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px 12px 8px}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:12px;color:var(--muted);padding:0 4px 8px}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.sw{width:18px;height:0;border-top:2px solid}
+.sw.band{height:10px;border:1px solid var(--band-line);background:var(--band)}
+.canvas{position:relative;height:min(62vh,440px);min-height:300px}
+footer{font-size:12px;color:var(--muted);display:flex;flex-direction:column;gap:4px}
+footer a{color:inherit}
+</style>
+
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Bitcoin <span>Power Law</span></h1>
+      <p class="formula">Prijs = 4,42 × 10⁻¹⁷ × (dagen sinds 3 jan 2009)<sup>5,6</sup></p>
+    </div>
+    <span class="tag">Conservatieve versie</span>
+  </header>
+
+  <section class="panel" aria-label="Berekening voor een datum">
+    <div class="ctrl">
+      <label for="d">Kies een datum</label>
+      <input id="d" type="date" min="2009-01-04" max="2034-12-31">
+      <div class="chips" role="group" aria-label="Snelkeuze">
+        <button class="chip" id="c-today" type="button">Vandaag</button>
+        <button class="chip" id="c-2030" type="button">1 jan 2030</button>
+        <button class="chip" id="c-2034" type="button">Eind 2034</button>
+      </div>
+      <p class="err" id="err" role="alert"></p>
+    </div>
+    <div class="res" aria-live="polite">
+      <div class="res-top"><span class="res-date" id="r-date">–</span><span class="pill" id="r-kind">–</span></div>
+      <p class="big" id="r-model">–</p>
+      <p class="sub">modelwaarde (conservatief)</p>
+      <dl class="grid">
+        <div class="cell"><dt>Dagen sinds genesis</dt><dd id="r-days">–</dd></div>
+        <div class="cell"><dt>Band 0,5×</dt><dd id="r-lo">–</dd></div>
+        <div class="cell"><dt>Band 2×</dt><dd id="r-hi">–</dd></div>
+        <div class="cell"><dt id="r-p-l">Werkelijke close</dt><dd id="r-price">–</dd></div>
+        <div class="cell"><dt>Koers / model</dt><dd id="r-ratio">–</dd></div>
+      </dl>
+    </div>
+  </section>
+
+  <section class="chart-box" aria-label="Grafiek">
+    <div class="legend">
+      <span><i class="sw" style="border-color:var(--price)"></i>Koers (Bitstamp)</span>
+      <span><i class="sw" style="border-color:var(--btc)"></i>Power Law</span>
+      <span><i class="sw band"></i>Band 0,5× – 2×</span>
+      <span><i class="sw" style="border-top-style:dashed;border-color:var(--band-line)"></i>Extrapolatie</span>
+    </div>
+    <div class="canvas"><canvas id="chart" role="img" aria-label="Logaritmische grafiek van de bitcoin-koers met de conservatieve Power Law en een band van 0,5 tot 2 keer het model, doorgetrokken tot eind 2034. De gekozen datum is gemarkeerd.">Bitcoin-koers versus conservatieve Power Law.</canvas></div>
+  </section>
+
+  <footer>
+    <span id="fresh">Koersdata laden…</span>
+    <span>Bron: <a href="https://github.com/rcaljouw/btc-price-history" target="_blank" rel="noopener">rcaljouw/btc-price-history</a> (dagelijkse close, UTC). Model en extrapolatie zijn een scenario, geen voorspelling of financieel advies.</span>
+  </footer>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+(function(){
+const DAY=86400000, GEN=Date.UTC(2009,0,3);
+const A=4.42e-17, B=5.6;
+const model=days=>A*Math.pow(days,B);
+const daysOf=ms=>Math.round((ms-GEN)/DAY);
+const toYear=ms=>{const d=new Date(ms),y=d.getUTCFullYear(),s=Date.UTC(y,0,1);return y+(ms-s)/(Date.UTC(y+1,0,1)-s)};
+const iso=ms=>new Date(ms).toISOString().slice(0,10);
+const parseIso=s=>{const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(s||'');return m?Date.UTC(+m[1],+m[2]-1,+m[3]):NaN};
+const usd=new Intl.NumberFormat('nl-NL',{style:'currency',currency:'USD',maximumFractionDigits:0});
+const usd2=new Intl.NumberFormat('nl-NL',{style:'currency',currency:'USD',maximumFractionDigits:2});
+const num=new Intl.NumberFormat('nl-NL');
+const money=v=>v<100?usd2.format(v):usd.format(v);
+const longDate=ms=>new Date(ms).toLocaleDateString('nl-NL',{day:'numeric',month:'long',year:'numeric',timeZone:'UTC'});
+const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const $=id=>document.getElementById(id);
+
+let prices=new Map(), lastMs=null, chart=null, sel=null;
+const now=new Date(), TODAY=Date.UTC(now.getUTCFullYear(),now.getUTCMonth(),now.getUTCDate());
+const END=Date.UTC(2034,11,31);
+
+function render(){
+  if(sel==null) return;
+  const days=daysOf(sel), m=model(days);
+  $('r-date').textContent=longDate(sel);
+  $('r-model').textContent=money(m);
+  $('r-days').textContent=num.format(days);
+  $('r-lo').textContent=money(m*.5);
+  $('r-hi').textContent=money(m*2);
+  const p=prices.get(sel);
+  const future=lastMs==null?sel>=TODAY:sel>lastMs;
+  $('r-kind').textContent=p!=null?'Historie':future?'Extrapolatie':'Geen koersdata';
+  if(p!=null){
+    const r=p/m;
+    $('r-price').textContent=money(p);
+    $('r-ratio').textContent=r.toLocaleString('nl-NL',{maximumFractionDigits:2,minimumFractionDigits:2})+'×';
+    $('r-ratio').style.color=r<1?css('--good'):r>2?css('--warn'):'';
+  }else{
+    $('r-price').textContent='–'; $('r-ratio').textContent='–'; $('r-ratio').style.color='';
+  }
+  ['c-today','c-2030','c-2034'].forEach(id=>$(id).setAttribute('aria-pressed','false'));
+  if(sel===TODAY)$('c-today').setAttribute('aria-pressed','true');
+  if(sel===Date.UTC(2030,0,1))$('c-2030').setAttribute('aria-pressed','true');
+  if(sel===END)$('c-2034').setAttribute('aria-pressed','true');
+  if(chart){
+    const x=toYear(sel);
+    chart.data.datasets[4].data=[{x,y:m}];
+    chart.data.datasets[5].data=p!=null?[{x,y:p}]:[];
+    chart.update('none');
+  }
+}
+
+function setDate(ms){
+  if(isNaN(ms)){ $('err').textContent='Vul een geldige datum in.'; return; }
+  if(ms<GEN+DAY||ms>END){ $('err').textContent='Kies een datum tussen 4 januari 2009 en 31 december 2034.'; return; }
+  $('err').textContent=''; sel=ms; $('d').value=iso(ms); render();
+}
+
+function buildChart(){
+  const grid=css('--line'), muted=css('--muted'), btc=css('--btc'), price=css('--price'), band=css('--band'), bandLine=css('--band-line'), ink=css('--ink');
+  const NOWX=toYear(lastMs??TODAY);
+  const xs=[];for(let x=2010.5;x<=2035;x+=0.04)xs.push(+x.toFixed(3));
+  const msOfYear=x=>{const y=Math.floor(x),s=Date.UTC(y,0,1);return s+(x-y)*(Date.UTC(y+1,0,1)-s)};
+  const line=f=>xs.map(x=>({x,y:model((msOfYear(x)-GEN)/DAY)*f}));
+  const dash={borderDash:c=>c.p0.parsed.x>=NOWX?[6,4]:undefined};
+  const pts=[];let i=0;const keys=[...prices.keys()];
+  keys.forEach((k,j)=>{if(j%3===0||j===keys.length-1)pts.push({x:toYear(k),y:prices.get(k)})});
+  const fmt=v=>v>=1e6?'$'+(v/1e6)+' mln':v>=1e3?'$'+(v/1e3)+'k':'$'+v;
+  chart=new Chart($('chart'),{type:'line',
+    data:{datasets:[
+      {label:'Koers',data:pts,borderColor:price,borderWidth:1.6,pointRadius:0,order:1},
+      {label:'2× model',data:line(2),borderColor:bandLine,borderWidth:1,pointRadius:0,fill:'+1',backgroundColor:band,segment:dash,order:3},
+      {label:'0,5× model',data:line(.5),borderColor:bandLine,borderWidth:1,pointRadius:0,segment:dash,order:3},
+      {label:'Model',data:line(1),borderColor:btc,borderWidth:2,pointRadius:0,segment:dash,order:2},
+      {label:'Gekozen datum, model',data:[],pointRadius:6,pointBackgroundColor:btc,pointBorderColor:css('--surface'),pointBorderWidth:2,showLine:false,order:0},
+      {label:'Gekozen datum, koers',data:[],pointRadius:6,pointBackgroundColor:price,pointBorderColor:css('--surface'),pointBorderWidth:2,showLine:false,order:0}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,animation:false,parsing:false,normalized:true,
+      interaction:{mode:'nearest',axis:'x',intersect:false},
+      onClick:(e,els,c)=>{const x=c.scales.x.getValueForPixel(e.x);if(x!=null){const ms=msOfYear(x);const d=new Date(ms);setDate(Date.UTC(d.getUTCFullYear(),d.getUTCMonth(),d.getUTCDate()))}},
+      plugins:{legend:{display:false},
+        tooltip:{filter:t=>t.datasetIndex<4,callbacks:{title:t=>{const d=new Date(msOfYear(t[0].parsed.x));return d.toLocaleDateString('nl-NL',{month:'short',year:'numeric',timeZone:'UTC'})},label:t=>t.dataset.label+': '+money(t.parsed.y)}}},
+      scales:{
+        x:{type:'linear',min:2011,max:2035,ticks:{stepSize:1,color:muted,autoSkip:true,maxRotation:0,callback:v=>Number.isInteger(v)&&v%2===1?v:''},grid:{display:false},border:{color:grid}},
+        y:{type:'logarithmic',min:1,max:3e6,ticks:{color:muted,callback:v=>[1,10,100,1e3,1e4,1e5,1e6].includes(v)?fmt(v):''},grid:{color:grid},border:{display:false}}}
+    },
+    plugins:[{id:'selLine',afterDatasetsDraw(c){if(sel==null)return;const x=c.scales.x.getPixelForValue(toYear(sel)),a=c.chartArea;if(x<a.left||x>a.right)return;const g=c.ctx;g.save();g.strokeStyle=ink;g.globalAlpha=.35;g.setLineDash([3,3]);g.beginPath();g.moveTo(x,a.top);g.lineTo(x,a.bottom);g.stroke();g.restore()}}]
+  });
+}
+
+$('d').addEventListener('change',e=>setDate(parseIso(e.target.value)));
+$('d').addEventListener('input',()=>{$('err').textContent=''});
+$('c-today').addEventListener('click',()=>setDate(TODAY));
+$('c-2030').addEventListener('click',()=>setDate(Date.UTC(2030,0,1)));
+$('c-2034').addEventListener('click',()=>setDate(END));
+
+setDate(TODAY);
+
+fetch('data/btc-usd-daily.csv',{cache:'no-cache'}).then(r=>{if(!r.ok)throw new Error(r.status);return r.text()}).then(t=>{
+  const rows=t.trim().split('\n');const h=rows.shift().split(',');const di=h.indexOf('date'),ci=h.indexOf('close');
+  for(const line of rows){const c=line.split(',');const ms=parseIso(c[di]);const v=+c[ci];if(!isNaN(ms)&&v>0)prices.set(ms,v)}
+  lastMs=[...prices.keys()].pop();
+  $('fresh').textContent='Koersdata t/m '+longDate(lastMs)+' ('+num.format(prices.size)+' dagen).';
+}).catch(()=>{
+  $('fresh').textContent='Koersdata kon niet worden geladen; alleen het model wordt getoond.';
+}).finally(()=>{
+  if(window.Chart)buildChart(); else $('fresh').textContent+=' De grafiekbibliotheek kon niet laden.';
+  render();
+});
+
+const mq=matchMedia('(prefers-color-scheme: dark)');
+const rebuild=()=>{if(chart){chart.destroy();buildChart();render()}};
+mq.addEventListener&&mq.addEventListener('change',rebuild);
+new MutationObserver(rebuild).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+})();
+</script>
