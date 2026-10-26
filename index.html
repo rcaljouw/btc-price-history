@@ -329,7 +329,7 @@ function setDate(ms){
 }
 
 const XMIN=2011, XMAX=2035;
-let view={min:XMIN,max:XMAX}, panEnd=0;
+let view={min:XMIN,max:XMAX}, panEnd=0, hoverMs=null;
 const isFull=()=>view.min<=XMIN+1e-6&&view.max>=XMAX-1e-6;
 const MSHORT=['jan','feb','mrt','apr','mei','jun','jul','aug','sep','okt','nov','dec'];
 function monLabel(v){let y=Math.floor(v+1e-6),m=Math.round((v-y)*12);if(m===12){y++;m=0}return m===0?String(y):MSHORT[m]}
@@ -372,12 +372,22 @@ const afterGesture=({chart:c})=>{view={min:c.scales.x.min,max:c.scales.x.max};se
 function buildChart(){
   const grid=css('--line'), muted=css('--muted'), btc=css('--btc'), price=css('--price'), band=css('--band'), bandLine=css('--band-line'), ink=css('--ink');
   const NOWX=toYear(lastMs??TODAY);
-  const xs=[];for(let x=2010.5;x<=2035;x+=0.04)xs.push(+x.toFixed(3));
+  const xs=[];for(let ms=Date.UTC(2010,6,1);ms<=Date.UTC(2035,0,15);ms+=14*DAY)xs.push(ms);
+  if(!Chart.Tooltip.positioners.cursorX)Chart.Tooltip.positioners.cursorX=function(items,pos){return items.length?{x:pos.x,y:items[0].element.y}:false};
+  if(!Chart.Interaction.modes.btcDay)Chart.Interaction.modes.btcDay=function(c,e){
+    const sx=c.scales.x,v=sx.getValueForPixel(e.x);
+    if(v==null||v<sx.min||v>sx.max)return [];
+    const pd=c.data.datasets[0].data,useP=pd.length&&v<=pd[pd.length-1].x+.5/365;
+    const ds=useP?0:3,arr=c.data.datasets[ds].data;if(!arr.length)return [];
+    let lo=0,hi=arr.length-1;while(hi-lo>1){const m=(lo+hi)>>1;if(arr[m].x<v)lo=m;else hi=m}
+    const i=Math.abs(arr[lo].x-v)<=Math.abs(arr[hi].x-v)?lo:hi;
+    hoverMs=useP?arr[i].ms:Math.round(msOfYear(v)/DAY)*DAY;
+    const el=c.getDatasetMeta(ds).data[i];return el?[{datasetIndex:ds,index:i,element:el}]:[];
+  };
   const msOfYear=x=>{const y=Math.floor(x),s=Date.UTC(y,0,1);return s+(x-y)*(Date.UTC(y+1,0,1)-s)};
-  const line=f=>xs.map(x=>({x,y:model((msOfYear(x)-GEN)/DAY)*f}));
+  const line=f=>xs.map(ms=>({x:toYear(ms),y:model(daysOf(ms))*f,ms}));
   const dash={borderDash:c=>c.p0.parsed.x>=NOWX?[6,4]:undefined};
-  const pts=[];let i=0;const keys=[...prices.keys()];
-  keys.forEach((k,j)=>{if(j%3===0||j===keys.length-1)pts.push({x:toYear(k),y:prices.get(k)})});
+  const pts=[...prices.keys()].map(k=>({x:toYear(k),y:prices.get(k),ms:k}));
   const fmt=v=>v>=1e6?'$'+(v/1e6)+' mln':v>=1e3?'$'+(v/1e3)+'k':'$'+v;
   chart=new Chart($('chart'),{type:'line',
     data:{datasets:[
@@ -389,13 +399,15 @@ function buildChart(){
       {label:'Gekozen datum, koers',data:[],pointRadius:6,pointBackgroundColor:price,pointBorderColor:css('--surface'),pointBorderWidth:2,showLine:false,order:0}
     ]},
     options:{responsive:true,maintainAspectRatio:false,animation:false,parsing:false,normalized:true,
-      interaction:{mode:'nearest',axis:'x',intersect:false},
+      interaction:{mode:'btcDay',intersect:false},
       onClick:(e,els,c)=>{if(Date.now()-panEnd<400)return;const x=c.scales.x.getValueForPixel(e.x);if(x!=null){const ms=msOfYear(x);const d=new Date(ms);setDate(Date.UTC(d.getUTCFullYear(),d.getUTCMonth(),d.getUTCDate()))}},
-      plugins:{legend:{display:false},
+      plugins:{legend:{display:false},decimation:{enabled:true,algorithm:'lttb',threshold:900,samples:700},
         zoom:{limits:{x:{min:XMIN,max:XMAX,minRange:.25}},
           pan:{enabled:true,mode:'x',threshold:6,onPanComplete:a=>{panEnd=Date.now();afterGesture(a)}},
           zoom:{wheel:{enabled:true,modifierKey:'ctrl'},pinch:{enabled:true},mode:'x',onZoomComplete:afterGesture}},
-        tooltip:{filter:t=>t.datasetIndex<4,callbacks:{title:t=>{const d=new Date(msOfYear(t[0].parsed.x));return d.toLocaleDateString('nl-NL',{month:'short',year:'numeric',timeZone:'UTC'})},label:t=>t.dataset.label+': '+money(t.parsed.y)}}},
+        tooltip:{displayColors:false,position:'cursorX',callbacks:{title:()=>longDate(hoverMs),label:t=>{const p=t.raw,m=model(daysOf(hoverMs));
+          if(t.datasetIndex===0)return ['Koers: '+money(p.y),'Model: '+money(m),'Koers / model: '+(p.y/m).toLocaleString('nl-NL',{minimumFractionDigits:2,maximumFractionDigits:2})+'×'];
+          const out=['Model: '+money(m),'Band: '+money(m*.5)+' – '+money(m*2)];if(hoverMs>(lastMs??TODAY))out.push('Extrapolatie');return out}}}},
       scales:{
         x:{type:'linear',min:XMIN,max:XMAX,ticks:{stepSize:1,color:muted,autoSkip:true,maxRotation:0,maxTicksLimit:13,callback:v=>{const s=view.max-view.min;if(s>8)return Number.isInteger(v)&&v%2===1?v:'';if(s>2.5)return Number.isInteger(v)?v:'';return monLabel(v)}},grid:{display:false},border:{color:grid}},
         y:{type:'logarithmic',min:1,max:3e6,ticks:{color:muted,callback:v=>{if(isFull())return [1,10,100,1e3,1e4,1e5,1e6].includes(v)?fmt(v):'';const e=Math.pow(10,Math.floor(Math.log10(v)+1e-9)),m=Math.round(v/e*1000)/1000;return [1,2,5].includes(m)?fmt(v):''}},grid:{color:grid},border:{display:false}}}
