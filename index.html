@@ -64,6 +64,15 @@ select:focus-visible,.chip:focus-visible{outline:2px solid var(--btc);outline-of
 footer{font-size:12px;color:var(--muted);display:flex;flex-direction:column;gap:4px}
 footer a{color:inherit}
 .view{display:flex;flex-direction:column;gap:18px}
+.zbar{display:flex;flex-wrap:wrap;gap:8px;justify-content:space-between;align-items:center;padding:0 4px 6px}
+.zbar .seg{min-width:0}
+.zbtns{display:flex;gap:6px}
+.zb{font:500 14px var(--f-body);color:var(--ink);background:transparent;border:1px solid var(--line);border-radius:10px;min-width:40px;min-height:38px;padding:0 12px;cursor:pointer}
+.zb:hover:not(:disabled){border-color:var(--btc)}
+.zb:disabled{opacity:.4;cursor:default}
+.zb:focus-visible{outline:2px solid var(--btc);outline-offset:2px}
+.zr:not(:disabled){border-color:var(--btc);color:var(--btc)}
+.zhint{font-size:12px;color:var(--muted);margin:0 4px 8px}
 .tabs{display:inline-flex;gap:4px;padding:4px;background:var(--surface);border:1px solid var(--line);border-radius:12px;align-self:flex-start}
 .tab{font:500 14px var(--f-body);color:var(--muted);background:transparent;border:0;border-radius:9px;padding:9px 16px;cursor:pointer;min-height:40px}
 .tab[aria-selected="true"]{background:var(--btc);color:#fff}
@@ -176,6 +185,19 @@ tr.empty td{color:var(--muted)}
       <span><i class="sw band"></i>Band 0,5× – 2×</span>
       <span><i class="sw" style="border-top-style:dashed;border-color:var(--band-line)"></i>Extrapolatie</span>
     </div>
+    <div class="zbar">
+      <div class="seg" role="group" aria-label="Periode">
+        <button type="button" data-range="all" aria-pressed="true">Alles</button>
+        <button type="button" data-range="5y" aria-pressed="false">Laatste 5 jaar</button>
+        <button type="button" data-range="fut" aria-pressed="false">Nu – 2034</button>
+      </div>
+      <div class="zbtns">
+        <button type="button" class="zb" id="z-out" aria-label="Uitzoomen">−</button>
+        <button type="button" class="zb" id="z-in" aria-label="Inzoomen">+</button>
+        <button type="button" class="zb zr" id="z-reset" disabled>Beginstand</button>
+      </div>
+    </div>
+    <p class="zhint" id="zhint" hidden></p>
     <div class="canvas"><canvas id="chart" role="img" aria-label="Logaritmische grafiek van de bitcoin-koers met de conservatieve Power Law en een band van 0,5 tot 2 keer het model, doorgetrokken tot eind 2034. De gekozen datum is gemarkeerd.">Bitcoin-koers versus conservatieve Power Law.</canvas></div>
   </section>
   </div>
@@ -247,6 +269,8 @@ tr.empty td{color:var(--muted)}
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/hammer.js/2.0.8/hammer.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-zoom/2.0.1/chartjs-plugin-zoom.min.js"></script>
 <script>
 (function(){
 const DAY=86400000, GEN=Date.UTC(2009,0,3);
@@ -304,6 +328,47 @@ function setDate(ms){
   $('err').textContent=''; sel=ms; syncSelects(ms); render();
 }
 
+const XMIN=2011, XMAX=2035;
+let view={min:XMIN,max:XMAX}, panEnd=0;
+const isFull=()=>view.min<=XMIN+1e-6&&view.max>=XMAX-1e-6;
+const MSHORT=['jan','feb','mrt','apr','mei','jun','jul','aug','sep','okt','nov','dec'];
+function monLabel(v){let y=Math.floor(v+1e-6),m=Math.round((v-y)*12);if(m===12){y++;m=0}return m===0?String(y):MSHORT[m]}
+function fitY(){
+  const o=chart.options.scales.y;
+  if(isFull()){o.min=1;o.max=3e6;return}
+  let lo=Infinity,hi=0;
+  for(const i of [0,1,2,3])for(const p of chart.data.datasets[i].data){if(p.x<view.min||p.x>view.max)continue;if(p.y<lo)lo=p.y;if(p.y>hi)hi=p.y}
+  if(isFinite(lo)&&hi>0){o.min=lo/1.25;o.max=hi*1.25}
+}
+function setRange(min,max){
+  let span=Math.max(.25,Math.min(max-min,XMAX-XMIN));
+  if(min<XMIN){min=XMIN}
+  max=min+span;
+  if(max>XMAX){max=XMAX;min=max-span}
+  view={min,max};
+  if(!chart)return;
+  const x=chart.options.scales.x;x.min=min;x.max=max;
+  const s=max-min;x.ticks.stepSize=s>2.5?1:s>1?.25:1/12;
+  fitY();chart.update('none');syncZoomUI();
+}
+function presetRange(k){
+  const now=toYear(lastMs??TODAY);
+  return k==='5y'?[now-5,now+.15]:k==='fut'?[now-.5,XMAX]:[XMIN,XMAX];
+}
+function syncZoomUI(){
+  $('z-reset').disabled=isFull();$('z-out').disabled=isFull();
+  $('z-in').disabled=view.max-view.min<=.26;
+  document.querySelectorAll('[data-range]').forEach(b=>{const [a,c]=presetRange(b.dataset.range);b.setAttribute('aria-pressed',String(Math.abs(a-view.min)<.02&&Math.abs(Math.min(c,XMAX)-view.max)<.02))});
+}
+function zoomBy(f){const c=(view.min+view.max)/2,h=(view.max-view.min)*f/2;setRange(c-h,c+h)}
+document.querySelectorAll('[data-range]').forEach(b=>b.addEventListener('click',()=>{const [a,c]=presetRange(b.dataset.range);setRange(a,c)}));
+$('z-in').addEventListener('click',()=>zoomBy(.5));
+$('z-out').addEventListener('click',()=>zoomBy(2));
+$('z-reset').addEventListener('click',()=>setRange(XMIN,XMAX));
+const hasZoom=!!window.ChartZoom&&!!window.Hammer;
+if(hasZoom){const h=$('zhint');h.textContent=matchMedia('(pointer: coarse)').matches?'Knijp om te zoomen, veeg opzij om te schuiven. Tik om een datum te kiezen.':'Zoom met Ctrl + scrollwiel of knijp op je trackpad, sleep om te schuiven.';h.hidden=false}
+const afterGesture=({chart:c})=>{view={min:c.scales.x.min,max:c.scales.x.max};setRange(view.min,view.max)};
+
 function buildChart(){
   const grid=css('--line'), muted=css('--muted'), btc=css('--btc'), price=css('--price'), band=css('--band'), bandLine=css('--band-line'), ink=css('--ink');
   const NOWX=toYear(lastMs??TODAY);
@@ -325,15 +390,20 @@ function buildChart(){
     ]},
     options:{responsive:true,maintainAspectRatio:false,animation:false,parsing:false,normalized:true,
       interaction:{mode:'nearest',axis:'x',intersect:false},
-      onClick:(e,els,c)=>{const x=c.scales.x.getValueForPixel(e.x);if(x!=null){const ms=msOfYear(x);const d=new Date(ms);setDate(Date.UTC(d.getUTCFullYear(),d.getUTCMonth(),d.getUTCDate()))}},
+      onClick:(e,els,c)=>{if(Date.now()-panEnd<400)return;const x=c.scales.x.getValueForPixel(e.x);if(x!=null){const ms=msOfYear(x);const d=new Date(ms);setDate(Date.UTC(d.getUTCFullYear(),d.getUTCMonth(),d.getUTCDate()))}},
       plugins:{legend:{display:false},
+        zoom:{limits:{x:{min:XMIN,max:XMAX,minRange:.25}},
+          pan:{enabled:true,mode:'x',threshold:6,onPanComplete:a=>{panEnd=Date.now();afterGesture(a)}},
+          zoom:{wheel:{enabled:true,modifierKey:'ctrl'},pinch:{enabled:true},mode:'x',onZoomComplete:afterGesture}},
         tooltip:{filter:t=>t.datasetIndex<4,callbacks:{title:t=>{const d=new Date(msOfYear(t[0].parsed.x));return d.toLocaleDateString('nl-NL',{month:'short',year:'numeric',timeZone:'UTC'})},label:t=>t.dataset.label+': '+money(t.parsed.y)}}},
       scales:{
-        x:{type:'linear',min:2011,max:2035,ticks:{stepSize:1,color:muted,autoSkip:true,maxRotation:0,callback:v=>Number.isInteger(v)&&v%2===1?v:''},grid:{display:false},border:{color:grid}},
-        y:{type:'logarithmic',min:1,max:3e6,ticks:{color:muted,callback:v=>[1,10,100,1e3,1e4,1e5,1e6].includes(v)?fmt(v):''},grid:{color:grid},border:{display:false}}}
+        x:{type:'linear',min:XMIN,max:XMAX,ticks:{stepSize:1,color:muted,autoSkip:true,maxRotation:0,maxTicksLimit:13,callback:v=>{const s=view.max-view.min;if(s>8)return Number.isInteger(v)&&v%2===1?v:'';if(s>2.5)return Number.isInteger(v)?v:'';return monLabel(v)}},grid:{display:false},border:{color:grid}},
+        y:{type:'logarithmic',min:1,max:3e6,ticks:{color:muted,callback:v=>{if(isFull())return [1,10,100,1e3,1e4,1e5,1e6].includes(v)?fmt(v):'';const e=Math.pow(10,Math.floor(Math.log10(v)+1e-9)),m=Math.round(v/e*1000)/1000;return [1,2,5].includes(m)?fmt(v):''}},grid:{color:grid},border:{display:false}}}
     },
     plugins:[{id:'selLine',afterDatasetsDraw(c){if(sel==null)return;const x=c.scales.x.getPixelForValue(toYear(sel)),a=c.chartArea;if(x<a.left||x>a.right)return;const g=c.ctx;g.save();g.strokeStyle=ink;g.globalAlpha=.35;g.setLineDash([3,3]);g.beginPath();g.moveTo(x,a.top);g.lineTo(x,a.bottom);g.stroke();g.restore()}}]
   });
+  if(hasZoom)chart.canvas.style.touchAction='pan-y';
+  setRange(view.min,view.max);
 }
 
 const MONTHS=['januari','februari','maart','april','mei','juni','juli','augustus','september','oktober','november','december'];
