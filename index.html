@@ -340,6 +340,13 @@ function fitY(){
   for(const i of [0,1,2,3])for(const p of chart.data.datasets[i].data){if(p.x<view.min||p.x>view.max)continue;if(p.y<lo)lo=p.y;if(p.y>hi)hi=p.y}
   if(isFinite(lo)&&hi>0){o.min=lo/1.25;o.max=hi*1.25}
 }
+const STEPS=[1/12,.25,.5,1,2,4,5];
+function xTicks(sc){
+  const span=sc.max-sc.min,ppy=(sc.width||600)/span;
+  const st=STEPS.find(t=>t*ppy>=58)||5;sc._btcStep=st;
+  const out=[];for(let v=Math.ceil(sc.min/st-1e-6)*st;v<=sc.max+1e-6;v+=st)out.push({value:+v.toFixed(6)});
+  sc.ticks=out;
+}
 function setRange(min,max){
   let span=Math.max(.25,Math.min(max-min,XMAX-XMIN));
   if(min<XMIN){min=XMIN}
@@ -348,7 +355,7 @@ function setRange(min,max){
   view={min,max};
   if(!chart)return;
   const x=chart.options.scales.x;x.min=min;x.max=max;
-  const s=max-min;x.ticks.stepSize=s>2.5?1:s>1?.25:1/12;
+  
   fitY();chart.update('none');syncZoomUI();
 }
 function presetRange(k){
@@ -409,7 +416,7 @@ function buildChart(){
           if(t.datasetIndex===0)return ['Koers: '+money(p.y),'Model: '+money(m),'Koers / model: '+(p.y/m).toLocaleString('nl-NL',{minimumFractionDigits:2,maximumFractionDigits:2})+'×'];
           const out=['Model: '+money(m),'Band: '+money(m*.5)+' – '+money(m*2)];if(hoverMs>(lastMs??TODAY))out.push('Extrapolatie');return out}}}},
       scales:{
-        x:{type:'linear',min:XMIN,max:XMAX,ticks:{stepSize:1,color:muted,autoSkip:true,maxRotation:0,maxTicksLimit:13,callback:v=>{const s=view.max-view.min;if(s>8)return Number.isInteger(v)&&v%2===1?v:'';if(s>2.5)return Number.isInteger(v)?v:'';return monLabel(v)}},grid:{display:false},border:{color:grid}},
+        x:{type:'linear',min:XMIN,max:XMAX,afterBuildTicks:xTicks,ticks:{color:muted,autoSkip:true,autoSkipPadding:10,maxRotation:0,callback:function(v){return (this._btcStep||1)>=1?Math.round(v):monLabel(v)}},grid:{display:false},border:{color:grid}},
         y:{type:'logarithmic',min:1,max:3e6,ticks:{color:muted,callback:v=>{if(isFull())return [1,10,100,1e3,1e4,1e5,1e6].includes(v)?fmt(v):'';const e=Math.pow(10,Math.floor(Math.log10(v)+1e-9)),m=Math.round(v/e*1000)/1000;return [1,2,5].includes(m)?fmt(v):''}},grid:{color:grid},border:{display:false}}}
     },
     plugins:[{id:'selLine',afterDatasetsDraw(c){if(sel==null)return;const x=c.scales.x.getPixelForValue(toYear(sel)),a=c.chartArea;if(x<a.left||x>a.right)return;const g=c.ctx;g.save();g.strokeStyle=ink;g.globalAlpha=.35;g.setLineDash([3,3]);g.beginPath();g.moveTo(x,a.top);g.lineTo(x,a.bottom);g.stroke();g.restore()}}]
