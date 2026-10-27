@@ -255,7 +255,7 @@ tr.empty td{color:var(--muted)}
         </div>
         <div class="tbl-wrap">
           <div class="tbl-head"><h3 id="tbl-title">Per jaar</h3><span class="note" id="tbl-note"></span></div>
-          <table><thead><tr><th>Jaar</th><th>Koers 1 jan</th><th>Groei</th><th>Opname %</th><th>Opname</th><th id="th-real">In $ van nu</th><th>Cumulatief</th><th>BTC over</th><th>Waarde</th></tr></thead><tbody id="tbody"></tbody></table>
+          <table><thead><tr><th>Jaar</th><th>Koers 1 jan</th><th>Groei</th><th>Opname %</th><th>BTC verkocht</th><th>Opname</th><th id="th-real">In $ van nu</th><th>Cumulatief</th><th>BTC over</th><th>Waarde</th></tr></thead><tbody id="tbody"></tbody></table>
         </div>
         <p class="note">Koers per jaar = je conservatieve Power Law op 1 januari, maal de scenariofactor. Opnames vinden plaats op 1 januari tegen die koers. Zonder belasting. Een scenario, geen voorspelling of financieel advies.</p>
       </div>
@@ -462,6 +462,7 @@ const SC=[
 const NOWY=new Date().getUTCFullYear(), Y0=NOWY+1, Y1=NOWY+30;
 const priceJan=(y,f)=>model(daysOf(Date.UTC(y,0,1)))*f;
 const btcFmt=v=>v.toLocaleString('nl-NL',{minimumFractionDigits:4,maximumFractionDigits:4});
+const soldFmt=v=>'−'+v.toLocaleString('nl-NL',{minimumFractionDigits:v<.001?8:4,maximumFractionDigits:v<.001?8:4});
 const pct1=v=>(v*100).toLocaleString('nl-NL',{minimumFractionDigits:1,maximumFractionDigits:1})+'%';
 const compact=v=>v>=1e6?'$ '+(v/1e6).toLocaleString('nl-NL',{maximumFractionDigits:v>=1e7?0:1})+' mln':money(v);
 function pnum(s){
@@ -515,7 +516,7 @@ function simulate(f,r){
   const rows=[];let btc=r.btc,cum=0,cumReal=0,dep=null,first=null,firstReal=null,nW=0,lastW=null;
   for(let y=Y0;y<=END;y++){
     const P=priceJan(y,f),growth=P/priceJan(y-1,f)-1,inf=Math.pow(1+r.inf/100,y-NOWY);
-    let W=0,pct=0;
+    let W=0,pct=0,sold=0;
     if(y>=r.start&&btc>0){
       const V=btc*P;
       W=r.mode==='usd'?(r.real?r.usd*inf:r.usd):V*rateFor(y-r.start,r);
@@ -523,10 +524,10 @@ function simulate(f,r){
       if(r.max!=null)W=Math.min(W,r.max*inf);
       if(W>=V){W=V}
       pct=V>0?W/V:0;
-      btc-=W/P; if(btc<1e-9){btc=0;if(dep===null)dep=y}
+      sold=W/P; btc-=sold; if(btc<1e-9){btc=0;if(dep===null)dep=y}
       if(W>0){cum+=W;cumReal+=W/inf;lastW=y;nW++;if(first===null){first=W;firstReal=W/inf}}
     }
-    rows.push({y,P,growth,pct,W,Wr:W/inf,cum,btc,V:btc*P,start:y===r.start,pre:y<r.start});
+    rows.push({y,P,growth,pct,W,sold,Wr:W/inf,cum,btc,V:btc*P,start:y===r.start,pre:y<r.start});
   }
   return {rows,end:END,dep,first,firstReal,avg:nW?cum/nW:0,nW,total:cum,totalReal:cumReal,lastW,endBtc:btc,endV:rows[rows.length-1].V};
 }
@@ -565,8 +566,8 @@ function renderFire(){
   const tb=$('tbody');tb.textContent='';
   s.rows.forEach(w=>{
     const tr=document.createElement('tr');if(w.start)tr.className='start';else if(w.pre||(!w.W&&w.btc===0))tr.className='empty';
-    const cells=[w.y,money(w.P),pct1(w.growth),w.W?pct1(w.pct):'–',w.W?money(w.W):'–',w.W?money(w.Wr):'–',w.cum?money(w.cum):'–',btcFmt(w.btc),money(w.V)];
-    cells.forEach((c,j)=>{if(j===5&&!real)return;const td=document.createElement('td');td.textContent=c;tr.appendChild(td)});
+    const cells=[w.y,money(w.P),pct1(w.growth),w.W?pct1(w.pct):'–',w.sold?soldFmt(w.sold):'–',w.W?money(w.W):'–',w.W?money(w.Wr):'–',w.cum?money(w.cum):'–',btcFmt(w.btc),money(w.V)];
+    cells.forEach((c,j)=>{if(j===6&&!real)return;const td=document.createElement('td');td.textContent=c;tr.appendChild(td)});
     tb.appendChild(tr);
   });
   drawFire();
