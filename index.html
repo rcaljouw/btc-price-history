@@ -25,7 +25,7 @@ html,body{margin:0}
 body{background:var(--bg);color:var(--ink);font:400 15px/1.55 var(--f-body);
   padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 32px}
 .wrap{max-width:980px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
-header{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap}
+header{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap}
 h1{font:600 clamp(26px,5vw,34px)/1.1 var(--f-display);margin:0;letter-spacing:-.01em;text-wrap:balance}
 h1 span{color:var(--btc)}
 .tag{font:500 11px/1 var(--f-body);letter-spacing:.08em;text-transform:uppercase;color:var(--btc);border:1px solid var(--btc);border-radius:999px;padding:6px 10px}
@@ -162,7 +162,12 @@ th:first-child,td:first-child{text-align:left}
 tr.start td{background:color-mix(in srgb,var(--btc) 8%,transparent)}
 tr.empty td{color:var(--muted)}
 .note{font-size:12px;color:var(--muted);margin:0;max-width:70ch}
-.hdr-r{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.hdr-side{display:flex;flex-direction:column;align-items:flex-end;gap:8px}
+.hdr-r{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end}
+.hdr-exp{justify-content:flex-end}
+.hdr-exp .zb{min-height:36px;font-size:13px}
+.hdr-side .exp-msg{text-align:right;min-height:1em}
+@media (max-width:640px){.hdr-side{align-items:flex-start}.hdr-r,.hdr-exp{justify-content:flex-start}.hdr-side .exp-msg{text-align:left}}
 .lang{display:inline-grid;grid-auto-flow:column;gap:2px;padding:3px;background:var(--surface);border:1px solid var(--line);border-radius:999px}
 .lang button{font:600 12px/1 var(--f-body);letter-spacing:.06em;color:var(--muted);background:transparent;border:0;border-radius:999px;padding:7px 11px;min-height:30px;cursor:pointer}
 .lang button[aria-pressed="true"]{background:var(--ink);color:var(--surface)}
@@ -175,12 +180,19 @@ tr.empty td{color:var(--muted)}
       <h1>Bitcoin <span>Power Law</span></h1>
       <p class="formula" data-ih="formula">Prijs = 4,42 × 10⁻¹⁷ × (dagen sinds 3 jan 2009)<sup>5,6</sup></p>
     </div>
+    <div class="hdr-side">
     <div class="hdr-r">
       <span class="tag" data-i="tag">Conservatieve versie</span>
       <div class="lang" role="group" aria-label="Taal / Language">
         <button type="button" data-lang="nl" aria-pressed="true" lang="nl" title="Nederlands">NL</button>
         <button type="button" data-lang="en" aria-pressed="false" lang="en" title="English">EN</button>
       </div>
+    </div>
+    <div class="exp hdr-exp">
+      <button type="button" class="zb" id="exp-csv" data-i="expCsv">Exporteer CSV</button>
+      <button type="button" class="zb" id="exp-pdf" data-i="expPdf">Exporteer PDF-rapport</button>
+    </div>
+    <span class="exp-msg" id="exp-msg" role="status"></span>
     </div>
   </header>
 
@@ -294,11 +306,6 @@ tr.empty td{color:var(--muted)}
       </form>
 
       <div class="out">
-        <div class="exp">
-          <button type="button" class="zb" id="exp-csv" data-i="expCsv">Exporteer CSV</button>
-          <button type="button" class="zb" id="exp-pdf" data-i="expPdf">Exporteer PDF-rapport</button>
-          <span class="exp-msg" id="exp-msg" role="status"></span>
-        </div>
         <p class="headline" id="fire-head">–</p>
         <div class="scen" id="scen" role="group" aria-label="Scenario"></div>
         <section class="mcf" id="mc-fire" aria-live="polite"><p class="sub2" data-i="mcRunning">Monte Carlo wordt berekend…</p></section>
@@ -342,9 +349,6 @@ tr.empty td{color:var(--muted)}
           <button type="button" class="zb" id="mc-prev" data-ia="yPrevAria" aria-label="Eén jaar terug">◂</button>
           <select id="mc-date"></select>
           <button type="button" class="zb" id="mc-next" data-ia="yNextAria" aria-label="Eén jaar vooruit">▸</button>
-          <span class="sp"></span>
-          <button type="button" class="zb" id="exp-pdf-mc" data-i="expPdf">Exporteer PDF-rapport</button>
-          <span class="exp-msg" id="exp-msg-mc" role="status"></span>
         </div>
         <p class="headline" id="mc-head" data-i="simRunning">Simulatie wordt berekend…</p>
         <p class="sect" data-i="secRange">Bandbreedte</p>
@@ -884,7 +888,7 @@ function drawFire(){
 }
 
 /* ---------- Export ---------- */
-function expMsg(t,bad){['exp-msg','exp-msg-mc'].forEach(id=>{const m=$(id);if(m){m.textContent=t||'';m.classList.toggle('bad',!!bad)}})}
+function expMsg(t,bad){['exp-msg'].forEach(id=>{const m=$(id);if(m){m.textContent=t||'';m.classList.toggle('bad',!!bad)}})}
 async function saveFile(name,data){
   if(window.claude&&typeof window.claude.use==='function'){
     let d=null;try{d=await window.claude.use('downloads')}catch(e){}
@@ -922,7 +926,7 @@ const pdfTxt=v=>String(v).replace(/−/g,'-').replace(/≈/g,'~').replace(/[ �
 function chartImg(ch){const c=ch.canvas,o=document.createElement('canvas');o.width=c.width;o.height=c.height;const g=o.getContext('2d');g.fillStyle='#ffffff';g.fillRect(0,0,o.width,o.height);g.drawImage(c,0,0);return {url:o.toDataURL('image/png'),ratio:c.height/c.width}}
 async function makePdf(){
   if(!lastRes){expMsg(T('eInputs'),true);return}
-  const btns=[$('exp-pdf'),$('exp-pdf-mc')];btns.forEach(b=>b.disabled=true);expMsg(T('pdfBusy'));
+  const btns=[$('exp-pdf')];btns.forEach(b=>b.disabled=true);expMsg(T('pdfBusy'));
   try{
     await loadLib('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
     await loadLib('https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js');
@@ -1050,7 +1054,6 @@ async function makePdf(){
   btns.forEach(b=>b.disabled=false);
 }
 $('exp-pdf').addEventListener('click',makePdf);
-$('exp-pdf-mc').addEventListener('click',makePdf);
 
 /* ---------- Monte Carlo ---------- */
 const MCDEF={mid:1,hl:10,sig:20,n:5000,seed:42};
