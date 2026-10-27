@@ -72,6 +72,21 @@ footer a{color:inherit}
 .zb:disabled{opacity:.4;cursor:default}
 .zb:focus-visible{outline:2px solid var(--btc);outline-offset:2px}
 .zr:not(:disabled){border-color:var(--btc);color:var(--btc)}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:0}
+.tile{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:4px}
+.tile dt{font:500 11px/1.25 var(--f-body);color:var(--muted);letter-spacing:.04em;text-transform:uppercase}
+.tile dd{margin:0;font:600 20px/1.15 var(--f-display);font-variant-numeric:tabular-nums}
+.tile dd small{display:block;font:400 12px/1.3 var(--f-body);color:var(--muted);margin-top:3px}
+.mcf{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:12px}
+.mcf-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+.mcf-top .lbl{display:block;margin-bottom:6px}
+.mcf .big2{font:600 34px/1 var(--f-display);margin:0;font-variant-numeric:tabular-nums}
+.mcf .sub2{font-size:13px;color:var(--muted);margin:4px 0 0}
+.mcf dl{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin:0}
+.mcf dt{font:500 11px/1.25 var(--f-body);color:var(--muted)}
+.mcf dd{margin:3px 0 0;font:500 14px/1.35 var(--f-data);font-variant-numeric:tabular-nums}
+.meter{height:8px;border-radius:999px;background:color-mix(in srgb,var(--warn) 22%,transparent);overflow:hidden}
+.meter i{display:block;height:100%;background:var(--good);border-radius:999px}
 .exp{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 .exp-msg{font-size:13px;color:var(--muted)}
 .exp-msg.bad{color:var(--warn)}
@@ -145,6 +160,7 @@ tr.empty td{color:var(--muted)}
   <div class="tabs" role="tablist" aria-label="Weergave">
     <button class="tab" role="tab" id="tab-model" aria-controls="view-model" aria-selected="true">Model</button>
     <button class="tab" role="tab" id="tab-fire" aria-controls="view-fire" aria-selected="false">FIRE-plan</button>
+    <button class="tab" role="tab" id="tab-mc" aria-controls="view-mc" aria-selected="false">Monte Carlo</button>
   </div>
 
   <div class="view" id="view-model" role="tabpanel" aria-labelledby="tab-model">
@@ -258,6 +274,7 @@ tr.empty td{color:var(--muted)}
         </div>
         <p class="headline" id="fire-head">–</p>
         <div class="scen" id="scen" role="group" aria-label="Scenario"></div>
+        <section class="mcf" id="mc-fire" aria-live="polite"><p class="sub2">Monte Carlo wordt berekend…</p></section>
         <div class="charts2">
           <section class="chart-box"><h3>Opname per jaar</h3><div class="canvas sm"><canvas id="ch-w" role="img" aria-label="Lijngrafiek van de jaarlijkse opname in dollars per scenario.">Jaarlijkse opname per scenario.</canvas></div></section>
           <section class="chart-box"><h3>Bitcoin over</h3><div class="canvas sm"><canvas id="ch-b" role="img" aria-label="Lijngrafiek van de resterende bitcoin per scenario.">Resterende bitcoin per scenario.</canvas></div></section>
@@ -267,6 +284,54 @@ tr.empty td{color:var(--muted)}
           <div class="tbl-scroll"><table><thead><tr><th>Jaar</th><th>Koers 1 jan</th><th>Groei</th><th>Opname %</th><th>BTC verkocht</th><th>Opname</th><th id="th-real">In $ van nu</th><th>Cumulatief</th><th>BTC over</th><th>Waarde</th></tr></thead><tbody id="tbody"></tbody></table></div>
         </div>
         <p class="note">Koers per jaar = je conservatieve Power Law op 1 januari, maal de scenariofactor. Opnames vinden plaats op 1 januari tegen die koers. Zonder belasting. Een scenario, geen voorspelling of financieel advies.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="view" id="view-mc" role="tabpanel" aria-labelledby="tab-mc" hidden>
+    <div class="fire-grid">
+      <form class="form" id="mc-form" novalidate>
+        <div class="fgroup">
+          <h2>Simulatie</h2>
+          <div class="fld" id="mc-mid-w"><label for="mc-mid">Midden (factor × model)</label><div class="in"><input id="mc-mid" inputmode="decimal" autocomplete="off" value="1"><span class="u">×</span></div><p class="msg" hidden>Tussen 0,2 en 5</p></div>
+          <div class="row2">
+            <div class="fld" id="mc-hl-w"><label for="mc-hl">Halveringstijd</label><div class="in"><input id="mc-hl" inputmode="decimal" autocomplete="off" value="10"><span class="u">mnd</span></div><p class="msg" hidden>1–60 mnd</p></div>
+            <div class="fld" id="mc-sig-w"><label for="mc-sig">Schok per maand</label><div class="in"><input id="mc-sig" inputmode="decimal" autocomplete="off" value="20"><span class="u">%</span></div><p class="msg" hidden>1–80%</p></div>
+          </div>
+          <div class="fld"><span class="lbl" id="mc-n-l" style="text-transform:none;letter-spacing:0;font-size:12px">Aantal paden</span>
+            <div class="seg" role="group" aria-labelledby="mc-n-l">
+              <button type="button" data-n="1000" aria-pressed="false">1.000</button>
+              <button type="button" data-n="5000" aria-pressed="true">5.000</button>
+              <button type="button" data-n="10000" aria-pressed="false">10.000</button>
+            </div></div>
+          <div class="fld" id="mc-seed-w"><label for="mc-seed">Startwaarde toeval (seed)</label><div class="in"><input id="mc-seed" inputmode="numeric" autocomplete="off" value="42"></div><p class="msg" hidden>Geheel getal</p></div>
+          <button type="button" class="zb" id="mc-def">Standaardwaarden uit data</button>
+          <p class="note">Gemeten t.o.v. je conservatieve lijn (2015–nu): een afwijking halveert in ±10 maanden, met een schok van ±20% per maand. Sinds 2018 lag de koers mediaan op 1,36× je lijn.</p>
+        </div>
+        <div class="fgroup">
+          <h2>Peildatum</h2>
+          <div class="fld"><label for="mc-date">Datum</label><select id="mc-date"></select></div>
+          <div class="fld" id="mc-thr-w"><label for="mc-thr">Kans dat de koers boven dit bedrag ligt</label><div class="in"><span class="u" style="padding:0 0 0 12px">$</span><input id="mc-thr" inputmode="decimal" autocomplete="off" value="250000"></div><p class="msg" hidden>Vul een bedrag in.</p></div>
+        </div>
+      </form>
+      <div class="out">
+        <p class="headline" id="mc-head">Simulatie wordt berekend…</p>
+        <dl class="tiles" id="mc-tiles"></dl>
+        <section class="chart-box" aria-label="Waaiergrafiek">
+          <div class="legend">
+            <span><i class="sw" style="border-color:var(--price)"></i>Koers</span>
+            <span><i class="sw" style="border-color:var(--btc)"></i>Mediaan</span>
+            <span><i class="sw band" style="background:color-mix(in srgb,var(--btc) 30%,transparent);border-color:transparent"></i>50% van de paden</span>
+            <span><i class="sw band" style="background:color-mix(in srgb,var(--btc) 12%,transparent);border-color:transparent"></i>90% van de paden</span>
+            <span><i class="sw" style="border-top-style:dashed;border-color:var(--band-line)"></i>Model 1×</span>
+          </div>
+          <div class="canvas"><canvas id="ch-mc" role="img" aria-label="Waaiergrafiek van gesimuleerde bitcoin-koerspaden rond de conservatieve Power Law tot 2035, met mediaan, 50%- en 90%-band.">Monte Carlo-waaier van de bitcoin-koers.</canvas></div>
+        </section>
+        <div class="tbl-wrap">
+          <div class="tbl-head"><h3>Per 1 januari</h3><span class="note" id="mc-tnote"></span></div>
+          <div class="tbl-scroll"><table><thead><tr><th>Datum</th><th>Model</th><th>5%</th><th>25%</th><th>Mediaan</th><th>75%</th><th>95%</th><th>Kans &gt; model</th><th>Kans &lt; 0,5×</th></tr></thead><tbody id="mc-tbody"></tbody></table></div>
+        </div>
+        <p class="note">Elk pad volgt ln(koers / model): de afwijking van je conservatieve lijn keert met de ingestelde halveringstijd terug naar het midden, plus elke maand een normaal verdeelde schok (Ornstein-Uhlenbeck). Start bij de laatste close. Een scenario-analyse binnen het model, geen voorspelling of financieel advies.</p>
       </div>
     </div>
   </div>
@@ -460,6 +525,7 @@ fetch('data/btc-usd-daily.csv',{cache:'no-cache'}).then(r=>{if(!r.ok)throw new E
 }).finally(()=>{
   if(window.Chart)buildChart(); else $('fresh').textContent+=' De grafiekbibliotheek kon niet laden.';
   render();
+  mcRecompute();
 });
 
 const mq=matchMedia('(prefers-color-scheme: dark)');
@@ -520,6 +586,12 @@ function rateFor(k,r){
   const t=k/(n-1);
   return (p0>0&&p1>0)?p0*Math.pow(p1/p0,t):p0+(p1-p0)*t;
 }
+function wCalc(r,y,V,inf){
+  let W=r.mode==='usd'?(r.real?r.usd*inf:r.usd):V*rateFor(y-r.start,r);
+  if(r.min!=null)W=Math.max(W,r.min*inf);
+  if(r.max!=null)W=Math.min(W,r.max*inf);
+  return W>=V?V:W;
+}
 function simulate(f,r){
   const END=r.start+r.yrs-1;
   const rows=[];let btc=r.btc,cum=0,cumReal=0,dep=null,first=null,firstReal=null,nW=0,lastW=null;
@@ -528,10 +600,7 @@ function simulate(f,r){
     let W=0,pct=0,sold=0;
     if(y>=r.start&&btc>0){
       const V=btc*P;
-      W=r.mode==='usd'?(r.real?r.usd*inf:r.usd):V*rateFor(y-r.start,r);
-      if(r.min!=null)W=Math.max(W,r.min*inf);
-      if(r.max!=null)W=Math.min(W,r.max*inf);
-      if(W>=V){W=V}
+      W=wCalc(r,y,V,inf);
       pct=V>0?W/V:0;
       sold=W/P; btc-=sold; if(btc<1e-9){btc=0;if(dep===null)dep=y}
       if(W>0){cum+=W;cumReal+=W/inf;lastW=y;nW++;if(first===null){first=W;firstReal=W/inf}}
@@ -544,7 +613,8 @@ function simulate(f,r){
 function renderFire(){
   const r=readInputs(); if(!r)return;
   saveState();
-  const res=SC.map(s=>simulate(s.f,r)); lastRes={r,res};
+  const res=SC.map(s=>simulate(s.f,r)); lastRes={r,res,mcr:fireMC(r)};
+  renderMcFire(lastRes.mcr,r);
   const s=res[scSel], sc=SC[scSel];
   const btcTxt=r.btc.toLocaleString('nl-NL',{maximumFractionDigits:8});
   $('fire-head').innerHTML='';
@@ -675,7 +745,19 @@ $('exp-pdf').addEventListener('click',async()=>{
       styles:{fontSize:8,cellPadding:1.8,textColor:INK},headStyles:{fillColor:ORANGE,textColor:255},
       columnStyles:{2:{halign:'right'},3:{halign:'right'},4:{halign:'right'},5:{halign:'right'},6:{halign:'right'}},
       didParseCell:d=>{if(d.section==='body'&&d.row.index===scSel)d.cell.styles.fillColor=[253,237,216]}});
-    y=doc.lastAutoTable.finalY+7;
+    y=doc.lastAutoTable.finalY+5;
+    const m=lastRes.mcr;
+    if(m){
+      const mrows=[
+        ['Instellingen',num.format(m.N)+' paden, midden '+f1(m.st.mid)+'x model, halveringstijd '+f1(m.st.hl)+' mnd, schok '+f1(m.st.sig)+'% per maand, seed '+m.st.seed],
+        ['Slagingskans',pctTxt(m.success)+' (stack houdt het vol t/m '+m.END+')'+(m.depMed?'; gaat het mis, dan mediaan op in '+m.depMed:'')],
+        ['Eerste opname '+r.start,'mediaan '+money(m.first(.5))+' (10-90%: '+money(m.first(.1))+' - '+money(m.first(.9))+')'],
+        ['Totaal opgenomen','mediaan '+money(m.tot(.5))+' (10-90%: '+money(m.tot(.1))+' - '+money(m.tot(.9))+')'],
+        ['BTC over eind '+m.END,'mediaan '+btcFmt(m.endB(.5))+' (10-90%: '+btcFmt(m.endB(.1))+' - '+btcFmt(m.endB(.9))+')']].map(x=>x.map(pdfTxt));
+      doc.autoTable({startY:y,head:[['Monte Carlo','']],body:mrows,theme:'grid',margin:{left:M,right:M},
+        styles:{fontSize:8.5,cellPadding:1.8,textColor:INK},headStyles:{fillColor:ORANGE,textColor:255},columnStyles:{0:{cellWidth:48,fontStyle:'bold'}}});
+      y=doc.lastAutoTable.finalY+7;
+    }else y+=2;
     const imgs=[[wChart,'Opname per jaar (USD)'],[bChart,'Bitcoin over']].filter(x=>x[0]);
     if(imgs.length){
       const cw=(W-2*M-6)/2,ratio=chartImg(imgs[0][0]).ratio,ch=Math.min(cw*ratio,62);
@@ -705,6 +787,163 @@ $('exp-pdf').addEventListener('click',async()=>{
   btn.disabled=false;
 });
 
+/* ---------- Monte Carlo ---------- */
+const MCDEF={mid:1,hl:10,sig:20,n:5000,seed:42};
+const MCS={...MCDEF};
+let mc=null, mcChart=null, mcTimer=null;
+const f1=v=>String(+v.toFixed(2)).replace('.',',');
+const pctTxt=v=>(v*100).toLocaleString('nl-NL',{maximumFractionDigits:v>0&&v<.01?1:0})+'%';
+function rng(seed){let a=seed>>>0;return()=>{a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function runMC(){
+  const st={...MCS},N=st.n,startMs=lastMs??TODAY,p0=lastMs!=null?prices.get(lastMs):null,mu=Math.log(st.mid);
+  const X0=p0?Math.log(p0/model(daysOf(startMs))):mu;
+  const grid=[];const d0=new Date(startMs);let y=d0.getUTCFullYear(),m=d0.getUTCMonth()+1;
+  for(;;){if(m>11){m=0;y++}const t=Date.UTC(y,m,1);if(t>Date.UTC(2035,0,1))break;grid.push(t);m++}
+  const nMonthly=grid.length;
+  for(let yy=2036;yy<=2100;yy++)grid.push(Date.UTC(yy,0,1));
+  const G=grid.length,phi=Math.pow(.5,1/st.hl),sg=st.sig/100,MD=365.25/12*DAY;
+  const A=new Float64Array(G),S=new Float64Array(G);
+  let prev=startMs;for(let g=0;g<G;g++){const dt=(grid[g]-prev)/MD,a=Math.pow(phi,dt);A[g]=a;S[g]=sg*Math.sqrt((1-a*a)/(1-phi*phi));prev=grid[g]}
+  const X=new Float32Array(G*N),rnd=rng(st.seed);let spare=null;
+  const gauss=()=>{if(spare!==null){const v=spare;spare=null;return v}let u=0;while(u===0)u=rnd();const v=rnd(),rr=Math.sqrt(-2*Math.log(u));spare=rr*Math.sin(2*Math.PI*v);return rr*Math.cos(2*Math.PI*v)};
+  for(let i=0;i<N;i++){let x=X0;for(let g=0;g<G;g++){x=mu+A[g]*(x-mu)+S[g]*gauss();X[g*N+i]=x}}
+  const janIdx={};grid.forEach((t,g)=>{const d=new Date(t);if(d.getUTCMonth()===0)janIdx[d.getUTCFullYear()]=g});
+  const PL=grid.map(t=>model(daysOf(t)));
+  const Q=[.05,.25,.5,.75,.95],pct=Q.map(()=>new Float64Array(nMonthly)),buf=new Float32Array(N);
+  for(let g=0;g<nMonthly;g++){buf.set(X.subarray(g*N,(g+1)*N));buf.sort();Q.forEach((q,k)=>pct[k][g]=PL[g]*Math.exp(buf[Math.round(q*(N-1))]))}
+  mc={st,N,grid,nMonthly,X,janIdx,PL,pct,X0,startMs,p0};
+}
+function colStats(g){
+  const N=mc.N,col=mc.X.subarray(g*N,(g+1)*N),srt=Float32Array.from(col).sort(),q=p=>mc.PL[g]*Math.exp(srt[Math.round(p*(N-1))]);
+  const share=f=>{let c=0;for(let i=0;i<N;i++)if(f(col[i]))c++;return c/N};
+  return {q,share,PL:mc.PL[g]};
+}
+function mcRead(){
+  const a=field('mc-mid',{min:.2,max:5}),b=field('mc-hl',{min:1,max:60}),c=field('mc-sig',{min:1,max:80}),d=field('mc-seed',{min:0,max:4294967295,int:true});
+  if(!(a.ok&&b.ok&&c.ok&&d.ok)||[a,b,c,d].some(x=>x.v==null))return false;
+  MCS.mid=a.v;MCS.hl=b.v;MCS.sig=c.v;MCS.seed=d.v;return true;
+}
+function mcSave(){try{localStorage.setItem('bpl-mc',JSON.stringify({...MCS,date:$('mc-date').value,thr:$('mc-thr').value}))}catch(e){}}
+function mcFill(){
+  $('mc-mid').value=f1(MCS.mid);$('mc-hl').value=f1(MCS.hl);$('mc-sig').value=f1(MCS.sig);$('mc-seed').value=MCS.seed;
+  document.querySelectorAll('[data-n]').forEach(b=>b.setAttribute('aria-pressed',String(+b.dataset.n===MCS.n)));
+}
+function mcLoad(){try{const o=JSON.parse(localStorage.getItem('bpl-mc')||'null');if(!o)return;for(const k in MCDEF)if(typeof o[k]==='number'&&isFinite(o[k]))MCS[k]=o[k];if(![1000,5000,10000].includes(MCS.n))MCS.n=5000;if(o.date)$('mc-date').value=o.date;if(o.thr!=null)$('mc-thr').value=o.thr}catch(e){}}
+function mcRecompute(){
+  if(!mcRead())return;
+  runMC();mcSave();renderMC();
+  if(lastRes)renderFire();
+}
+function mcSchedule(){clearTimeout(mcTimer);mcTimer=setTimeout(mcRecompute,180)}
+for(let yy=Y0;yy<=2035;yy++)opt($('mc-date'),yy,'1 januari '+yy);
+$('mc-date').value=String(Math.min(2030,2035));
+
+function renderMC(){
+  if(!mc)return;
+  const yr=+$('mc-date').value,g=mc.janIdx[yr];if(g==null)return;
+  const s=colStats(g),thrF=field('mc-thr',{min:1});
+  const lo=s.q(.05),hi=s.q(.95),med=s.q(.5);
+  $('mc-head').textContent='Op 1 januari '+yr+' ligt de koers in 90% van de '+num.format(mc.N)+' paden tussen '+money(lo)+' en '+money(hi)+'. De mediaan is '+money(med)+', tegen '+money(s.PL)+' volgens je conservatieve model.';
+  const tiles=[
+    ['Mediaan',money(med),f1(med/s.PL)+'× model'],
+    ['50% van de paden',compact(s.q(.25))+' – '+compact(s.q(.75)),'tussen 25% en 75%'],
+    ['90% van de paden',compact(lo)+' – '+compact(hi),'tussen 5% en 95%'],
+    ['Kans boven model',pctTxt(s.share(x=>x>0)),'koers > '+compact(s.PL)],
+    ['Kans onder 0,5×',pctTxt(s.share(x=>x<Math.log(.5))),'koers < '+compact(s.PL*.5)],
+    ['Kans boven bedrag',thrF.ok&&thrF.v?pctTxt(s.share(x=>x>Math.log(thrF.v/s.PL))):'–',thrF.ok&&thrF.v?'koers > '+money(thrF.v):'vul een bedrag in']];
+  const box=$('mc-tiles');box.textContent='';
+  tiles.forEach(([a,b,c])=>{const d=document.createElement('div');d.className='tile';const dt=document.createElement('dt');dt.textContent=a;const dd=document.createElement('dd');dd.textContent=b;const sm=document.createElement('small');sm.textContent=c;dd.appendChild(sm);d.append(dt,dd);box.appendChild(d)});
+  const tb=$('mc-tbody');tb.textContent='';
+  for(let y=Y0;y<=2035;y++){const gg=mc.janIdx[y];if(gg==null)continue;const t=colStats(gg),tr=document.createElement('tr');if(y===yr)tr.className='start';
+    ['1 jan '+y,money(t.PL),money(t.q(.05)),money(t.q(.25)),money(t.q(.5)),money(t.q(.75)),money(t.q(.95)),pctTxt(t.share(x=>x>0)),pctTxt(t.share(x=>x<Math.log(.5)))].forEach(v=>{const td=document.createElement('td');td.textContent=v;tr.appendChild(td)});tb.appendChild(tr)}
+  $('mc-tnote').textContent=num.format(mc.N)+' paden · midden '+f1(mc.st.mid)+'× · halveringstijd '+f1(mc.st.hl)+' mnd · schok '+f1(mc.st.sig)+'% · seed '+mc.st.seed;
+  drawMC();
+}
+function drawMC(){
+  if(!mc||$('view-mc').hidden||!window.Chart)return;
+  const muted=css('--muted'),grid=css('--line'),btc=css('--btc'),price=css('--price'),bl=css('--band-line');
+  const xs=Array.from({length:mc.nMonthly},(_,g)=>toYear(mc.grid[g]));
+  const band=(k)=>xs.map((x,g)=>({x,y:mc.pct[k][g],ms:mc.grid[g]}));
+  const from=Date.UTC(2023,0,1);
+  const hist=[...prices.keys()].filter(k=>k>=from).map(k=>({x:toYear(k),y:prices.get(k),ms:k}));
+  if(hist.length&&mc.p0)hist.push({x:toYear(mc.startMs),y:mc.p0,ms:mc.startMs});
+  const mdl=[];for(let t=from;t<=Date.UTC(2035,0,1);t+=14*DAY)mdl.push({x:toYear(t),y:model(daysOf(t)),ms:t});
+  const a90=color(btc,.13),a50=color(btc,.3);
+  const ds=[
+    {label:'Koers',data:hist,borderColor:price,borderWidth:1.5,pointRadius:0},
+    {label:'95%',data:band(4),borderWidth:0,pointRadius:0,fill:5,backgroundColor:a90},
+    {label:'75%',data:band(3),borderWidth:0,pointRadius:0,fill:4,backgroundColor:a50},
+    {label:'Mediaan',data:band(2),borderColor:btc,borderWidth:2,pointRadius:0},
+    {label:'25%',data:band(1),borderWidth:0,pointRadius:0},
+    {label:'5%',data:band(0),borderWidth:0,pointRadius:0},
+    {label:'Model 1×',data:mdl,borderColor:bl,borderWidth:1.5,borderDash:[6,4],pointRadius:0}];
+  let lo=Infinity,hi=0;mc.pct[0].forEach(v=>{if(v<lo)lo=v});mc.pct[4].forEach(v=>{if(v>hi)hi=v});hist.forEach(p=>{if(p.y<lo)lo=p.y;if(p.y>hi)hi=p.y});
+  const fmtY=v=>v>=1e6?'$'+(v/1e6).toLocaleString('nl-NL')+' mln':v>=1e3?'$'+(v/1e3)+'k':'$'+v;
+  const opts={responsive:true,maintainAspectRatio:false,animation:false,parsing:false,normalized:true,
+    interaction:{mode:'mcX',intersect:false},
+    plugins:{legend:{display:false},tooltip:{displayColors:false,callbacks:{title:t=>t.length?longDate(t[0].raw.ms):'',label:t=>t.dataset.label+': '+money(t.parsed.y)},itemSort:(a,b)=>b.parsed.y-a.parsed.y}},
+    scales:{x:{type:'linear',min:2023,max:2035,afterBuildTicks:sc=>{sc.ticks=[];for(let v=2023;v<=2035;v++)sc.ticks.push({value:v})},ticks:{color:muted,maxRotation:0,autoSkip:true,autoSkipPadding:10,callback:v=>v},grid:{display:false},border:{color:grid}},
+      y:{type:'logarithmic',min:lo/1.3,max:hi*1.3,ticks:{color:muted,callback:v=>{const e=Math.pow(10,Math.floor(Math.log10(v)+1e-9)),m=Math.round(v/e*1000)/1000;return [1,2,5].includes(m)?fmtY(v):''}},grid:{color:grid},border:{display:false}}}};
+  if(!Chart.Interaction.modes.mcX)Chart.Interaction.modes.mcX=function(c,e){
+    const v=c.scales.x.getValueForPixel(e.x);if(v==null)return [];
+    const near=(arr)=>{let lo=0,hi=arr.length-1;if(hi<0)return -1;while(hi-lo>1){const m=(lo+hi)>>1;if(arr[m].x<v)lo=m;else hi=m}return Math.abs(arr[lo].x-v)<=Math.abs(arr[hi].x-v)?lo:hi};
+    const d=c.data.datasets,h=d[0].data;
+    if(h.length&&v<=h[h.length-1].x){const i=near(h);return [{datasetIndex:0,index:i,element:c.getDatasetMeta(0).data[i]}]}
+    const i=near(d[3].data);if(i<0)return [];
+    return [1,2,3,4,5].map(k=>({datasetIndex:k,index:i,element:c.getDatasetMeta(k).data[i]})).filter(x=>x.element);
+  };
+  if(mcChart){mcChart.data.datasets=ds;mcChart.options.scales.y.min=opts.scales.y.min;mcChart.options.scales.y.max=opts.scales.y.max;mcChart.update('none')}
+  else mcChart=new Chart($('ch-mc'),{type:'line',data:{datasets:ds},options:opts});
+}
+function color(hex,a){const h=hex.replace('#','');if(h.length!==6)return hex;const n=parseInt(h,16);return 'rgba('+(n>>16&255)+','+(n>>8&255)+','+(n&255)+','+a+')'}
+
+function fireMC(r){
+  if(!mc)return null;
+  const N=mc.N,END=r.start+r.yrs-1;
+  if(mc.janIdx[r.start]==null||mc.janIdx[END]==null)return null;
+  const first=new Float64Array(N),tot=new Float64Array(N),endB=new Float64Array(N),deps=[];let fails=0;
+  for(let i=0;i<N;i++){
+    let btc=r.btc,t=0,f=0,dep=null;
+    for(let y=r.start;y<=END;y++){
+      if(btc<=0)break;
+      const g=mc.janIdx[y],P=mc.PL[g]*Math.exp(mc.X[g*N+i]),inf=Math.pow(1+r.inf/100,y-NOWY);
+      const W=wCalc(r,y,btc*P,inf);
+      if(y===r.start)f=W;
+      t+=W;btc-=W/P;if(btc<1e-9){btc=0;if(dep===null)dep=y}
+    }
+    first[i]=f;tot[i]=t;endB[i]=btc;if(dep!==null){fails++;deps.push(dep)}
+  }
+  const qs=a=>{const s=Float64Array.from(a).sort();return p=>s[Math.round(p*(N-1))]};
+  deps.sort((a,b)=>a-b);
+  return {N,END,success:1-fails/N,first:qs(first),tot:qs(tot),endB:qs(endB),depMed:deps.length?deps[deps.length>>1]:null,st:{...mc.st}};
+}
+function renderMcFire(m,r){
+  const box=$('mc-fire');box.textContent='';
+  if(!m){const p=document.createElement('p');p.className='sub2';p.textContent='Monte Carlo wordt berekend…';box.appendChild(p);return}
+  const ok=m.success>=.9,mid=m.success>=.7;
+  box.innerHTML='<div class="mcf-top"><div><span class="lbl"></span><p class="big2"></p><p class="sub2"></p></div><span class="state"></span></div><div class="meter" role="img"><i></i></div><dl></dl><p class="note"></p>';
+  box.querySelector('.lbl').textContent='Monte Carlo · '+num.format(m.N)+' paden · midden '+f1(m.st.mid)+'×';
+  box.querySelector('.big2').textContent=pctTxt(m.success);
+  box.querySelector('.sub2').textContent='slagingskans: je stack houdt het vol t/m '+m.END+(m.depMed?' · gaat het mis, dan mediaan op in '+m.depMed:'');
+  const st=box.querySelector('.state');st.className='state '+(ok?'ok':'no');st.textContent=ok?'Robuust':mid?'Kwetsbaar':'Groot risico';
+  const mt=box.querySelector('.meter');mt.setAttribute('aria-label','Slagingskans '+pctTxt(m.success));mt.querySelector('i').style.width=(m.success*100).toFixed(1)+'%';
+  const rows=[
+    ['Eerste opname '+r.start,money(m.first(.5))+' mediaan',compact(m.first(.1))+' – '+compact(m.first(.9))+' (10–90%)'],
+    ['Totaal opgenomen t/m '+m.END,compact(m.tot(.5))+' mediaan',compact(m.tot(.1))+' – '+compact(m.tot(.9))+' (10–90%)'],
+    ['BTC over eind '+m.END,btcFmt(m.endB(.5))+' mediaan',btcFmt(m.endB(.1))+' – '+btcFmt(m.endB(.9))+' (10–90%)']];
+  const dl=box.querySelector('dl');
+  rows.forEach(([a,b,c])=>{const d=document.createElement('div'),dt=document.createElement('dt'),dd=document.createElement('dd');dt.textContent=a;dd.textContent=b;dd.appendChild(document.createElement('br'));dd.appendChild(document.createTextNode(c));d.append(dt,dd);dl.appendChild(d)});
+  box.querySelector('.note').textContent='Slaagt = de stack raakt niet op vóór het einde van je opnameperiode. '+(r.mode!=='usd'&&r.min==null?'Met een percentage raakt de stack zelden op; kijk vooral naar de bandbreedte van je opnames. ':'')+'Instellingen staan in het tabblad Monte Carlo.';
+}
+
+$('mc-form').addEventListener('submit',e=>e.preventDefault());
+['mc-mid','mc-hl','mc-sig','mc-seed'].forEach(id=>$(id).addEventListener('input',mcSchedule));
+$('mc-date').addEventListener('change',()=>{mcSave();renderMC()});
+$('mc-thr').addEventListener('input',()=>{mcSave();renderMC()});
+document.querySelectorAll('[data-n]').forEach(b=>b.addEventListener('click',()=>{MCS.n=+b.dataset.n;mcFill();mcSchedule()}));
+$('mc-def').addEventListener('click',()=>{Object.assign(MCS,MCDEF);mcFill();mcSchedule()});
+mcLoad();mcFill();
+
 function setMode(m){mode=m;document.querySelectorAll('.seg [data-mode]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.mode===m)));$('m-decl').hidden=m!=='decl';$('m-pct').hidden=m!=='pct';$('m-usd').hidden=m!=='usd';renderFire()}
 document.querySelectorAll('.seg [data-mode]').forEach(b=>b.addEventListener('click',()=>setMode(b.dataset.mode)));
 $('fire-form').addEventListener('input',renderFire);
@@ -712,18 +951,17 @@ $('fire-form').addEventListener('change',renderFire);
 $('fire-form').addEventListener('submit',e=>e.preventDefault());
 
 function showView(v){
-  const fire=v==='fire';
-  $('view-fire').hidden=!fire;$('view-model').hidden=fire;
-  $('tab-fire').setAttribute('aria-selected',String(fire));$('tab-model').setAttribute('aria-selected',String(!fire));
-  try{history.replaceState(null,'','#'+(fire?'fire':'model'))}catch(e){}
-  if(fire)drawFire();else if(chart)chart.resize();
+  ['model','fire','mc'].forEach(k=>{$('view-'+k).hidden=k!==v;$('tab-'+k).setAttribute('aria-selected',String(k===v))});
+  try{history.replaceState(null,'','#'+v)}catch(e){}
+  if(v==='fire')drawFire();else if(v==='mc')drawMC();else if(chart)chart.resize();
 }
 $('tab-model').addEventListener('click',()=>showView('model'));
 $('tab-fire').addEventListener('click',()=>showView('fire'));
+$('tab-mc').addEventListener('click',()=>showView('mc'));
 
 loadState();
 setMode(mode);
-if(location.hash==='#fire')showView('fire');
+if(location.hash==='#fire')showView('fire');else if(location.hash==='#mc')showView('mc');
 window.addEventListener('load',()=>{if(!$('view-fire').hidden)drawFire()});
 
 const rebuild=()=>{
