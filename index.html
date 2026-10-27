@@ -120,7 +120,8 @@ footer a{color:inherit}
 .charts2{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px}
 .chart-box h3{font:600 14px var(--f-display);margin:2px 4px 8px}
 .canvas.sm{height:260px;min-height:0}
-.tbl-wrap{background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow-x:auto}
+.tbl-wrap{background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden;min-width:0}
+.tbl-scroll{overflow-x:auto}
 .tbl-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;padding:14px 14px 4px}
 .tbl-head h3{font:600 14px var(--f-display);margin:0}
 table{border-collapse:collapse;width:100%;font:400 13px var(--f-data);font-variant-numeric:tabular-nums}
@@ -263,7 +264,7 @@ tr.empty td{color:var(--muted)}
         </div>
         <div class="tbl-wrap">
           <div class="tbl-head"><h3 id="tbl-title">Per jaar</h3><span class="note" id="tbl-note"></span></div>
-          <table><thead><tr><th>Jaar</th><th>Koers 1 jan</th><th>Groei</th><th>Opname %</th><th>BTC verkocht</th><th>Opname</th><th id="th-real">In $ van nu</th><th>Cumulatief</th><th>BTC over</th><th>Waarde</th></tr></thead><tbody id="tbody"></tbody></table>
+          <div class="tbl-scroll"><table><thead><tr><th>Jaar</th><th>Koers 1 jan</th><th>Groei</th><th>Opname %</th><th>BTC verkocht</th><th>Opname</th><th id="th-real">In $ van nu</th><th>Cumulatief</th><th>BTC over</th><th>Waarde</th></tr></thead><tbody id="tbody"></tbody></table></div>
         </div>
         <p class="note">Koers per jaar = je conservatieve Power Law op 1 januari, maal de scenariofactor. Opnames vinden plaats op 1 januari tegen die koers. Zonder belasting. Een scenario, geen voorspelling of financieel advies.</p>
       </div>
@@ -583,15 +584,18 @@ function renderFire(){
 
 function drawFire(){
   if(!lastRes||$('view-fire').hidden||!window.Chart)return;
-  const {res}=lastRes, years=res[0].rows.map(w=>w.y), muted=css('--muted'), grid=css('--line');
-  const ds=(get)=>SC.map((c,i)=>({label:c.name+' ('+c.key+')',data:res[i].rows.map(get),borderColor:css(c.col),borderWidth:i===scSel?2.5:1.5,borderDash:c.dash,pointRadius:0,spanGaps:false,tension:0}));
-  const common=(ytype,fmt)=>({responsive:true,maintainAspectRatio:false,animation:false,interaction:{mode:'index',intersect:false},
+  const {r,res}=lastRes, years=res[0].rows.map(w=>w.y), muted=css('--muted'), grid=css('--line');
+  const si=Math.max(0,years.indexOf(r.start)), wYears=years.slice(si);
+  const ds=(get,from=0)=>SC.map((c,i)=>({label:c.name+' ('+c.key+')',data:res[i].rows.slice(from).map(get),borderColor:css(c.col),borderWidth:i===scSel?2.5:1.5,borderDash:c.dash,pointRadius:0,spanGaps:false,tension:0}));
+  const common=(ytype,fmt,tick)=>({responsive:true,maintainAspectRatio:false,animation:false,interaction:{mode:'index',intersect:false},
     plugins:{legend:{display:false},tooltip:{callbacks:{label:t=>t.dataset.label+': '+fmt(t.parsed.y)}}},
     scales:{x:{ticks:{color:muted,maxRotation:0,autoSkip:true,maxTicksLimit:7},grid:{display:false},border:{color:grid}},
-      y:{type:ytype,ticks:{color:muted,maxTicksLimit:6,callback:v=>ytype==='logarithmic'?([1e3,1e4,1e5,1e6,1e7,1e8].includes(v)?compact(v):''):btcFmt(v).replace(/0+$/,'').replace(/,$/,'')},grid:{color:grid},border:{display:false},beginAtZero:ytype!=='logarithmic'}}});
-  const wData=ds(w=>w.W>0?w.W:null), bData=ds(w=>w.btc);
-  if(wChart){wChart.data.labels=years;wChart.data.datasets=wData;wChart.update('none')}else wChart=new Chart($('ch-w'),{type:'line',data:{labels:years,datasets:wData},options:common('logarithmic',money)});
-  if(bChart){bChart.data.labels=years;bChart.data.datasets=bData;bChart.update('none')}else bChart=new Chart($('ch-b'),{type:'line',data:{labels:years,datasets:bData},options:common('linear',v=>btcFmt(v)+' BTC')});
+      y:{type:ytype,ticks:{color:muted,maxTicksLimit:6,callback:tick},grid:{color:grid},border:{display:false},beginAtZero:true}}});
+  const usdTick=v=>v===0?'$ 0':v>=1e6?'$ '+(v/1e6).toLocaleString('nl-NL',{maximumFractionDigits:1})+' mln':'$ '+(v/1e3).toLocaleString('nl-NL',{maximumFractionDigits:0})+'k';
+  const btcTick=v=>btcFmt(v).replace(/0+$/,'').replace(/,$/,'');
+  const wData=ds(w=>w.W>0?w.W:null,si), bData=ds(w=>w.btc);
+  if(wChart){wChart.data.labels=wYears;wChart.data.datasets=wData;wChart.update('none')}else wChart=new Chart($('ch-w'),{type:'line',data:{labels:wYears,datasets:wData},options:common('linear',money,usdTick)});
+  if(bChart){bChart.data.labels=years;bChart.data.datasets=bData;bChart.update('none')}else bChart=new Chart($('ch-b'),{type:'line',data:{labels:years,datasets:bData},options:common('linear',v=>btcFmt(v)+' BTC',btcTick)});
 }
 
 
@@ -672,7 +676,7 @@ $('exp-pdf').addEventListener('click',async()=>{
       columnStyles:{2:{halign:'right'},3:{halign:'right'},4:{halign:'right'},5:{halign:'right'},6:{halign:'right'}},
       didParseCell:d=>{if(d.section==='body'&&d.row.index===scSel)d.cell.styles.fillColor=[253,237,216]}});
     y=doc.lastAutoTable.finalY+7;
-    const imgs=[[wChart,'Opname per jaar (USD, log)'],[bChart,'Bitcoin over']].filter(x=>x[0]);
+    const imgs=[[wChart,'Opname per jaar (USD)'],[bChart,'Bitcoin over']].filter(x=>x[0]);
     if(imgs.length){
       const cw=(W-2*M-6)/2,ratio=chartImg(imgs[0][0]).ratio,ch=Math.min(cw*ratio,62);
       if(y+ch+10>285){doc.addPage();y=20}
