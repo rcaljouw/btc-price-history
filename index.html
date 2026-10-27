@@ -146,79 +146,90 @@ th:first-child,td:first-child{text-align:left}
 tr.start td{background:color-mix(in srgb,var(--btc) 8%,transparent)}
 tr.empty td{color:var(--muted)}
 .note{font-size:12px;color:var(--muted);margin:0;max-width:70ch}
+.hdr-r{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.lang{display:inline-grid;grid-auto-flow:column;gap:2px;padding:3px;background:var(--surface);border:1px solid var(--line);border-radius:999px}
+.lang button{font:600 12px/1 var(--f-body);letter-spacing:.06em;color:var(--muted);background:transparent;border:0;border-radius:999px;padding:7px 11px;min-height:30px;cursor:pointer}
+.lang button[aria-pressed="true"]{background:var(--ink);color:var(--surface)}
+.lang button:focus-visible{outline:2px solid var(--btc);outline-offset:2px}
 </style>
 
 <div class="wrap">
   <header>
     <div>
       <h1>Bitcoin <span>Power Law</span></h1>
-      <p class="formula">Prijs = 4,42 × 10⁻¹⁷ × (dagen sinds 3 jan 2009)<sup>5,6</sup></p>
+      <p class="formula" data-ih="formula">Prijs = 4,42 × 10⁻¹⁷ × (dagen sinds 3 jan 2009)<sup>5,6</sup></p>
     </div>
-    <span class="tag">Conservatieve versie</span>
+    <div class="hdr-r">
+      <span class="tag" data-i="tag">Conservatieve versie</span>
+      <div class="lang" role="group" aria-label="Taal / Language">
+        <button type="button" data-lang="nl" aria-pressed="true" lang="nl" title="Nederlands">NL</button>
+        <button type="button" data-lang="en" aria-pressed="false" lang="en" title="English">EN</button>
+      </div>
+    </div>
   </header>
 
-  <div class="tabs" role="tablist" aria-label="Weergave">
-    <button class="tab" role="tab" id="tab-model" aria-controls="view-model" aria-selected="true">Model</button>
-    <button class="tab" role="tab" id="tab-fire" aria-controls="view-fire" aria-selected="false">FIRE-plan</button>
-    <button class="tab" role="tab" id="tab-mc" aria-controls="view-mc" aria-selected="false">Monte Carlo</button>
+  <div class="tabs" role="tablist" data-ia="tabsAria" aria-label="Weergave">
+    <button class="tab" role="tab" id="tab-model" aria-controls="view-model" aria-selected="true" data-i="tabModel">Model</button>
+    <button class="tab" role="tab" id="tab-fire" aria-controls="view-fire" aria-selected="false" data-i="tabFire">FIRE-plan</button>
+    <button class="tab" role="tab" id="tab-mc" aria-controls="view-mc" aria-selected="false" data-i="tabMc">Monte Carlo</button>
   </div>
 
   <div class="view" id="view-model" role="tabpanel" aria-labelledby="tab-model">
-  <section class="panel" aria-label="Berekening voor een datum">
+  <section class="panel" data-ia="panelAria" aria-label="Berekening voor een datum">
     <div class="ctrl">
-      <span class="lbl" id="lbl-date">Kies een datum</span>
+      <span class="lbl" id="lbl-date" data-i="pickDate">Kies een datum</span>
       <div class="dsel" role="group" aria-labelledby="lbl-date">
-        <select id="dd" aria-label="Dag"></select>
-        <select id="mm" aria-label="Maand"></select>
-        <select id="yy" aria-label="Jaar"></select>
+        <select id="dd" data-ia="day" aria-label="Dag"></select>
+        <select id="mm" data-ia="month" aria-label="Maand"></select>
+        <select id="yy" data-ia="year" aria-label="Jaar"></select>
       </div>
       <div class="steps">
-        <button class="chip" type="button" id="y-prev" aria-label="Eén jaar terug">− 1 jaar</button>
-        <button class="chip" type="button" id="y-next" aria-label="Eén jaar vooruit">+ 1 jaar</button>
+        <button class="chip" type="button" id="y-prev" data-i="yPrev" data-ia="yPrevAria" aria-label="Eén jaar terug">− 1 jaar</button>
+        <button class="chip" type="button" id="y-next" data-i="yNext" data-ia="yNextAria" aria-label="Eén jaar vooruit">+ 1 jaar</button>
       </div>
-      <div class="chips" role="group" aria-label="Snelkeuze">
-        <button class="chip" type="button" data-date="today">Vandaag</button>
-        <button class="chip" type="button" data-date="2030-01-01">1 jan 2030</button>
-        <button class="chip" type="button" data-date="2034-12-31">Eind 2034</button>
+      <div class="chips" role="group" data-ia="quickAria" aria-label="Snelkeuze">
+        <button class="chip" type="button" data-date="today" data-i="today">Vandaag</button>
+        <button class="chip" type="button" data-date="2030-01-01" data-i="jan2030">1 jan 2030</button>
+        <button class="chip" type="button" data-date="2034-12-31" data-i="end2034">Eind 2034</button>
       </div>
-      <p class="hint">Of tik in de grafiek op een moment.</p>
+      <p class="hint" data-i="tapHint">Of tik in de grafiek op een moment.</p>
       <p class="err" id="err" role="alert"></p>
     </div>
     <div class="res" aria-live="polite">
       <div class="res-top"><span class="res-date" id="r-date">–</span><span class="pill" id="r-kind">–</span></div>
       <p class="big" id="r-model">–</p>
-      <p class="sub">modelwaarde (conservatief)</p>
+      <p class="sub" data-i="modelValue">modelwaarde (conservatief)</p>
       <dl class="grid">
-        <div class="cell"><dt>Dagen sinds genesis</dt><dd id="r-days">–</dd></div>
-        <div class="cell"><dt>Band 0,5×</dt><dd id="r-lo">–</dd></div>
-        <div class="cell"><dt>Band 2×</dt><dd id="r-hi">–</dd></div>
-        <div class="cell"><dt id="r-p-l">Werkelijke close</dt><dd id="r-price">–</dd></div>
-        <div class="cell"><dt>Koers / model</dt><dd id="r-ratio">–</dd></div>
+        <div class="cell"><dt data-i="daysGen">Dagen sinds genesis</dt><dd id="r-days">–</dd></div>
+        <div class="cell"><dt data-i="bandLo">Band 0,5×</dt><dd id="r-lo">–</dd></div>
+        <div class="cell"><dt data-i="bandHi">Band 2×</dt><dd id="r-hi">–</dd></div>
+        <div class="cell"><dt data-i="actualClose">Werkelijke close</dt><dd id="r-price">–</dd></div>
+        <div class="cell"><dt data-i="priceModel">Koers / model</dt><dd id="r-ratio">–</dd></div>
       </dl>
     </div>
   </section>
 
-  <section class="chart-box" aria-label="Grafiek">
+  <section class="chart-box" data-ia="chartAria" aria-label="Grafiek">
     <div class="legend">
-      <span><i class="sw" style="border-color:var(--price)"></i>Koers (Bitstamp)</span>
+      <span><i class="sw" style="border-color:var(--price)"></i><span data-i="lgPrice">Koers (Bitstamp)</span></span>
       <span><i class="sw" style="border-color:var(--btc)"></i>Power Law</span>
-      <span><i class="sw band"></i>Band 0,5× – 2×</span>
-      <span><i class="sw" style="border-top-style:dashed;border-color:var(--band-line)"></i>Extrapolatie</span>
+      <span><i class="sw band"></i><span data-i="lgBand">Band 0,5× – 2×</span></span>
+      <span><i class="sw" style="border-top-style:dashed;border-color:var(--band-line)"></i><span data-i="extrap">Extrapolatie</span></span>
     </div>
     <div class="zbar">
-      <div class="seg" role="group" aria-label="Periode">
-        <button type="button" data-range="all" aria-pressed="true">Alles</button>
-        <button type="button" data-range="5y" aria-pressed="false">Laatste 5 jaar</button>
-        <button type="button" data-range="fut" aria-pressed="false">Nu – 2034</button>
+      <div class="seg" role="group" data-ia="periodAria" aria-label="Periode">
+        <button type="button" data-range="all" aria-pressed="true" data-i="rAll">Alles</button>
+        <button type="button" data-range="5y" aria-pressed="false" data-i="r5y">Laatste 5 jaar</button>
+        <button type="button" data-range="fut" aria-pressed="false" data-i="rFut">Nu – 2034</button>
       </div>
       <div class="zbtns">
-        <button type="button" class="zb" id="z-out" aria-label="Uitzoomen">−</button>
-        <button type="button" class="zb" id="z-in" aria-label="Inzoomen">+</button>
-        <button type="button" class="zb zr" id="z-reset" disabled>Beginstand</button>
+        <button type="button" class="zb" id="z-out" data-ia="zoomOut" aria-label="Uitzoomen">−</button>
+        <button type="button" class="zb" id="z-in" data-ia="zoomIn" aria-label="Inzoomen">+</button>
+        <button type="button" class="zb zr" id="z-reset" disabled data-i="reset">Beginstand</button>
       </div>
     </div>
     <p class="zhint" id="zhint" hidden></p>
-    <div class="canvas"><canvas id="chart" role="img" aria-label="Logaritmische grafiek van de bitcoin-koers met de conservatieve Power Law en een band van 0,5 tot 2 keer het model, doorgetrokken tot eind 2034. De gekozen datum is gemarkeerd.">Bitcoin-koers versus conservatieve Power Law.</canvas></div>
+    <div class="canvas"><canvas id="chart" role="img" data-ia="chartCanvas" data-i="chartFallback" aria-label="Logaritmische grafiek van de bitcoin-koers met de conservatieve Power Law en een band van 0,5 tot 2 keer het model, doorgetrokken tot eind 2034. De gekozen datum is gemarkeerd.">Bitcoin-koers versus conservatieve Power Law.</canvas></div>
   </section>
   </div>
 
@@ -226,64 +237,64 @@ tr.empty td{color:var(--muted)}
     <div class="fire-grid">
       <form class="form" id="fire-form" novalidate>
         <div class="fgroup">
-          <h2>Je stack</h2>
+          <h2 data-i="yourStack">Je stack</h2>
           <div class="fld" id="f-btc-w"><label for="f-btc">Bitcoin (BTC)</label>
             <div class="in"><input id="f-btc" inputmode="decimal" autocomplete="off" value="1"><span class="u">BTC</span></div>
-            <p class="msg" hidden>Vul een positief aantal BTC in.</p></div>
+            <p class="msg" hidden data-i="msgBtc">Vul een positief aantal BTC in.</p></div>
           <div class="row2">
-            <div class="fld"><label for="f-start">Eerste opnamejaar</label><select id="f-start"></select></div>
-            <div class="fld" id="f-yrs-w"><label for="f-yrs">Aantal jaren opnemen</label><div class="in"><input id="f-yrs" inputmode="numeric" autocomplete="off" value="25"><span class="u">jaar</span></div><p class="msg" hidden>1–40 jaar</p></div>
+            <div class="fld"><label for="f-start" data-i="firstYear">Eerste opnamejaar</label><select id="f-start"></select></div>
+            <div class="fld" id="f-yrs-w"><label for="f-yrs" data-i="yearsW">Aantal jaren opnemen</label><div class="in"><input id="f-yrs" inputmode="numeric" autocomplete="off" value="25"><span class="u" data-i="uYears">jaar</span></div><p class="msg" hidden data-i="msg140">1–40 jaar</p></div>
           </div>
         </div>
         <div class="fgroup">
-          <h2>Opnames</h2>
-          <div class="seg" role="group" aria-label="Opnamemethode">
-            <button type="button" data-mode="decl" aria-pressed="true">Aflopend %</button>
-            <button type="button" data-mode="pct" aria-pressed="false">Vast %</button>
-            <button type="button" data-mode="usd" aria-pressed="false">Vast $</button>
+          <h2 data-i="withdrawals">Opnames</h2>
+          <div class="seg" role="group" data-ia="methodAria" aria-label="Opnamemethode">
+            <button type="button" data-mode="decl" aria-pressed="true" data-i="mDecl">Aflopend %</button>
+            <button type="button" data-mode="pct" aria-pressed="false" data-i="mPct">Vast %</button>
+            <button type="button" data-mode="usd" aria-pressed="false" data-i="mUsd">Vast $</button>
           </div>
           <div id="m-decl" class="row2">
-            <div class="fld" id="f-p0-w"><label for="f-p0">Startpercentage</label><div class="in"><input id="f-p0" inputmode="decimal" value="10"><span class="u">%</span></div><p class="msg" hidden>0–100%</p></div>
-            <div class="fld" id="f-p1-w"><label for="f-p1">Eindpercentage</label><div class="in"><input id="f-p1" inputmode="decimal" value="3"><span class="u">%</span></div><p class="msg" hidden>0–100%</p></div>
-            <div class="fld" id="f-pn-w" style="grid-column:1/-1"><label for="f-pn">Afbouwen in</label><div class="in"><input id="f-pn" inputmode="numeric" value="20"><span class="u">jaar</span></div><p class="msg" hidden>1–30 jaar</p></div>
+            <div class="fld" id="f-p0-w"><label for="f-p0" data-i="startPct">Startpercentage</label><div class="in"><input id="f-p0" inputmode="decimal" value="10"><span class="u">%</span></div><p class="msg" hidden>0–100%</p></div>
+            <div class="fld" id="f-p1-w"><label for="f-p1" data-i="endPct">Eindpercentage</label><div class="in"><input id="f-p1" inputmode="decimal" value="3"><span class="u">%</span></div><p class="msg" hidden>0–100%</p></div>
+            <div class="fld" id="f-pn-w" style="grid-column:1/-1"><label for="f-pn" data-i="taper">Afbouwen in</label><div class="in"><input id="f-pn" inputmode="numeric" value="20"><span class="u" data-i="uYears">jaar</span></div><p class="msg" hidden data-i="msg130">1–30 jaar</p></div>
           </div>
           <div id="m-pct" hidden>
-            <div class="fld" id="f-pf-w"><label for="f-pf">Percentage per jaar</label><div class="in"><input id="f-pf" inputmode="decimal" value="4"><span class="u">%</span></div><p class="msg" hidden>0–100%</p></div>
+            <div class="fld" id="f-pf-w"><label for="f-pf" data-i="pctYear">Percentage per jaar</label><div class="in"><input id="f-pf" inputmode="decimal" value="4"><span class="u">%</span></div><p class="msg" hidden>0–100%</p></div>
           </div>
           <div id="m-usd" hidden>
-            <div class="fld" id="f-usd-w"><label for="f-usd">Bedrag per jaar</label><div class="in"><span class="u" style="padding:0 0 0 12px">$</span><input id="f-usd" inputmode="decimal" value="60000"></div><p class="msg" hidden>Vul een bedrag in.</p></div>
-            <label class="check"><input type="checkbox" id="f-usd-real" checked>Meegroeien met inflatie</label>
+            <div class="fld" id="f-usd-w"><label for="f-usd" data-i="amtYear">Bedrag per jaar</label><div class="in"><span class="u" style="padding:0 0 0 12px">$</span><input id="f-usd" inputmode="decimal" value="60000"></div><p class="msg" hidden data-i="msgAmt">Vul een bedrag in.</p></div>
+            <label class="check"><input type="checkbox" id="f-usd-real" checked><span data-i="growInf">Meegroeien met inflatie</span></label>
           </div>
         </div>
         <div class="fgroup">
-          <h2>Bijstellen</h2>
-          <div class="fld" id="f-inf-w"><label for="f-inf">Inflatie per jaar</label><div class="in"><input id="f-inf" inputmode="decimal" value="2"><span class="u">%</span></div><p class="msg" hidden>0–20%</p></div>
+          <h2 data-i="adjust">Bijstellen</h2>
+          <div class="fld" id="f-inf-w"><label for="f-inf" data-i="infYear">Inflatie per jaar</label><div class="in"><input id="f-inf" inputmode="decimal" value="2"><span class="u">%</span></div><p class="msg" hidden>0–20%</p></div>
           <div class="row2">
-            <div class="fld" id="f-min-w"><label for="f-min">Minimaal per jaar</label><div class="in"><span class="u" style="padding:0 0 0 12px">$</span><input id="f-min" inputmode="decimal" placeholder="geen"></div><p class="msg" hidden>Ongeldig bedrag</p></div>
-            <div class="fld" id="f-max-w"><label for="f-max">Maximaal per jaar</label><div class="in"><span class="u" style="padding:0 0 0 12px">$</span><input id="f-max" inputmode="decimal" placeholder="geen"></div><p class="msg" hidden>Ongeldig bedrag</p></div>
+            <div class="fld" id="f-min-w"><label for="f-min" data-i="minYear">Minimaal per jaar</label><div class="in"><span class="u" style="padding:0 0 0 12px">$</span><input id="f-min" inputmode="decimal" data-ip="none" placeholder="geen"></div><p class="msg" hidden data-i="msgInvalid">Ongeldig bedrag</p></div>
+            <div class="fld" id="f-max-w"><label for="f-max" data-i="maxYear">Maximaal per jaar</label><div class="in"><span class="u" style="padding:0 0 0 12px">$</span><input id="f-max" inputmode="decimal" data-ip="none" placeholder="geen"></div><p class="msg" hidden>Ongeldig bedrag</p></div>
           </div>
-          <p class="note">Minimum en maximum gelden in dollars van nu en groeien mee met de inflatie.</p>
+          <p class="note" data-i="minMaxNote">Minimum en maximum gelden in dollars van nu en groeien mee met de inflatie.</p>
         </div>
       </form>
 
       <div class="out">
         <div class="exp">
-          <button type="button" class="zb" id="exp-csv">Exporteer CSV</button>
-          <button type="button" class="zb" id="exp-pdf">Exporteer PDF-rapport</button>
+          <button type="button" class="zb" id="exp-csv" data-i="expCsv">Exporteer CSV</button>
+          <button type="button" class="zb" id="exp-pdf" data-i="expPdf">Exporteer PDF-rapport</button>
           <span class="exp-msg" id="exp-msg" role="status"></span>
         </div>
         <p class="headline" id="fire-head">–</p>
         <div class="scen" id="scen" role="group" aria-label="Scenario"></div>
-        <section class="mcf" id="mc-fire" aria-live="polite"><p class="sub2">Monte Carlo wordt berekend…</p></section>
+        <section class="mcf" id="mc-fire" aria-live="polite"><p class="sub2" data-i="mcRunning">Monte Carlo wordt berekend…</p></section>
         <div class="charts2">
-          <section class="chart-box"><h3>Opname per jaar</h3><div class="canvas sm"><canvas id="ch-w" role="img" aria-label="Lijngrafiek van de jaarlijkse opname in dollars per scenario.">Jaarlijkse opname per scenario.</canvas></div></section>
-          <section class="chart-box"><h3>Bitcoin over</h3><div class="canvas sm"><canvas id="ch-b" role="img" aria-label="Lijngrafiek van de resterende bitcoin per scenario.">Resterende bitcoin per scenario.</canvas></div></section>
+          <section class="chart-box"><h3 data-i="chW">Opname per jaar</h3><div class="canvas sm"><canvas id="ch-w" role="img" data-ia="chWAria" aria-label="Lijngrafiek van de jaarlijkse opname in dollars per scenario."></canvas></div></section>
+          <section class="chart-box"><h3 data-i="chB">Bitcoin over</h3><div class="canvas sm"><canvas id="ch-b" role="img" data-ia="chBAria" aria-label="Lijngrafiek van de resterende bitcoin per scenario."></canvas></div></section>
         </div>
         <div class="tbl-wrap">
           <div class="tbl-head"><h3 id="tbl-title">Per jaar</h3><span class="note" id="tbl-note"></span></div>
-          <div class="tbl-scroll"><table><thead><tr><th>Jaar</th><th>Koers 1 jan</th><th>Groei</th><th>Opname %</th><th>BTC verkocht</th><th>Opname</th><th id="th-real">In $ van nu</th><th>Cumulatief</th><th>BTC over</th><th>Waarde</th></tr></thead><tbody id="tbody"></tbody></table></div>
+          <div class="tbl-scroll"><table><thead><tr><th data-i="thYear">Jaar</th><th data-i="thPrice">Koers 1 jan</th><th data-i="thGrowth">Groei</th><th data-i="thWpct">Opname %</th><th data-i="thSold">BTC verkocht</th><th data-i="thW">Opname</th><th id="th-real" data-i="thReal">In $ van nu</th><th data-i="thCum">Cumulatief</th><th data-i="thLeft">BTC over</th><th data-i="thValue">Waarde</th></tr></thead><tbody id="tbody"></tbody></table></div>
         </div>
-        <p class="note">Koers per jaar = je conservatieve Power Law op 1 januari, maal de scenariofactor. Opnames vinden plaats op 1 januari tegen die koers. Zonder belasting. Een scenario, geen voorspelling of financieel advies.</p>
+        <p class="note" data-i="fireNote">Koers per jaar = je conservatieve Power Law op 1 januari, maal de scenariofactor. Opnames vinden plaats op 1 januari tegen die koers. Zonder belasting. Een scenario, geen voorspelling of financieel advies.</p>
       </div>
     </div>
   </div>
@@ -292,53 +303,53 @@ tr.empty td{color:var(--muted)}
     <div class="fire-grid">
       <form class="form" id="mc-form" novalidate>
         <div class="fgroup">
-          <h2>Simulatie</h2>
-          <div class="fld" id="mc-mid-w"><label for="mc-mid">Midden (factor × model)</label><div class="in"><input id="mc-mid" inputmode="decimal" autocomplete="off" value="1"><span class="u">×</span></div><p class="msg" hidden>Tussen 0,2 en 5</p></div>
+          <h2 data-i="simulation">Simulatie</h2>
+          <div class="fld" id="mc-mid-w"><label for="mc-mid" data-i="centre">Midden (factor × model)</label><div class="in"><input id="mc-mid" inputmode="decimal" autocomplete="off" value="1"><span class="u">×</span></div><p class="msg" hidden data-i="msgMid">Tussen 0,2 en 5</p></div>
           <div class="row2">
-            <div class="fld" id="mc-hl-w"><label for="mc-hl">Halveringstijd</label><div class="in"><input id="mc-hl" inputmode="decimal" autocomplete="off" value="10"><span class="u">mnd</span></div><p class="msg" hidden>1–60 mnd</p></div>
-            <div class="fld" id="mc-sig-w"><label for="mc-sig">Schok per maand</label><div class="in"><input id="mc-sig" inputmode="decimal" autocomplete="off" value="20"><span class="u">%</span></div><p class="msg" hidden>1–80%</p></div>
+            <div class="fld" id="mc-hl-w"><label for="mc-hl" data-i="halfLife">Halveringstijd</label><div class="in"><input id="mc-hl" inputmode="decimal" autocomplete="off" value="10"><span class="u" data-i="uMo">mnd</span></div><p class="msg" hidden data-i="msg160">1–60 mnd</p></div>
+            <div class="fld" id="mc-sig-w"><label for="mc-sig" data-i="shock">Schok per maand</label><div class="in"><input id="mc-sig" inputmode="decimal" autocomplete="off" value="20"><span class="u">%</span></div><p class="msg" hidden>1–80%</p></div>
           </div>
-          <div class="fld"><span class="lbl" id="mc-n-l" style="text-transform:none;letter-spacing:0;font-size:12px">Aantal paden</span>
+          <div class="fld"><span class="lbl" id="mc-n-l" style="text-transform:none;letter-spacing:0;font-size:12px" data-i="nPaths">Aantal paden</span>
             <div class="seg" role="group" aria-labelledby="mc-n-l">
               <button type="button" data-n="1000" aria-pressed="false">1.000</button>
               <button type="button" data-n="5000" aria-pressed="true">5.000</button>
               <button type="button" data-n="10000" aria-pressed="false">10.000</button>
             </div></div>
-          <div class="fld" id="mc-seed-w"><label for="mc-seed">Startwaarde toeval (seed)</label><div class="in"><input id="mc-seed" inputmode="numeric" autocomplete="off" value="42"></div><p class="msg" hidden>Geheel getal</p></div>
-          <button type="button" class="zb" id="mc-def">Standaardwaarden uit data</button>
-          <p class="note">Gemeten t.o.v. je conservatieve lijn (2015–nu): een afwijking halveert in ±10 maanden, met een schok van ±20% per maand. Sinds 2018 lag de koers mediaan op 1,36× je lijn.</p>
+          <div class="fld" id="mc-seed-w"><label for="mc-seed" data-i="seed">Startwaarde toeval (seed)</label><div class="in"><input id="mc-seed" inputmode="numeric" autocomplete="off" value="42"></div><p class="msg" hidden data-i="msgInt">Geheel getal</p></div>
+          <button type="button" class="zb" id="mc-def" data-i="mcDefaults">Standaardwaarden uit data</button>
+          <p class="note" data-i="mcMeasured">Gemeten t.o.v. je conservatieve lijn (2015–nu): een afwijking halveert in ±10 maanden, met een schok van ±20% per maand. Sinds 2018 lag de koers mediaan op 1,36× je lijn.</p>
         </div>
         <div class="fgroup">
-          <h2>Peildatum</h2>
-          <div class="fld"><label for="mc-date">Datum</label><select id="mc-date"></select></div>
-          <div class="fld" id="mc-thr-w"><label for="mc-thr">Kans dat de koers boven dit bedrag ligt</label><div class="in"><span class="u" style="padding:0 0 0 12px">$</span><input id="mc-thr" inputmode="decimal" autocomplete="off" value="250000"></div><p class="msg" hidden>Vul een bedrag in.</p></div>
+          <h2 data-i="refDate">Peildatum</h2>
+          <div class="fld"><label for="mc-date" data-i="date">Datum</label><select id="mc-date"></select></div>
+          <div class="fld" id="mc-thr-w"><label for="mc-thr" data-i="thrLabel">Kans dat de koers boven dit bedrag ligt</label><div class="in"><span class="u" style="padding:0 0 0 12px">$</span><input id="mc-thr" inputmode="decimal" autocomplete="off" value="250000"></div><p class="msg" hidden data-i="msgAmt">Vul een bedrag in.</p></div>
         </div>
       </form>
       <div class="out">
-        <p class="headline" id="mc-head">Simulatie wordt berekend…</p>
+        <p class="headline" id="mc-head" data-i="simRunning">Simulatie wordt berekend…</p>
         <dl class="tiles" id="mc-tiles"></dl>
-        <section class="chart-box" aria-label="Waaiergrafiek">
+        <section class="chart-box" data-ia="fanAria" aria-label="Waaiergrafiek">
           <div class="legend">
-            <span><i class="sw" style="border-color:var(--price)"></i>Koers</span>
-            <span><i class="sw" style="border-color:var(--btc)"></i>Mediaan</span>
-            <span><i class="sw band" style="background:color-mix(in srgb,var(--btc) 30%,transparent);border-color:transparent"></i>50% van de paden</span>
-            <span><i class="sw band" style="background:color-mix(in srgb,var(--btc) 12%,transparent);border-color:transparent"></i>90% van de paden</span>
+            <span><i class="sw" style="border-color:var(--price)"></i><span data-i="price">Koers</span></span>
+            <span><i class="sw" style="border-color:var(--btc)"></i><span data-i="median">Mediaan</span></span>
+            <span><i class="sw band" style="background:color-mix(in srgb,var(--btc) 30%,transparent);border-color:transparent"></i><span data-i="p50">50% van de paden</span></span>
+            <span><i class="sw band" style="background:color-mix(in srgb,var(--btc) 12%,transparent);border-color:transparent"></i><span data-i="p90">90% van de paden</span></span>
             <span><i class="sw" style="border-top-style:dashed;border-color:var(--band-line)"></i>Model 1×</span>
           </div>
-          <div class="canvas"><canvas id="ch-mc" role="img" aria-label="Waaiergrafiek van gesimuleerde bitcoin-koerspaden rond de conservatieve Power Law tot 2035, met mediaan, 50%- en 90%-band.">Monte Carlo-waaier van de bitcoin-koers.</canvas></div>
+          <div class="canvas"><canvas id="ch-mc" role="img" data-ia="fanCanvas" aria-label="Waaiergrafiek van gesimuleerde bitcoin-koerspaden rond de conservatieve Power Law tot 2035, met mediaan, 50%- en 90%-band."></canvas></div>
         </section>
         <div class="tbl-wrap">
-          <div class="tbl-head"><h3>Per 1 januari</h3><span class="note" id="mc-tnote"></span></div>
-          <div class="tbl-scroll"><table><thead><tr><th>Datum</th><th>Model</th><th>5%</th><th>25%</th><th>Mediaan</th><th>75%</th><th>95%</th><th>Kans &gt; model</th><th>Kans &lt; 0,5×</th></tr></thead><tbody id="mc-tbody"></tbody></table></div>
+          <div class="tbl-head"><h3 data-i="on1Jan">Per 1 januari</h3><span class="note" id="mc-tnote"></span></div>
+          <div class="tbl-scroll"><table><thead><tr><th data-i="date">Datum</th><th>Model</th><th>5%</th><th>25%</th><th data-i="median">Mediaan</th><th>75%</th><th>95%</th><th data-i="chAbove">Kans &gt; model</th><th data-i="chBelow">Kans &lt; 0,5×</th></tr></thead><tbody id="mc-tbody"></tbody></table></div>
         </div>
-        <p class="note">Elk pad volgt ln(koers / model): de afwijking van je conservatieve lijn keert met de ingestelde halveringstijd terug naar het midden, plus elke maand een normaal verdeelde schok (Ornstein-Uhlenbeck). Start bij de laatste close. Een scenario-analyse binnen het model, geen voorspelling of financieel advies.</p>
+        <p class="note" data-i="mcNote">Elk pad volgt ln(koers / model): de afwijking van je conservatieve lijn keert met de ingestelde halveringstijd terug naar het midden, plus elke maand een normaal verdeelde schok (Ornstein-Uhlenbeck). Start bij de laatste close. Een scenario-analyse binnen het model, geen voorspelling of financieel advies.</p>
       </div>
     </div>
   </div>
 
   <footer>
     <span id="fresh">Koersdata laden…</span>
-    <span>Bron: <a href="https://github.com/rcaljouw/btc-price-history" target="_blank" rel="noopener">rcaljouw/btc-price-history</a> (dagelijkse close, UTC). Model en extrapolatie zijn een scenario, geen voorspelling of financieel advies.</span>
+    <span><span data-i="source">Bron:</span> <a href="https://github.com/rcaljouw/btc-price-history" target="_blank" rel="noopener">rcaljouw/btc-price-history</a> <span data-i="sourceTail">(dagelijkse close, UTC). Model en extrapolatie zijn een scenario, geen voorspelling of financieel advies.</span></span>
   </footer>
 </div>
 
@@ -347,6 +358,149 @@ tr.empty td{color:var(--muted)}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-zoom/2.0.1/chartjs-plugin-zoom.min.js"></script>
 <script>
 (function(){
+const I18N={
+nl:{
+  formula:'Prijs = 4,42 × 10⁻¹⁷ × (dagen sinds 3 jan 2009)<sup>5,6</sup>',
+  tag:'Conservatieve versie',tabsAria:'Weergave',tabModel:'Model',tabFire:'FIRE-plan',tabMc:'Monte Carlo',
+  panelAria:'Berekening voor een datum',pickDate:'Kies een datum',day:'Dag',month:'Maand',year:'Jaar',
+  yPrev:'− 1 jaar',yNext:'+ 1 jaar',yPrevAria:'Eén jaar terug',yNextAria:'Eén jaar vooruit',quickAria:'Snelkeuze',
+  today:'Vandaag',jan2030:'1 jan 2030',end2034:'Eind 2034',tapHint:'Of tik in de grafiek op een moment.',
+  modelValue:'modelwaarde (conservatief)',daysGen:'Dagen sinds genesis',bandLo:'Band 0,5×',bandHi:'Band 2×',actualClose:'Werkelijke close',priceModel:'Koers / model',
+  chartAria:'Grafiek',lgPrice:'Koers (Bitstamp)',lgBand:'Band 0,5× – 2×',extrap:'Extrapolatie',periodAria:'Periode',rAll:'Alles',r5y:'Laatste 5 jaar',rFut:'Nu – 2034',
+  zoomOut:'Uitzoomen',zoomIn:'Inzoomen',reset:'Beginstand',
+  chartCanvas:'Logaritmische grafiek van de bitcoin-koers met de conservatieve Power Law en een band van 0,5 tot 2 keer het model, doorgetrokken tot eind 2034. De gekozen datum is gemarkeerd.',
+  chartFallback:'Bitcoin-koers versus conservatieve Power Law.',
+  yourStack:'Je stack',msgBtc:'Vul een positief aantal BTC in.',firstYear:'Eerste opnamejaar',yearsW:'Aantal jaren opnemen',uYears:'jaar',msg140:'1–40 jaar',
+  withdrawals:'Opnames',methodAria:'Opnamemethode',mDecl:'Aflopend %',mPct:'Vast %',mUsd:'Vast $',startPct:'Startpercentage',endPct:'Eindpercentage',taper:'Afbouwen in',msg130:'1–30 jaar',
+  pctYear:'Percentage per jaar',amtYear:'Bedrag per jaar',msgAmt:'Vul een bedrag in.',growInf:'Meegroeien met inflatie',
+  adjust:'Bijstellen',infYear:'Inflatie per jaar',minYear:'Minimaal per jaar',maxYear:'Maximaal per jaar',none:'geen',msgInvalid:'Ongeldig bedrag',msgMaxMin:'Moet ≥ minimum zijn',
+  minMaxNote:'Minimum en maximum gelden in dollars van nu en groeien mee met de inflatie.',
+  expCsv:'Exporteer CSV',expPdf:'Exporteer PDF-rapport',mcRunning:'Monte Carlo wordt berekend…',
+  chW:'Opname per jaar',chB:'Bitcoin over',chWAria:'Lijngrafiek van de jaarlijkse opname in dollars per scenario.',chBAria:'Lijngrafiek van de resterende bitcoin per scenario.',
+  thYear:'Jaar',thPrice:'Koers 1 jan',thGrowth:'Groei',thWpct:'Opname %',thSold:'BTC verkocht',thW:'Opname',thReal:'In $ van nu',thCum:'Cumulatief',thLeft:'BTC over',thValue:'Waarde',
+  fireNote:'Koers per jaar = je conservatieve Power Law op 1 januari, maal de scenariofactor. Opnames vinden plaats op 1 januari tegen die koers. Zonder belasting. Een scenario, geen voorspelling of financieel advies.',
+  simulation:'Simulatie',centre:'Midden (factor × model)',msgMid:'Tussen 0,2 en 5',halfLife:'Halveringstijd',uMo:'mnd',msg160:'1–60 mnd',shock:'Schok per maand',nPaths:'Aantal paden',
+  seed:'Startwaarde toeval (seed)',msgInt:'Geheel getal',mcDefaults:'Standaardwaarden uit data',
+  mcMeasured:'Gemeten t.o.v. je conservatieve lijn (2015–nu): een afwijking halveert in ±10 maanden, met een schok van ±20% per maand. Sinds 2018 lag de koers mediaan op 1,36× je lijn.',
+  refDate:'Peildatum',date:'Datum',thrLabel:'Kans dat de koers boven dit bedrag ligt',simRunning:'Simulatie wordt berekend…',
+  fanAria:'Waaiergrafiek',price:'Koers',median:'Mediaan',p50:'50% van de paden',p90:'90% van de paden',
+  fanCanvas:'Waaiergrafiek van gesimuleerde bitcoin-koerspaden rond de conservatieve Power Law tot 2035, met mediaan, 50%- en 90%-band.',
+  on1Jan:'Per 1 januari',chAbove:'Kans > model',chBelow:'Kans < 0,5×',
+  mcNote:'Elk pad volgt ln(koers / model): de afwijking van je conservatieve lijn keert met de ingestelde halveringstijd terug naar het midden, plus elke maand een normaal verdeelde schok (Ornstein-Uhlenbeck). Start bij de laatste close. Een scenario-analyse binnen het model, geen voorspelling of financieel advies.',
+  loading:'Koersdata laden…',source:'Bron:',sourceTail:'(dagelijkse close, UTC). Model en extrapolatie zijn een scenario, geen voorspelling of financieel advies.',
+  months:['januari','februari','maart','april','mei','juni','juli','augustus','september','oktober','november','december'],
+  mshort:['jan','feb','mrt','apr','mei','jun','jul','aug','sep','okt','nov','dec'],
+  kindHist:'Historie',kindNone:'Geen koersdata',errDate:'Vul een geldige datum in.',errRange:'Kies een datum tussen 4 januari 2009 en 31 december 2034.',
+  hintTouch:'Knijp om te zoomen, veeg opzij om te schuiven. Tik om een datum te kiezen.',hintMouse:'Zoom met Ctrl + scrollwiel of knijp op je trackpad, sleep om te schuiven.',
+  dsLo:'0,5× model',dsSelModel:'Gekozen datum, model',dsSelPrice:'Gekozen datum, koers',mln:' mln',
+  fresh:'Koersdata t/m {0} ({1} dagen).',freshFail:'Koersdata kon niet worden geladen; alleen het model wordt getoond.',libFail:' De grafiekbibliotheek kon niet laden.',
+  sc0:'Bodem',sc1:'Model',sc2:'Bovenkant',
+  fireHead:(o)=>'Met '+o.btc+' BTC en opnames vanaf '+o.start+' is je eerste opname in het scenario '+o.sc.toLowerCase()+' ',
+  fireReal:(v)=>' (≈ '+v+' in dollars van nu). ',
+  fireDep:(o)=>'Je stack is op in '+o.dep+', '+o.left+' jaar voor het einde van je opnameperiode.',
+  fireOk:(o)=>'Je stack houdt het vol t/m '+o.end+' ('+o.yrs+' jaar opnemen), met dan nog '+o.btc+' BTC over.',
+  avgYear:'Gem. per jaar ({0} jr)',totalW:'Totaal opgenomen',btcEnd:'BTC eind {0}',valueEnd:'Waarde eind {0}',stDep:'Op in {0}',stOk:'Houdt stand t/m {0}',firstW:'eerste opname {0}',
+  perYear:'Per jaar · {0} ({1})',stackDep:'Stack op in {0}',
+  eRate:'Er staat al een opslagvraag open; probeer het zo nog eens.',eSave:'Opslaan lukte niet in deze weergave. Gebruik de app via GitHub Pages.',eNA:'Exporteren is in deze weergave niet beschikbaar. Gebruik de app via GitHub Pages.',
+  eInputs:'Vul eerst geldige gegevens in.',csvDone:'CSV gemaakt.',pdfBusy:'PDF wordt gemaakt…',pdfLib:'De PDF-bibliotheek kon niet laden. Controleer je internetverbinding.',pdfDone:'PDF-rapport gemaakt.',pdfFail:'Het rapport kon niet worden gemaakt.',
+  mtDecl:(o)=>'Aflopend %: '+o.p0+'% naar '+o.p1+'% in '+o.n+' jaar',mtPct:(o)=>'Vast %: '+o.pf+'% van de stack per jaar',
+  mtUsd:(o)=>'Vast bedrag: '+o.usd+' per jaar'+(o.real?', meegroeiend met inflatie (in $ van nu)':', vast nominaal bedrag'),
+  pdfTitle:'Bitcoin FIRE-plan',pdfFormula:'Conservatieve Power Law: prijs = 4,42 x 10^-17 x (dagen sinds 3 jan 2009)^5,6',pdfMade:'Gemaakt op {0}',pdfThrough:' · koersdata t/m {0}',
+  pStack:'Bitcoin stack',pFirst:'Eerste opnamejaar',pYears:'Aantal jaren opnemen',pYearsV:'{0} jaar (t/m {1})',pMethod:'Opnamemethode',pInf:'Inflatie',pInfV:'{0}% per jaar',
+  pMin:'Minimum per jaar',pMax:'Maximum per jaar',pToday:' (in $ van nu)',pSc:'Gekozen scenario',pAssume:'Uitgangspunten',
+  pAssumeV:'Koers per jaar = Power Law op 1 januari x scenariofactor. Opname op 1 januari tegen die koers. Zonder belasting.',
+  pParam:'Parameter',pValue:'Waarde',pChosen:' (gekozen)',
+  pSumHead:['Scenario','Factor','Eerste opname','Gem. per jaar','Totaal opgenomen','BTC eind','Waarde eind','Status'],
+  pMcSet:'Instellingen',pMcSetV:'{0} paden, midden {1}x model, halveringstijd {2} mnd, schok {3}% per maand, seed {4}',
+  pMcSucc:'Slagingskans',pMcSuccV:'{0} (stack houdt het vol t/m {1})',pMcDep:'; gaat het mis, dan mediaan op in {0}',
+  pMcFirst:'Eerste opname {0}',pMcTot:'Totaal opgenomen',pMcEnd:'BTC over eind {0}',pMedRange:'mediaan {0} (10-90%: {1} - {2})',
+  pChW:'Opname per jaar (USD)',pChB:'Bitcoin over',pLines:'Lijnen: Bodem 0,5x (grijs, gestreept) · Model 1x (oranje) · Bovenkant 2x (blauw, gestippeld).',
+  pPerYear:'Per jaar: {0} ({1})',pFoot1:'Scenario op basis van de conservatieve Power Law; geen voorspelling of financieel advies.',pFoot2:'Bron koersdata: github.com/rcaljouw/btc-price-history',pPage:'Pagina {0} van {1}',
+  pdfFile:'fire-plan_{0}BTC_{1}_{2}jr_{3}',
+  dateOpt:'1 januari {0}',mcHead:(o)=>'Op 1 januari '+o.yr+' ligt de koers in 90% van de '+o.n+' paden tussen '+o.lo+' en '+o.hi+'. De mediaan is '+o.med+', tegen '+o.pl+' volgens je conservatieve model.',
+  tMed:'Mediaan',tMedS:'{0}× model',t50:'50% van de paden',t50S:'tussen 25% en 75%',t90:'90% van de paden',t90S:'tussen 5% en 95%',
+  tAbove:'Kans boven model',tBelow:'Kans onder 0,5×',tThr:'Kans boven bedrag',tPriceGt:'koers > {0}',tPriceLt:'koers < {0}',tEnter:'vul een bedrag in',
+  rowJan:'1 jan {0}',tnote:'{0} paden · midden {1}× · halveringstijd {2} mnd · schok {3}% · seed {4}',
+  mcfLbl:'Monte Carlo · {0} paden · midden {1}×',mcfSub:'slagingskans: je stack houdt het vol t/m {0}',mcfDep:' · gaat het mis, dan mediaan op in {0}',
+  sRobust:'Robuust',sFragile:'Kwetsbaar',sRisk:'Groot risico',succAria:'Slagingskans {0}',
+  mcfFirst:'Eerste opname {0}',mcfTot:'Totaal opgenomen t/m {0}',mcfEnd:'BTC over eind {0}',medianW:'{0} mediaan',
+  mcfNote1:'Slaagt = de stack raakt niet op vóór het einde van je opnameperiode. ',mcfNote2:'Met een percentage raakt de stack zelden op; kijk vooral naar de bandbreedte van je opnames. ',mcfNote3:'Instellingen staan in het tabblad Monte Carlo.'
+},
+en:{
+  formula:'Price = 4.42 × 10⁻¹⁷ × (days since 3 Jan 2009)<sup>5.6</sup>',
+  tag:'Conservative version',tabsAria:'View',tabModel:'Model',tabFire:'FIRE plan',tabMc:'Monte Carlo',
+  panelAria:'Calculation for a date',pickDate:'Pick a date',day:'Day',month:'Month',year:'Year',
+  yPrev:'− 1 year',yNext:'+ 1 year',yPrevAria:'One year back',yNextAria:'One year forward',quickAria:'Quick picks',
+  today:'Today',jan2030:'1 Jan 2030',end2034:'End of 2034',tapHint:'Or tap a moment in the chart.',
+  modelValue:'model value (conservative)',daysGen:'Days since genesis',bandLo:'Band 0.5×',bandHi:'Band 2×',actualClose:'Actual close',priceModel:'Price / model',
+  chartAria:'Chart',lgPrice:'Price (Bitstamp)',lgBand:'Band 0.5× – 2×',extrap:'Extrapolation',periodAria:'Period',rAll:'All',r5y:'Last 5 years',rFut:'Now – 2034',
+  zoomOut:'Zoom out',zoomIn:'Zoom in',reset:'Reset',
+  chartCanvas:'Logarithmic chart of the bitcoin price with the conservative Power Law and a band from 0.5 to 2 times the model, extended to the end of 2034. The selected date is marked.',
+  chartFallback:'Bitcoin price versus conservative Power Law.',
+  yourStack:'Your stack',msgBtc:'Enter a positive amount of BTC.',firstYear:'First withdrawal year',yearsW:'Years of withdrawals',uYears:'yrs',msg140:'1–40 years',
+  withdrawals:'Withdrawals',methodAria:'Withdrawal method',mDecl:'Declining %',mPct:'Fixed %',mUsd:'Fixed $',startPct:'Start percentage',endPct:'End percentage',taper:'Taper over',msg130:'1–30 years',
+  pctYear:'Percentage per year',amtYear:'Amount per year',msgAmt:'Enter an amount.',growInf:'Grow with inflation',
+  adjust:'Adjustments',infYear:'Inflation per year',minYear:'Minimum per year',maxYear:'Maximum per year',none:'none',msgInvalid:'Invalid amount',msgMaxMin:'Must be ≥ minimum',
+  minMaxNote:'Minimum and maximum are in today’s dollars and grow with inflation.',
+  expCsv:'Export CSV',expPdf:'Export PDF report',mcRunning:'Running Monte Carlo…',
+  chW:'Withdrawal per year',chB:'Bitcoin left',chWAria:'Line chart of the yearly withdrawal in dollars per scenario.',chBAria:'Line chart of the remaining bitcoin per scenario.',
+  thYear:'Year',thPrice:'Price 1 Jan',thGrowth:'Growth',thWpct:'Withdrawal %',thSold:'BTC sold',thW:'Withdrawal',thReal:'In today’s $',thCum:'Cumulative',thLeft:'BTC left',thValue:'Value',
+  fireNote:'Price per year = your conservative Power Law on 1 January, times the scenario factor. Withdrawals happen on 1 January at that price. Before tax. A scenario, not a forecast or financial advice.',
+  simulation:'Simulation',centre:'Centre (factor × model)',msgMid:'Between 0.2 and 5',halfLife:'Half-life',uMo:'mo',msg160:'1–60 mo',shock:'Shock per month',nPaths:'Number of paths',
+  seed:'Random seed',msgInt:'Whole number',mcDefaults:'Defaults from data',
+  mcMeasured:'Measured against your conservative line (2015–now): a deviation halves in about 10 months, with a shock of about 20% per month. Since 2018 the median price was 1.36× your line.',
+  refDate:'Reference date',date:'Date',thrLabel:'Chance the price is above this amount',simRunning:'Running simulation…',
+  fanAria:'Fan chart',price:'Price',median:'Median',p50:'50% of paths',p90:'90% of paths',
+  fanCanvas:'Fan chart of simulated bitcoin price paths around the conservative Power Law to 2035, with median, 50% and 90% bands.',
+  on1Jan:'On 1 January',chAbove:'Chance > model',chBelow:'Chance < 0.5×',
+  mcNote:'Each path follows ln(price / model): the deviation from your conservative line returns to the centre at the set half-life, plus a normally distributed shock every month (Ornstein-Uhlenbeck). Starts at the last close. A scenario analysis within the model, not a forecast or financial advice.',
+  loading:'Loading price data…',source:'Source:',sourceTail:'(daily close, UTC). Model and extrapolation are a scenario, not a forecast or financial advice.',
+  months:['January','February','March','April','May','June','July','August','September','October','November','December'],
+  mshort:['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],
+  kindHist:'History',kindNone:'No price data',errDate:'Enter a valid date.',errRange:'Pick a date between 4 January 2009 and 31 December 2034.',
+  hintTouch:'Pinch to zoom, swipe sideways to pan. Tap to pick a date.',hintMouse:'Zoom with Ctrl + scroll wheel or pinch on your trackpad, drag to pan.',
+  dsLo:'0.5× model',dsSelModel:'Selected date, model',dsSelPrice:'Selected date, price',mln:'M',
+  fresh:'Price data through {0} ({1} days).',freshFail:'Price data could not be loaded; only the model is shown.',libFail:' The chart library could not load.',
+  sc0:'Floor',sc1:'Model',sc2:'Ceiling',
+  fireHead:(o)=>'With '+o.btc+' BTC and withdrawals from '+o.start+', your first withdrawal in the '+o.sc.toLowerCase()+' scenario is ',
+  fireReal:(v)=>' (≈ '+v+' in today’s dollars). ',
+  fireDep:(o)=>'Your stack runs out in '+o.dep+', '+o.left+' years before the end of your withdrawal period.',
+  fireOk:(o)=>'Your stack lasts through '+o.end+' ('+o.yrs+' years of withdrawals), with '+o.btc+' BTC left.',
+  avgYear:'Avg per year ({0} yrs)',totalW:'Total withdrawn',btcEnd:'BTC end {0}',valueEnd:'Value end {0}',stDep:'Depleted in {0}',stOk:'Lasts through {0}',firstW:'first withdrawal {0}',
+  perYear:'Per year · {0} ({1})',stackDep:'Stack depleted in {0}',
+  eRate:'A save prompt is already open; try again in a moment.',eSave:'Saving failed in this view. Use the app on GitHub Pages.',eNA:'Export is not available in this view. Use the app on GitHub Pages.',
+  eInputs:'Enter valid inputs first.',csvDone:'CSV created.',pdfBusy:'Creating PDF…',pdfLib:'The PDF library could not load. Check your internet connection.',pdfDone:'PDF report created.',pdfFail:'The report could not be created.',
+  mtDecl:(o)=>'Declining %: '+o.p0+'% to '+o.p1+'% over '+o.n+' years',mtPct:(o)=>'Fixed %: '+o.pf+'% of the stack per year',
+  mtUsd:(o)=>'Fixed amount: '+o.usd+' per year'+(o.real?', growing with inflation (in today’s $)':', fixed nominal amount'),
+  pdfTitle:'Bitcoin FIRE plan',pdfFormula:'Conservative Power Law: price = 4.42 x 10^-17 x (days since 3 Jan 2009)^5.6',pdfMade:'Created on {0}',pdfThrough:' · price data through {0}',
+  pStack:'Bitcoin stack',pFirst:'First withdrawal year',pYears:'Years of withdrawals',pYearsV:'{0} years (through {1})',pMethod:'Withdrawal method',pInf:'Inflation',pInfV:'{0}% per year',
+  pMin:'Minimum per year',pMax:'Maximum per year',pToday:' (in today\'s $)',pSc:'Selected scenario',pAssume:'Assumptions',
+  pAssumeV:'Price per year = Power Law on 1 January x scenario factor. Withdrawal on 1 January at that price. Before tax.',
+  pParam:'Parameter',pValue:'Value',pChosen:' (selected)',
+  pSumHead:['Scenario','Factor','First withdrawal','Avg per year','Total withdrawn','BTC end','Value end','Status'],
+  pMcSet:'Settings',pMcSetV:'{0} paths, centre {1}x model, half-life {2} mo, shock {3}% per month, seed {4}',
+  pMcSucc:'Success rate',pMcSuccV:'{0} (stack lasts through {1})',pMcDep:'; when it fails, median depletion in {0}',
+  pMcFirst:'First withdrawal {0}',pMcTot:'Total withdrawn',pMcEnd:'BTC left end {0}',pMedRange:'median {0} (10-90%: {1} - {2})',
+  pChW:'Withdrawal per year (USD)',pChB:'Bitcoin left',pLines:'Lines: Floor 0.5x (grey, dashed) · Model 1x (orange) · Ceiling 2x (blue, dotted).',
+  pPerYear:'Per year: {0} ({1})',pFoot1:'Scenario based on the conservative Power Law; not a forecast or financial advice.',pFoot2:'Price data source: github.com/rcaljouw/btc-price-history',pPage:'Page {0} of {1}',
+  pdfFile:'fire-plan_{0}BTC_{1}_{2}y_{3}',
+  dateOpt:'1 January {0}',mcHead:(o)=>'On 1 January '+o.yr+', the price is between '+o.lo+' and '+o.hi+' in 90% of the '+o.n+' paths. The median is '+o.med+', against '+o.pl+' in your conservative model.',
+  tMed:'Median',tMedS:'{0}× model',t50:'50% of paths',t50S:'between 25% and 75%',t90:'90% of paths',t90S:'between 5% and 95%',
+  tAbove:'Chance above model',tBelow:'Chance below 0.5×',tThr:'Chance above amount',tPriceGt:'price > {0}',tPriceLt:'price < {0}',tEnter:'enter an amount',
+  rowJan:'1 Jan {0}',tnote:'{0} paths · centre {1}× · half-life {2} mo · shock {3}% · seed {4}',
+  mcfLbl:'Monte Carlo · {0} paths · centre {1}×',mcfSub:'success rate: your stack lasts through {0}',mcfDep:' · when it fails, median depletion in {0}',
+  sRobust:'Robust',sFragile:'Fragile',sRisk:'High risk',succAria:'Success rate {0}',
+  mcfFirst:'First withdrawal {0}',mcfTot:'Total withdrawn through {0}',mcfEnd:'BTC left end {0}',medianW:'{0} median',
+  mcfNote1:'Success = the stack does not run out before the end of your withdrawal period. ',mcfNote2:'With a percentage the stack rarely runs out; look mainly at the range of your withdrawals. ',mcfNote3:'Settings are in the Monte Carlo tab.'
+}};
+/* ---------- Taal / language ---------- */
+let LANG=(()=>{try{const l=localStorage.getItem('bpl-lang');if(l==='en'||l==='nl')return l}catch(e){}return 'nl'})();
+const LOC=()=>LANG==='en'?'en-US':'nl-NL';
+const T=(k,...a)=>{const v=I18N[LANG][k]??I18N.nl[k];return typeof v==='string'?v.replace(/\{(\d)\}/g,(_,i)=>a[i]):v};
+const TF=(k,o)=>(I18N[LANG][k]||I18N.nl[k])(o);
+const DECS=()=>LANG==='en'?'.':',';
+const SP=()=>LANG==='en'?'':' ';
+
 const DAY=86400000, GEN=Date.UTC(2009,0,3);
 const A=4.42e-17, B=5.6;
 const model=days=>A*Math.pow(days,B);
@@ -354,19 +508,39 @@ const daysOf=ms=>Math.round((ms-GEN)/DAY);
 const toYear=ms=>{const d=new Date(ms),y=d.getUTCFullYear(),s=Date.UTC(y,0,1);return y+(ms-s)/(Date.UTC(y+1,0,1)-s)};
 const iso=ms=>new Date(ms).toISOString().slice(0,10);
 const parseIso=s=>{const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(s||'');return m?Date.UTC(+m[1],+m[2]-1,+m[3]):NaN};
-const usd=new Intl.NumberFormat('nl-NL',{style:'currency',currency:'USD',currencyDisplay:'narrowSymbol',maximumFractionDigits:0});
-const usd2=new Intl.NumberFormat('nl-NL',{style:'currency',currency:'USD',currencyDisplay:'narrowSymbol',maximumFractionDigits:2});
-const num=new Intl.NumberFormat('nl-NL');
+let usd,usd2,num;
+function mkFmt(){
+  usd=new Intl.NumberFormat(LOC(),{style:'currency',currency:'USD',currencyDisplay:'narrowSymbol',maximumFractionDigits:0});
+  usd2=new Intl.NumberFormat(LOC(),{style:'currency',currency:'USD',currencyDisplay:'narrowSymbol',maximumFractionDigits:2});
+  num=new Intl.NumberFormat(LOC());
+}
+mkFmt();
 const money=v=>v>0&&v<100?usd2.format(v):usd.format(v);
-const longDate=ms=>new Date(ms).toLocaleDateString('nl-NL',{day:'numeric',month:'long',year:'numeric',timeZone:'UTC'});
+const longDate=ms=>new Date(ms).toLocaleDateString(LOC(),{day:'numeric',month:'long',year:'numeric',timeZone:'UTC'});
+const fx=(v,min,max)=>v.toLocaleString(LOC(),{minimumFractionDigits:min,maximumFractionDigits:max});
 const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
 const $=id=>document.getElementById(id);
+const opt=(el,v,t)=>{const o=document.createElement('option');o.value=v;o.textContent=t;el.appendChild(o)};
 
-let prices=new Map(), lastMs=null, chart=null, sel=null;
+function applyStatic(){
+  document.documentElement.lang=LANG;
+  document.querySelectorAll('[data-i]').forEach(e=>{e.textContent=T(e.dataset.i)});
+  document.querySelectorAll('[data-ih]').forEach(e=>{e.innerHTML=T(e.dataset.ih)});
+  document.querySelectorAll('[data-ia]').forEach(e=>{e.setAttribute('aria-label',T(e.dataset.ia))});
+  document.querySelectorAll('[data-ip]').forEach(e=>{e.setAttribute('placeholder',T(e.dataset.ip))});
+  document.querySelectorAll('[data-lang]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.lang===LANG)));
+  document.querySelectorAll('[data-n]').forEach(b=>{b.textContent=num.format(+b.dataset.n)});
+}
+applyStatic();
+
+let prices=new Map(), lastMs=null, chart=null, sel=null, dataState='loading', libOk=true;
 const now=new Date(), TODAY=Date.UTC(now.getUTCFullYear(),now.getUTCMonth(),now.getUTCDate());
 const END=Date.UTC(2034,11,31);
 const chips=[...document.querySelectorAll('.chip[data-date]')];
 const chipMs=b=>b.dataset.date==='today'?TODAY:parseIso(b.dataset.date);
+function freshText(){
+  $('fresh').textContent=(dataState==='ok'?T('fresh',longDate(lastMs),num.format(prices.size)):dataState==='fail'?T('freshFail'):T('loading'))+(libOk?'':T('libFail'));
+}
 
 function render(){
   if(sel==null) return;
@@ -378,11 +552,11 @@ function render(){
   $('r-hi').textContent=money(m*2);
   const p=prices.get(sel);
   const future=lastMs==null?sel>=TODAY:sel>lastMs;
-  $('r-kind').textContent=p!=null?'Historie':future?'Extrapolatie':'Geen koersdata';
+  $('r-kind').textContent=p!=null?T('kindHist'):future?T('extrap'):T('kindNone');
   if(p!=null){
     const r=p/m;
     $('r-price').textContent=money(p);
-    $('r-ratio').textContent=r.toLocaleString('nl-NL',{maximumFractionDigits:2,minimumFractionDigits:2})+'×';
+    $('r-ratio').textContent=fx(r,2,2)+'×';
     $('r-ratio').style.color=r<1?css('--good'):r>2?css('--warn'):'';
   }else{
     $('r-price').textContent='–'; $('r-ratio').textContent='–'; $('r-ratio').style.color='';
@@ -397,16 +571,15 @@ function render(){
 }
 
 function setDate(ms){
-  if(isNaN(ms)){ $('err').textContent='Vul een geldige datum in.'; return; }
-  if(ms<GEN+DAY||ms>END){ $('err').textContent='Kies een datum tussen 4 januari 2009 en 31 december 2034.'; return; }
+  if(isNaN(ms)){ $('err').textContent=T('errDate'); return; }
+  if(ms<GEN+DAY||ms>END){ $('err').textContent=T('errRange'); return; }
   $('err').textContent=''; sel=ms; syncSelects(ms); render();
 }
 
 const XMIN=2011, XMAX=2035;
 let view={min:XMIN,max:XMAX}, panEnd=0, hoverMs=null;
 const isFull=()=>view.min<=XMIN+1e-6&&view.max>=XMAX-1e-6;
-const MSHORT=['jan','feb','mrt','apr','mei','jun','jul','aug','sep','okt','nov','dec'];
-function monLabel(v){let y=Math.floor(v+1e-6),m=Math.round((v-y)*12);if(m===12){y++;m=0}return m===0?String(y):MSHORT[m]}
+function monLabel(v){let y=Math.floor(v+1e-6),m=Math.round((v-y)*12);if(m===12){y++;m=0}return m===0?String(y):T('mshort')[m]}
 function fitY(){
   const o=chart.options.scales.y;
   if(isFull()){o.min=1;o.max=3e6;return}
@@ -429,7 +602,6 @@ function setRange(min,max){
   view={min,max};
   if(!chart)return;
   const x=chart.options.scales.x;x.min=min;x.max=max;
-  
   fitY();chart.update('none');syncZoomUI();
 }
 function presetRange(k){
@@ -447,8 +619,11 @@ $('z-in').addEventListener('click',()=>zoomBy(.5));
 $('z-out').addEventListener('click',()=>zoomBy(2));
 $('z-reset').addEventListener('click',()=>setRange(XMIN,XMAX));
 const hasZoom=!!window.ChartZoom&&!!window.Hammer;
-if(hasZoom){const h=$('zhint');h.textContent=matchMedia('(pointer: coarse)').matches?'Knijp om te zoomen, veeg opzij om te schuiven. Tik om een datum te kiezen.':'Zoom met Ctrl + scrollwiel of knijp op je trackpad, sleep om te schuiven.';h.hidden=false}
+function zoomHint(){if(hasZoom){const h=$('zhint');h.textContent=matchMedia('(pointer: coarse)').matches?T('hintTouch'):T('hintMouse');h.hidden=false}}
+zoomHint();
 const afterGesture=({chart:c})=>{view={min:c.scales.x.min,max:c.scales.x.max};setRange(view.min,view.max)};
+const msOfYear=x=>{const y=Math.floor(x),s=Date.UTC(y,0,1);return s+(x-y)*(Date.UTC(y+1,0,1)-s)};
+const axisUsd=v=>v>=1e6?'$'+(v/1e6).toLocaleString(LOC())+T('mln'):v>=1e3?'$'+(v/1e3)+'k':'$'+v;
 
 function buildChart(){
   const grid=css('--line'), muted=css('--muted'), btc=css('--btc'), price=css('--price'), band=css('--band'), bandLine=css('--band-line'), ink=css('--ink');
@@ -465,19 +640,17 @@ function buildChart(){
     hoverMs=useP?arr[i].ms:Math.round(msOfYear(v)/DAY)*DAY;
     const el=c.getDatasetMeta(ds).data[i];return el?[{datasetIndex:ds,index:i,element:el}]:[];
   };
-  const msOfYear=x=>{const y=Math.floor(x),s=Date.UTC(y,0,1);return s+(x-y)*(Date.UTC(y+1,0,1)-s)};
   const line=f=>xs.map(ms=>({x:toYear(ms),y:model(daysOf(ms))*f,ms}));
   const dash={borderDash:c=>c.p0.parsed.x>=NOWX?[6,4]:undefined};
   const pts=[...prices.keys()].map(k=>({x:toYear(k),y:prices.get(k),ms:k}));
-  const fmt=v=>v>=1e6?'$'+(v/1e6)+' mln':v>=1e3?'$'+(v/1e3)+'k':'$'+v;
   chart=new Chart($('chart'),{type:'line',
     data:{datasets:[
-      {label:'Koers',data:pts,borderColor:price,borderWidth:1.6,pointRadius:0,order:1},
+      {label:T('price'),data:pts,borderColor:price,borderWidth:1.6,pointRadius:0,order:1},
       {label:'2× model',data:line(2),borderColor:bandLine,borderWidth:1,pointRadius:0,fill:'+1',backgroundColor:band,segment:dash,order:3},
-      {label:'0,5× model',data:line(.5),borderColor:bandLine,borderWidth:1,pointRadius:0,segment:dash,order:3},
+      {label:T('dsLo'),data:line(.5),borderColor:bandLine,borderWidth:1,pointRadius:0,segment:dash,order:3},
       {label:'Model',data:line(1),borderColor:btc,borderWidth:2,pointRadius:0,segment:dash,order:2},
-      {label:'Gekozen datum, model',data:[],pointRadius:6,pointBackgroundColor:btc,pointBorderColor:css('--surface'),pointBorderWidth:2,showLine:false,order:0},
-      {label:'Gekozen datum, koers',data:[],pointRadius:6,pointBackgroundColor:price,pointBorderColor:css('--surface'),pointBorderWidth:2,showLine:false,order:0}
+      {label:T('dsSelModel'),data:[],pointRadius:6,pointBackgroundColor:btc,pointBorderColor:css('--surface'),pointBorderWidth:2,showLine:false,order:0},
+      {label:T('dsSelPrice'),data:[],pointRadius:6,pointBackgroundColor:price,pointBorderColor:css('--surface'),pointBorderWidth:2,showLine:false,order:0}
     ]},
     options:{responsive:true,maintainAspectRatio:false,animation:false,parsing:false,normalized:true,
       interaction:{mode:'btcDay',intersect:false},
@@ -487,22 +660,22 @@ function buildChart(){
           pan:{enabled:true,mode:'x',threshold:6,onPanComplete:a=>{panEnd=Date.now();afterGesture(a)}},
           zoom:{wheel:{enabled:true,modifierKey:'ctrl'},pinch:{enabled:true},mode:'x',onZoomComplete:afterGesture}},
         tooltip:{displayColors:false,position:'cursorX',callbacks:{title:()=>longDate(hoverMs),label:t=>{const p=t.raw,m=model(daysOf(hoverMs));
-          if(t.datasetIndex===0)return ['Koers: '+money(p.y),'Model: '+money(m),'Koers / model: '+(p.y/m).toLocaleString('nl-NL',{minimumFractionDigits:2,maximumFractionDigits:2})+'×'];
-          const out=['Model: '+money(m),'Band: '+money(m*.5)+' – '+money(m*2)];if(hoverMs>(lastMs??TODAY))out.push('Extrapolatie');return out}}}},
+          if(t.datasetIndex===0)return [T('price')+': '+money(p.y),'Model: '+money(m),T('priceModel')+': '+fx(p.y/m,2,2)+'×'];
+          const out=['Model: '+money(m),'Band: '+money(m*.5)+' – '+money(m*2)];if(hoverMs>(lastMs??TODAY))out.push(T('extrap'));return out}}}},
       scales:{
         x:{type:'linear',min:XMIN,max:XMAX,afterBuildTicks:xTicks,ticks:{color:muted,autoSkip:true,autoSkipPadding:10,maxRotation:0,callback:function(v){return (this._btcStep||1)>=1?Math.round(v):monLabel(v)}},grid:{display:false},border:{color:grid}},
-        y:{type:'logarithmic',min:1,max:3e6,ticks:{color:muted,callback:v=>{if(isFull())return [1,10,100,1e3,1e4,1e5,1e6].includes(v)?fmt(v):'';const e=Math.pow(10,Math.floor(Math.log10(v)+1e-9)),m=Math.round(v/e*1000)/1000;return [1,2,5].includes(m)?fmt(v):''}},grid:{color:grid},border:{display:false}}}
+        y:{type:'logarithmic',min:1,max:3e6,ticks:{color:muted,callback:v=>{if(isFull())return [1,10,100,1e3,1e4,1e5,1e6].includes(v)?axisUsd(v):'';const e=Math.pow(10,Math.floor(Math.log10(v)+1e-9)),m=Math.round(v/e*1000)/1000;return [1,2,5].includes(m)?axisUsd(v):''}},grid:{color:grid},border:{display:false}}}
     },
     plugins:[{id:'selLine',afterDatasetsDraw(c){if(sel==null)return;const x=c.scales.x.getPixelForValue(toYear(sel)),a=c.chartArea;if(x<a.left||x>a.right)return;const g=c.ctx;g.save();g.strokeStyle=ink;g.globalAlpha=.35;g.setLineDash([3,3]);g.beginPath();g.moveTo(x,a.top);g.lineTo(x,a.bottom);g.stroke();g.restore()}}]
   });
   if(hasZoom)chart.canvas.style.touchAction='pan-y';
   setRange(view.min,view.max);
+  render();
 }
 
-const MONTHS=['januari','februari','maart','april','mei','juni','juli','augustus','september','oktober','november','december'];
 const dim=(y,m)=>new Date(Date.UTC(y,m+1,0)).getUTCDate();
-const opt=(el,v,t)=>{const o=document.createElement('option');o.value=v;o.textContent=t;el.appendChild(o)};
-MONTHS.forEach((n,i)=>opt($('mm'),i,n));
+function fillMonths(){const el=$('mm'),keep=el.value;el.textContent='';T('months').forEach((n,i)=>opt(el,i,n));if(keep!=='')el.value=keep}
+fillMonths();
 for(let y=2009;y<=2034;y++)opt($('yy'),y,y);
 function fillDays(y,m){const el=$('dd'),keep=+el.value||1,n=dim(y,m);el.textContent='';for(let d=1;d<=n;d++)opt(el,d,d);el.value=Math.min(keep,n)}
 function syncSelects(ms){const d=new Date(ms),y=d.getUTCFullYear(),m=d.getUTCMonth();$('yy').value=y;$('mm').value=m;fillDays(y,m);$('dd').value=d.getUTCDate()}
@@ -514,16 +687,15 @@ $('y-next').addEventListener('click',()=>shiftYear(1));
 chips.forEach(b=>b.addEventListener('click',()=>setDate(chipMs(b))));
 
 setDate(TODAY);
+freshText();
 
 fetch('data/btc-usd-daily.csv',{cache:'no-cache'}).then(r=>{if(!r.ok)throw new Error(r.status);return r.text()}).then(t=>{
   const rows=t.trim().split('\n');const h=rows.shift().split(',');const di=h.indexOf('date'),ci=h.indexOf('close');
   for(const line of rows){const c=line.split(',');const ms=parseIso(c[di]);const v=+c[ci];if(!isNaN(ms)&&v>0)prices.set(ms,v)}
-  lastMs=[...prices.keys()].pop();
-  $('fresh').textContent='Koersdata t/m '+longDate(lastMs)+' ('+num.format(prices.size)+' dagen).';
-}).catch(()=>{
-  $('fresh').textContent='Koersdata kon niet worden geladen; alleen het model wordt getoond.';
-}).finally(()=>{
-  if(window.Chart)buildChart(); else $('fresh').textContent+=' De grafiekbibliotheek kon niet laden.';
+  lastMs=[...prices.keys()].pop();dataState='ok';
+}).catch(()=>{dataState='fail'}).finally(()=>{
+  if(window.Chart)buildChart(); else libOk=false;
+  freshText();
   render();
   mcRecompute();
 });
@@ -531,19 +703,22 @@ fetch('data/btc-usd-daily.csv',{cache:'no-cache'}).then(r=>{if(!r.ok)throw new E
 const mq=matchMedia('(prefers-color-scheme: dark)');
 /* ---------- FIRE-plan ---------- */
 const SC=[
-  {f:.5,name:'Bodem',key:'0,5× model',col:'--band-line',dash:[6,4]},
-  {f:1,name:'Model',key:'1× model',col:'--btc',dash:[]},
-  {f:2,name:'Bovenkant',key:'2× model',col:'--price',dash:[2,3]}];
+  {f:.5,id:0,key:'0,5× model',col:'--band-line',dash:[6,4]},
+  {f:1,id:1,key:'1× model',col:'--btc',dash:[]},
+  {f:2,id:2,key:'2× model',col:'--price',dash:[2,3]}];
+const scName=(c,lang)=>I18N[lang||LANG]['sc'+c.id];
+const scKey=c=>(LANG==='en'?String(c.f):String(c.f).replace('.',','))+'× model';
 const NOWY=new Date().getUTCFullYear(), Y0=NOWY+1, Y1=NOWY+30;
 const priceJan=(y,f)=>model(daysOf(Date.UTC(y,0,1)))*f;
-const btcFmt=v=>v.toLocaleString('nl-NL',{minimumFractionDigits:4,maximumFractionDigits:4});
-const soldFmt=v=>'−'+v.toLocaleString('nl-NL',{minimumFractionDigits:v<.001?8:4,maximumFractionDigits:v<.001?8:4});
-const pct1=v=>(v*100).toLocaleString('nl-NL',{minimumFractionDigits:1,maximumFractionDigits:1})+'%';
-const compact=v=>v>=1e6?'$ '+(v/1e6).toLocaleString('nl-NL',{maximumFractionDigits:v>=1e7?0:1})+' mln':money(v);
-function pnum(s){
-  if(s==null)return null; let t=String(s).trim().replace(/[\s$%€]/g,'');
+const btcFmt=v=>fx(v,4,4);
+const soldFmt=v=>'−'+fx(v,v<.001?8:4,v<.001?8:4);
+const pct1=v=>fx(v*100,1,1)+'%';
+const compact=v=>v>=1e6?'$'+SP()+(v/1e6).toLocaleString(LOC(),{maximumFractionDigits:v>=1e7?0:1})+T('mln'):money(v);
+function pnum(s,lang){
+  if(s==null)return null; let t=String(s).trim().replace(/[\s$%€  ]/g,'');
   if(t==='')return null;
-  if(t.includes(','))t=t.replace(/\./g,'').replace(',','.');
+  if((lang||LANG)==='en')t=t.replace(/,/g,'');
+  else if(t.includes(','))t=t.replace(/\./g,'').replace(',','.');
   else if(/^\d{1,3}(\.\d{3})+$/.test(t))t=t.replace(/\./g,'');
   const n=Number(t); return isFinite(n)?n:NaN;
 }
@@ -575,8 +750,9 @@ function readInputs(){
   if(mode==='decl'){g('p0','f-p0',{min:0,max:100});g('p1','f-p1',{min:0,max:100});g('n','f-pn',{min:1,max:30,int:true})}
   if(mode==='pct')g('pf','f-pf',{min:0,max:100});
   if(mode==='usd')g('usd','f-usd',{min:0});
-  if(r.min!=null&&r.max!=null&&r.min>r.max){$('f-max-w').classList.add('bad');const m=$('f-max-w').querySelector('.msg');m.textContent='Moet ≥ minimum zijn';m.hidden=false;checks.push(false)}
-  else $('f-max-w').querySelector('.msg').textContent='Ongeldig bedrag';
+  const mm=$('f-max-w').querySelector('.msg');
+  if(r.min!=null&&r.max!=null&&r.min>r.max){$('f-max-w').classList.add('bad');mm.textContent=T('msgMaxMin');mm.hidden=false;checks.push(false)}
+  else mm.textContent=T('msgInvalid');
   return checks.every(Boolean)?r:null;
 }
 function rateFor(k,r){
@@ -616,31 +792,32 @@ function renderFire(){
   const res=SC.map(s=>simulate(s.f,r)); lastRes={r,res,mcr:fireMC(r)};
   renderMcFire(lastRes.mcr,r);
   const s=res[scSel], sc=SC[scSel];
-  const btcTxt=r.btc.toLocaleString('nl-NL',{maximumFractionDigits:8});
-  $('fire-head').innerHTML='';
-  const h=$('fire-head');
+  const btcTxt=r.btc.toLocaleString(LOC(),{maximumFractionDigits:8});
+  const h=$('fire-head');h.textContent='';
   const add=(t,b)=>{const el=document.createElement(b?'b':'span');el.textContent=t;h.appendChild(el)};
-  add('Met '+btcTxt+' BTC en opnames vanaf '+r.start+' is je eerste opname in het scenario '+sc.name.toLowerCase()+' ');
-  add(s.first!=null?money(s.first):'$ 0',true);
-  add(r.inf>0&&s.firstReal!=null?' (≈ '+money(s.firstReal)+' in dollars van nu). ':'. ');
-  add(s.dep?'Je stack is op in '+s.dep+', '+(s.end-s.dep)+' jaar voor het einde van je opnameperiode.':'Je stack houdt het vol t/m '+s.end+' ('+r.yrs+' jaar opnemen), met dan nog '+btcFmt(s.endBtc)+' BTC over.');
+  add(TF('fireHead',{btc:btcTxt,start:r.start,sc:scName(sc)}));
+  add(s.first!=null?money(s.first):money(0),true);
+  add(r.inf>0&&s.firstReal!=null?TF('fireReal',money(s.firstReal)):'. ');
+  add(s.dep?TF('fireDep',{dep:s.dep,left:s.end-s.dep}):TF('fireOk',{end:s.end,yrs:r.yrs,btc:btcFmt(s.endBtc)}));
   const box=$('scen');box.textContent='';
   SC.forEach((c,i)=>{
     const x=res[i],b=document.createElement('button');b.type='button';b.className='sc';b.setAttribute('aria-pressed',String(i===scSel));
-    b.innerHTML='<div class="sc-top"><span class="sc-name"></span><span class="state"></span></div><span class="sc-key"><i class="sw"></i><span></span></span><p class="big2"></p><dl><div><dt>Gem. per jaar ('+x.nW+' jr)</dt><dd class="a"></dd></div><div><dt>Totaal opgenomen</dt><dd class="t"></dd></div><div><dt>BTC eind '+x.end+'</dt><dd class="e"></dd></div><div><dt>Waarde eind '+x.end+'</dt><dd class="v"></dd></div></dl>';
-    b.querySelector('.sc-name').textContent=c.name;
-    const st=b.querySelector('.state');st.className='state '+(x.dep?'no':'ok');st.textContent=x.dep?'Op in '+x.dep:'Houdt stand t/m '+x.end;
+    b.innerHTML='<div class="sc-top"><span class="sc-name"></span><span class="state"></span></div><span class="sc-key"><i class="sw"></i><span></span></span><p class="big2"></p><dl><div><dt class="la"></dt><dd class="a"></dd></div><div><dt class="lt"></dt><dd class="t"></dd></div><div><dt class="le"></dt><dd class="e"></dd></div><div><dt class="lv"></dt><dd class="v"></dd></div></dl>';
+    b.querySelector('.sc-name').textContent=scName(c);
+    b.querySelector('.la').textContent=T('avgYear',x.nW);b.querySelector('.lt').textContent=T('totalW');
+    b.querySelector('.le').textContent=T('btcEnd',x.end);b.querySelector('.lv').textContent=T('valueEnd',x.end);
+    const st=b.querySelector('.state');st.className='state '+(x.dep?'no':'ok');st.textContent=x.dep?T('stDep',x.dep):T('stOk',x.end);
     const sw=b.querySelector('.sw');sw.style.borderTopColor=css(c.col);if(c.dash.length)sw.style.borderTopStyle=c.f<1?'dashed':'dotted';
-    b.querySelector('.sc-key span').textContent=c.key;
-    b.querySelector('.big2').textContent=x.first!=null?money(x.first):'–';
-    b.querySelector('.big2').insertAdjacentHTML('beforeend','<span style="font:400 12px var(--f-body);color:var(--muted);display:block;margin-top:4px">eerste opname '+r.start+'</span>');
+    b.querySelector('.sc-key span').textContent=scKey(c);
+    const big=b.querySelector('.big2');big.textContent=x.first!=null?money(x.first):'–';
+    const sub=document.createElement('span');sub.style.cssText='font:400 12px var(--f-body);color:var(--muted);display:block;margin-top:4px';sub.textContent=T('firstW',r.start);big.appendChild(sub);
     b.querySelector('.a').textContent=compact(x.avg);b.querySelector('.t').textContent=compact(x.total);
     b.querySelector('.e').textContent=btcFmt(x.endBtc);b.querySelector('.v').textContent=compact(x.endV);
     b.addEventListener('click',()=>{scSel=i;renderFire()});
     box.appendChild(b);
   });
-  $('tbl-title').textContent='Per jaar · '+sc.name+' ('+sc.key+')';
-  $('tbl-note').textContent=s.dep?'Stack op in '+s.dep:'';
+  $('tbl-title').textContent=T('perYear',scName(sc),scKey(sc));
+  $('tbl-note').textContent=s.dep?T('stackDep',s.dep):'';
   const real=r.inf>0; $('th-real').hidden=!real;
   const tb=$('tbody');tb.textContent='';
   s.rows.forEach(w=>{
@@ -656,92 +833,92 @@ function drawFire(){
   if(!lastRes||$('view-fire').hidden||!window.Chart)return;
   const {r,res}=lastRes, years=res[0].rows.map(w=>w.y), muted=css('--muted'), grid=css('--line');
   const si=Math.max(0,years.indexOf(r.start)), wYears=years.slice(si);
-  const ds=(get,from=0)=>SC.map((c,i)=>({label:c.name+' ('+c.key+')',data:res[i].rows.slice(from).map(get),borderColor:css(c.col),borderWidth:i===scSel?2.5:1.5,borderDash:c.dash,pointRadius:0,spanGaps:false,tension:0}));
+  const ds=(get,from=0)=>SC.map((c,i)=>({label:scName(c)+' ('+scKey(c)+')',data:res[i].rows.slice(from).map(get),borderColor:css(c.col),borderWidth:i===scSel?2.5:1.5,borderDash:c.dash,pointRadius:0,spanGaps:false,tension:0}));
   const common=(ytype,fmt,tick)=>({responsive:true,maintainAspectRatio:false,animation:false,interaction:{mode:'index',intersect:false},
     plugins:{legend:{display:false},tooltip:{callbacks:{label:t=>t.dataset.label+': '+fmt(t.parsed.y)}}},
     scales:{x:{ticks:{color:muted,maxRotation:0,autoSkip:true,maxTicksLimit:7},grid:{display:false},border:{color:grid}},
       y:{type:ytype,ticks:{color:muted,maxTicksLimit:6,callback:tick},grid:{color:grid},border:{display:false},beginAtZero:true}}});
-  const usdTick=v=>v===0?'$ 0':v>=1e6?'$ '+(v/1e6).toLocaleString('nl-NL',{maximumFractionDigits:1})+' mln':'$ '+(v/1e3).toLocaleString('nl-NL',{maximumFractionDigits:0})+'k';
-  const btcTick=v=>btcFmt(v).replace(/0+$/,'').replace(/,$/,'');
+  const usdTick=v=>v===0?'$'+SP()+'0':v>=1e6?'$'+SP()+(v/1e6).toLocaleString(LOC(),{maximumFractionDigits:1})+T('mln'):'$'+SP()+(v/1e3).toLocaleString(LOC(),{maximumFractionDigits:0})+'k';
+  const btcTick=v=>{const s=btcFmt(v),d=DECS();return s.includes(d)?s.replace(/0+$/,'').replace(new RegExp('\\'+d+'$'),''):s};
   const wData=ds(w=>w.W>0?w.W:null,si), bData=ds(w=>w.btc);
   if(wChart){wChart.data.labels=wYears;wChart.data.datasets=wData;wChart.update('none')}else wChart=new Chart($('ch-w'),{type:'line',data:{labels:wYears,datasets:wData},options:common('linear',money,usdTick)});
   if(bChart){bChart.data.labels=years;bChart.data.datasets=bData;bChart.update('none')}else bChart=new Chart($('ch-b'),{type:'line',data:{labels:years,datasets:bData},options:common('linear',v=>btcFmt(v)+' BTC',btcTick)});
 }
 
-
 /* ---------- Export ---------- */
-const DEC=(v,d)=>v.toFixed(d).replace('.',',');
 function expMsg(t,bad){const m=$('exp-msg');m.textContent=t||'';m.classList.toggle('bad',!!bad)}
 async function saveFile(name,data){
   if(window.claude&&typeof window.claude.use==='function'){
     let d=null;try{d=await window.claude.use('downloads')}catch(e){}
     if(d){
       try{await d.save({filename:name,data});return true}
-      catch(e){if(e&&e.code==='declined')return false;expMsg(e&&e.code==='rate_limited'?'Er staat al een opslagvraag open; probeer het zo nog eens.':'Opslaan lukte niet in deze weergave. Gebruik de app via GitHub Pages.',true);return false}
+      catch(e){if(e&&e.code==='declined')return false;expMsg(e&&e.code==='rate_limited'?T('eRate'):T('eSave'),true);return false}
     }
-    if(window.parent!==window){expMsg('Exporteren is in deze weergave niet beschikbaar. Gebruik de app via GitHub Pages.',true);return false}
+    if(window.parent!==window){expMsg(T('eNA'),true);return false}
   }
   const blob=data instanceof Blob?data:new Blob([data],{type:name.endsWith('.csv')?'text/csv;charset=utf-8':'application/octet-stream'});
   const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();
   setTimeout(()=>URL.revokeObjectURL(url),4000);return true;
 }
 const stamp=()=>iso(TODAY);
-function baseName(r){return 'fire-plan_'+String(r.btc).replace('.',',')+'BTC_'+r.start+'_'+r.yrs+'jr_'+stamp()}
+const numTxt=v=>LANG==='en'?String(v):String(v).replace('.',',');
 function methodText(r){
-  if(r.mode==='decl')return 'Aflopend %: '+String(r.p0).replace('.',',')+'% naar '+String(r.p1).replace('.',',')+'% in '+r.n+' jaar';
-  if(r.mode==='pct')return 'Vast %: '+String(r.pf).replace('.',',')+'% van de stack per jaar';
-  return 'Vast bedrag: '+money(r.usd)+' per jaar'+(r.real?', meegroeiend met inflatie (in $ van nu)':', vast nominaal bedrag');
+  if(r.mode==='decl')return TF('mtDecl',{p0:numTxt(r.p0),p1:numTxt(r.p1),n:r.n});
+  if(r.mode==='pct')return TF('mtPct',{pf:numTxt(r.pf)});
+  return TF('mtUsd',{usd:money(r.usd),real:r.real});
 }
 $('exp-csv').addEventListener('click',async()=>{
-  if(!lastRes){expMsg('Vul eerst geldige gegevens in.',true);return}
+  if(!lastRes){expMsg(T('eInputs'),true);return}
   expMsg('');const {r,res}=lastRes;
-  const head=['Scenario','Factor','Jaar','Koers 1 jan (USD)','Groei (%)','Opname (%)','BTC verkocht','Opname (USD)','Opname in USD van nu','Cumulatief (USD)','BTC over','Waarde (USD)'];
-  const lines=[head.join(';')];
-  SC.forEach((c,i)=>res[i].rows.forEach(w=>lines.push([c.name,DEC(c.f,1),w.y,DEC(w.P,2),DEC(w.growth*100,2),DEC(w.pct*100,2),DEC(w.sold,8),DEC(w.W,2),DEC(w.Wr,2),DEC(w.cum,2),DEC(w.btc,8),DEC(w.V,2)].join(';'))));
-  const ok=await saveFile(baseName(r)+'.csv','﻿'+lines.join('\r\n')+'\r\n');
-  if(ok)expMsg('CSV gemaakt.');
+  const N=(v,d)=>v.toFixed(d);
+  const head=['Scenario','Factor','Year','Price 1 Jan (USD)','Growth (%)','Withdrawal (%)','BTC sold','Withdrawal (USD)','Withdrawal in today\'s USD','Cumulative (USD)','BTC left','Value (USD)'];
+  const q=s=>/[",\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s;
+  const lines=[head.map(q).join(',')];
+  SC.forEach((c,i)=>res[i].rows.forEach(w=>lines.push([scName(c,'en'),N(c.f,1),w.y,N(w.P,2),N(w.growth*100,2),N(w.pct*100,2),N(w.sold,8),N(w.W,2),N(w.Wr,2),N(w.cum,2),N(w.btc,8),N(w.V,2)].join(','))));
+  const ok=await saveFile('fire-plan_'+r.btc+'BTC_'+r.start+'_'+r.yrs+'y_'+stamp()+'.csv',lines.join('\r\n')+'\r\n');
+  if(ok)expMsg(T('csvDone'));
 });
 const libs={};
 function loadLib(src){return libs[src]||(libs[src]=new Promise((res,rej)=>{const e=document.createElement('script');e.src=src;e.onload=res;e.onerror=()=>{delete libs[src];rej(new Error('load'))};document.head.appendChild(e)}))}
-const pdfTxt=v=>String(v).replace(/−/g,'-').replace(/≈/g,'~').replace(/[   ]/g,' ').replace(/≥/g,'>=');
+const pdfTxt=v=>String(v).replace(/−/g,'-').replace(/≈/g,'~').replace(/[   ]/g,' ').replace(/≥/g,'>=').replace(/[‘’]/g,"'");
 function chartImg(ch){const c=ch.canvas,o=document.createElement('canvas');o.width=c.width;o.height=c.height;const g=o.getContext('2d');g.fillStyle='#ffffff';g.fillRect(0,0,o.width,o.height);g.drawImage(c,0,0);return {url:o.toDataURL('image/png'),ratio:c.height/c.width}}
 $('exp-pdf').addEventListener('click',async()=>{
-  if(!lastRes){expMsg('Vul eerst geldige gegevens in.',true);return}
-  const btn=$('exp-pdf');btn.disabled=true;expMsg('PDF wordt gemaakt…');
+  if(!lastRes){expMsg(T('eInputs'),true);return}
+  const btn=$('exp-pdf');btn.disabled=true;expMsg(T('pdfBusy'));
   try{
     await loadLib('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
     await loadLib('https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js');
-  }catch(e){btn.disabled=false;expMsg('De PDF-bibliotheek kon niet laden. Controleer je internetverbinding.',true);return}
+  }catch(e){btn.disabled=false;expMsg(T('pdfLib'),true);return}
   try{
     drawFire();
     const {r,res}=lastRes,s=res[scSel],sc=SC[scSel];
     const doc=new window.jspdf.jsPDF({unit:'mm',format:'a4'}),W=210,M=14;
     const ORANGE=[242,134,15],INK=[20,26,36],MUTED=[93,102,118];
-    doc.setFont('helvetica','bold');doc.setFontSize(18);doc.setTextColor(...INK);doc.text('Bitcoin FIRE-plan',M,20);
+    doc.setFont('helvetica','bold');doc.setFontSize(18);doc.setTextColor(...INK);doc.text(pdfTxt(T('pdfTitle')),M,20);
     doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(...MUTED);
-    doc.text(pdfTxt('Conservatieve Power Law: prijs = 4,42 x 10^-17 x (dagen sinds 3 jan 2009)^5,6'),M,26);
-    doc.text(pdfTxt('Gemaakt op '+longDate(TODAY)+(lastMs?' · koersdata t/m '+longDate(lastMs):'')),M,31);
+    doc.text(pdfTxt(T('pdfFormula')),M,26);
+    doc.text(pdfTxt(T('pdfMade',longDate(TODAY))+(lastMs?T('pdfThrough',longDate(lastMs)):'')),M,31);
     doc.setFontSize(11);doc.setTextColor(...INK);
     const head=pdfTxt($('fire-head').textContent);
     const hl=doc.splitTextToSize(head,W-2*M);doc.text(hl,M,40);
     let y=40+hl.length*5+3;
     const params=[
-      ['Bitcoin stack',r.btc.toLocaleString('nl-NL',{maximumFractionDigits:8})+' BTC'],
-      ['Eerste opnamejaar',String(r.start)],
-      ['Aantal jaren opnemen',r.yrs+' jaar (t/m '+(r.start+r.yrs-1)+')'],
-      ['Opnamemethode',methodText(r)],
-      ['Inflatie',String(r.inf).replace('.',',')+'% per jaar'],
-      ['Minimum per jaar',r.min!=null?money(r.min)+' (in $ van nu)':'geen'],
-      ['Maximum per jaar',r.max!=null?money(r.max)+' (in $ van nu)':'geen'],
-      ['Gekozen scenario',sc.name+' ('+sc.key+')'],
-      ['Uitgangspunten','Koers per jaar = Power Law op 1 januari x scenariofactor. Opname op 1 januari tegen die koers. Zonder belasting.']
+      [T('pStack'),r.btc.toLocaleString(LOC(),{maximumFractionDigits:8})+' BTC'],
+      [T('pFirst'),String(r.start)],
+      [T('pYears'),T('pYearsV',r.yrs,r.start+r.yrs-1)],
+      [T('pMethod'),methodText(r)],
+      [T('pInf'),T('pInfV',numTxt(r.inf))],
+      [T('pMin'),r.min!=null?money(r.min)+T('pToday'):T('none')],
+      [T('pMax'),r.max!=null?money(r.max)+T('pToday'):T('none')],
+      [T('pSc'),scName(sc)+' ('+scKey(sc)+')'],
+      [T('pAssume'),T('pAssumeV')]
     ].map(x=>x.map(pdfTxt));
-    doc.autoTable({startY:y,head:[['Parameter','Waarde']],body:params,theme:'grid',margin:{left:M,right:M},
+    doc.autoTable({startY:y,head:[[T('pParam'),T('pValue')]],body:params,theme:'grid',margin:{left:M,right:M},
       styles:{fontSize:9,cellPadding:2,textColor:INK},headStyles:{fillColor:ORANGE,textColor:255},columnStyles:{0:{cellWidth:48,fontStyle:'bold'}},
       didParseCell:d=>{if(d.section==='body'&&d.row.index===7)d.cell.styles.fillColor=[253,237,216]}});
     y=doc.lastAutoTable.finalY+6;
-    const sum=SC.map((c,i)=>{const x=res[i];return [c.name+(i===scSel?' (gekozen)':''),c.key,x.first!=null?money(x.first):'-',money(x.avg),money(x.total),btcFmt(x.endBtc),money(x.endV),x.dep?'Op in '+x.dep:'Houdt stand t/m '+x.end].map(pdfTxt)});
-    doc.autoTable({startY:y,head:[['Scenario','Factor','Eerste opname','Gem. per jaar','Totaal opgenomen','BTC eind','Waarde eind','Status']],body:sum,theme:'grid',margin:{left:M,right:M},
+    const sum=SC.map((c,i)=>{const x=res[i];return [scName(c)+(i===scSel?T('pChosen'):''),scKey(c),x.first!=null?money(x.first):'-',money(x.avg),money(x.total),btcFmt(x.endBtc),money(x.endV),x.dep?T('stDep',x.dep):T('stOk',x.end)].map(pdfTxt)});
+    doc.autoTable({startY:y,head:[T('pSumHead').map(pdfTxt)],body:sum,theme:'grid',margin:{left:M,right:M},
       styles:{fontSize:8,cellPadding:1.8,textColor:INK},headStyles:{fillColor:ORANGE,textColor:255},
       columnStyles:{2:{halign:'right'},3:{halign:'right'},4:{halign:'right'},5:{halign:'right'},6:{halign:'right'}},
       didParseCell:d=>{if(d.section==='body'&&d.row.index===scSel)d.cell.styles.fillColor=[253,237,216]}});
@@ -749,41 +926,41 @@ $('exp-pdf').addEventListener('click',async()=>{
     const m=lastRes.mcr;
     if(m){
       const mrows=[
-        ['Instellingen',num.format(m.N)+' paden, midden '+f1(m.st.mid)+'x model, halveringstijd '+f1(m.st.hl)+' mnd, schok '+f1(m.st.sig)+'% per maand, seed '+m.st.seed],
-        ['Slagingskans',pctTxt(m.success)+' (stack houdt het vol t/m '+m.END+')'+(m.depMed?'; gaat het mis, dan mediaan op in '+m.depMed:'')],
-        ['Eerste opname '+r.start,'mediaan '+money(m.first(.5))+' (10-90%: '+money(m.first(.1))+' - '+money(m.first(.9))+')'],
-        ['Totaal opgenomen','mediaan '+money(m.tot(.5))+' (10-90%: '+money(m.tot(.1))+' - '+money(m.tot(.9))+')'],
-        ['BTC over eind '+m.END,'mediaan '+btcFmt(m.endB(.5))+' (10-90%: '+btcFmt(m.endB(.1))+' - '+btcFmt(m.endB(.9))+')']].map(x=>x.map(pdfTxt));
+        [T('pMcSet'),T('pMcSetV',num.format(m.N),f1(m.st.mid),f1(m.st.hl),f1(m.st.sig),m.st.seed)],
+        [T('pMcSucc'),T('pMcSuccV',pctTxt(m.success),m.END)+(m.depMed?T('pMcDep',m.depMed):'')],
+        [T('pMcFirst',r.start),T('pMedRange',money(m.first(.5)),money(m.first(.1)),money(m.first(.9)))],
+        [T('pMcTot'),T('pMedRange',money(m.tot(.5)),money(m.tot(.1)),money(m.tot(.9)))],
+        [T('pMcEnd',m.END),T('pMedRange',btcFmt(m.endB(.5)),btcFmt(m.endB(.1)),btcFmt(m.endB(.9)))]].map(x=>x.map(pdfTxt));
       doc.autoTable({startY:y,head:[['Monte Carlo','']],body:mrows,theme:'grid',margin:{left:M,right:M},
         styles:{fontSize:8.5,cellPadding:1.8,textColor:INK},headStyles:{fillColor:ORANGE,textColor:255},columnStyles:{0:{cellWidth:48,fontStyle:'bold'}}});
       y=doc.lastAutoTable.finalY+7;
     }else y+=2;
-    const imgs=[[wChart,'Opname per jaar (USD)'],[bChart,'Bitcoin over']].filter(x=>x[0]);
+    const imgs=[[wChart,T('pChW')],[bChart,T('pChB')]].filter(x=>x[0]);
     if(imgs.length){
       const cw=(W-2*M-6)/2,ratio=chartImg(imgs[0][0]).ratio,ch=Math.min(cw*ratio,62);
       if(y+ch+10>285){doc.addPage();y=20}
       doc.setFontSize(10);doc.setFont('helvetica','bold');
       imgs.forEach(([c,t],i)=>{const x=M+i*(cw+6),im=chartImg(c);doc.text(pdfTxt(t),x,y);doc.addImage(im.url,'PNG',x,y+2,cw,Math.min(cw*im.ratio,62))});
       doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(...MUTED);
-      doc.text(pdfTxt('Lijnen: Bodem 0,5x (grijs, gestreept) · Model 1x (oranje) · Bovenkant 2x (blauw, gestippeld).'),M,y+ch+6);
+      doc.text(pdfTxt(T('pLines')),M,y+ch+6);
       y=y+ch+11;
     }
     const real=r.inf>0;
-    const cols=['Jaar','Koers 1 jan','Groei','Opname %','BTC verkocht','Opname'].concat(real?['In $ van nu']:[],['Cumulatief','BTC over','Waarde']);
+    const cols=[T('thYear'),T('thPrice'),T('thGrowth'),T('thWpct'),T('thSold'),T('thW')].concat(real?[T('thReal')]:[],[T('thCum'),T('thLeft'),T('thValue')]);
     const body=s.rows.map(w=>{const c=[w.y,money(w.P),pct1(w.growth),w.W?pct1(w.pct):'-',w.sold?'-'+btcFmt(w.sold):'-',w.W?money(w.W):'-'];if(real)c.push(w.W?money(w.Wr):'-');c.push(w.cum?money(w.cum):'-',btcFmt(w.btc),money(w.V));return c.map(pdfTxt)});
     if(y>240){doc.addPage();y=20}
-    doc.setFontSize(11);doc.setFont('helvetica','bold');doc.setTextColor(...INK);doc.text(pdfTxt('Per jaar: '+sc.name+' ('+sc.key+')'),M,y);
+    doc.setFontSize(11);doc.setFont('helvetica','bold');doc.setTextColor(...INK);doc.text(pdfTxt(T('pPerYear',scName(sc),scKey(sc))),M,y);
     const right={};for(let i=1;i<cols.length;i++)right[i]={halign:'right'};
     doc.autoTable({startY:y+3,head:[cols.map(pdfTxt)],body,theme:'striped',margin:{left:M,right:M,bottom:20},
       styles:{fontSize:7.2,cellPadding:1.4,textColor:INK},headStyles:{fillColor:ORANGE,textColor:255,halign:'right'},columnStyles:right,
       didParseCell:d=>{if(d.section==='head'&&d.column.index===0)d.cell.styles.halign='left';if(d.section==='body'&&s.rows[d.row.index].start)d.cell.styles.fillColor=[253,237,216]}});
     const n=doc.getNumberOfPages();
     for(let i=1;i<=n;i++){doc.setPage(i);doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.setTextColor(...MUTED);
-      doc.text(pdfTxt('Scenario op basis van de conservatieve Power Law; geen voorspelling of financieel advies.'),M,286);doc.text('Bron koersdata: github.com/rcaljouw/btc-price-history',M,290);
-      doc.text('Pagina '+i+' van '+n,W-M,290,{align:'right'})}
-    const ok=await saveFile(baseName(r)+'.pdf',doc.output('blob'));
-    if(ok)expMsg('PDF-rapport gemaakt.');else if(!$('exp-msg').classList.contains('bad'))expMsg('');
-  }catch(e){console.error(e);expMsg('Het rapport kon niet worden gemaakt.',true)}
+      doc.text(pdfTxt(T('pFoot1')),M,286);doc.text(pdfTxt(T('pFoot2')),M,290);
+      doc.text(T('pPage',i,n),W-M,290,{align:'right'})}
+    const ok=await saveFile(T('pdfFile',numTxt(r.btc),r.start,r.yrs,stamp())+'.pdf',doc.output('blob'));
+    if(ok)expMsg(T('pdfDone'));else if(!$('exp-msg').classList.contains('bad'))expMsg('');
+  }catch(e){console.error(e);expMsg(T('pdfFail'),true)}
   btn.disabled=false;
 });
 
@@ -791,8 +968,8 @@ $('exp-pdf').addEventListener('click',async()=>{
 const MCDEF={mid:1,hl:10,sig:20,n:5000,seed:42};
 const MCS={...MCDEF};
 let mc=null, mcChart=null, mcTimer=null;
-const f1=v=>String(+v.toFixed(2)).replace('.',',');
-const pctTxt=v=>(v*100).toLocaleString('nl-NL',{maximumFractionDigits:v>0&&v<.01?1:0})+'%';
+const f1=v=>String(+v.toFixed(2)).replace('.',DECS());
+const pctTxt=v=>(v*100).toLocaleString(LOC(),{maximumFractionDigits:v>0&&v<.01?1:0})+'%';
 function rng(seed){let a=seed>>>0;return()=>{a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
 function runMC(){
   const st={...MCS},N=st.n,startMs=lastMs??TODAY,p0=lastMs!=null?prices.get(lastMs):null,mu=Math.log(st.mid);
@@ -823,40 +1000,40 @@ function mcRead(){
   if(!(a.ok&&b.ok&&c.ok&&d.ok)||[a,b,c,d].some(x=>x.v==null))return false;
   MCS.mid=a.v;MCS.hl=b.v;MCS.sig=c.v;MCS.seed=d.v;return true;
 }
-function mcSave(){try{localStorage.setItem('bpl-mc',JSON.stringify({...MCS,date:$('mc-date').value,thr:$('mc-thr').value}))}catch(e){}}
+function mcSave(){try{localStorage.setItem('bpl-mc',JSON.stringify({...MCS,date:$('mc-date').value,thr:pnum($('mc-thr').value)}))}catch(e){}}
 function mcFill(){
   $('mc-mid').value=f1(MCS.mid);$('mc-hl').value=f1(MCS.hl);$('mc-sig').value=f1(MCS.sig);$('mc-seed').value=MCS.seed;
   document.querySelectorAll('[data-n]').forEach(b=>b.setAttribute('aria-pressed',String(+b.dataset.n===MCS.n)));
 }
-function mcLoad(){try{const o=JSON.parse(localStorage.getItem('bpl-mc')||'null');if(!o)return;for(const k in MCDEF)if(typeof o[k]==='number'&&isFinite(o[k]))MCS[k]=o[k];if(![1000,5000,10000].includes(MCS.n))MCS.n=5000;if(o.date)$('mc-date').value=o.date;if(o.thr!=null)$('mc-thr').value=o.thr}catch(e){}}
+function mcLoad(){try{const o=JSON.parse(localStorage.getItem('bpl-mc')||'null');if(!o)return;for(const k in MCDEF)if(typeof o[k]==='number'&&isFinite(o[k]))MCS[k]=o[k];if(![1000,5000,10000].includes(MCS.n))MCS.n=5000;if(o.date)$('mc-date').value=o.date;if(typeof o.thr==='number'&&isFinite(o.thr))$('mc-thr').value=String(o.thr).replace('.',DECS())}catch(e){}}
 function mcRecompute(){
   if(!mcRead())return;
   runMC();mcSave();renderMC();
   if(lastRes)renderFire();
 }
 function mcSchedule(){clearTimeout(mcTimer);mcTimer=setTimeout(mcRecompute,180)}
-for(let yy=Y0;yy<=2035;yy++)opt($('mc-date'),yy,'1 januari '+yy);
-$('mc-date').value=String(Math.min(2030,2035));
+function fillMcDates(){const el=$('mc-date'),keep=el.value;el.textContent='';for(let yy=Y0;yy<=2035;yy++)opt(el,yy,T('dateOpt',yy));el.value=keep||'2030';if(!el.value)el.value=String(Y0)}
+fillMcDates();
 
 function renderMC(){
   if(!mc)return;
   const yr=+$('mc-date').value,g=mc.janIdx[yr];if(g==null)return;
   const s=colStats(g),thrF=field('mc-thr',{min:1});
   const lo=s.q(.05),hi=s.q(.95),med=s.q(.5);
-  $('mc-head').textContent='Op 1 januari '+yr+' ligt de koers in 90% van de '+num.format(mc.N)+' paden tussen '+money(lo)+' en '+money(hi)+'. De mediaan is '+money(med)+', tegen '+money(s.PL)+' volgens je conservatieve model.';
+  $('mc-head').textContent=TF('mcHead',{yr,n:num.format(mc.N),lo:money(lo),hi:money(hi),med:money(med),pl:money(s.PL)});
   const tiles=[
-    ['Mediaan',money(med),f1(med/s.PL)+'× model'],
-    ['50% van de paden',compact(s.q(.25))+' – '+compact(s.q(.75)),'tussen 25% en 75%'],
-    ['90% van de paden',compact(lo)+' – '+compact(hi),'tussen 5% en 95%'],
-    ['Kans boven model',pctTxt(s.share(x=>x>0)),'koers > '+compact(s.PL)],
-    ['Kans onder 0,5×',pctTxt(s.share(x=>x<Math.log(.5))),'koers < '+compact(s.PL*.5)],
-    ['Kans boven bedrag',thrF.ok&&thrF.v?pctTxt(s.share(x=>x>Math.log(thrF.v/s.PL))):'–',thrF.ok&&thrF.v?'koers > '+money(thrF.v):'vul een bedrag in']];
+    [T('tMed'),money(med),T('tMedS',f1(med/s.PL))],
+    [T('t50'),compact(s.q(.25))+' – '+compact(s.q(.75)),T('t50S')],
+    [T('t90'),compact(lo)+' – '+compact(hi),T('t90S')],
+    [T('tAbove'),pctTxt(s.share(x=>x>0)),T('tPriceGt',compact(s.PL))],
+    [T('tBelow'),pctTxt(s.share(x=>x<Math.log(.5))),T('tPriceLt',compact(s.PL*.5))],
+    [T('tThr'),thrF.ok&&thrF.v?pctTxt(s.share(x=>x>Math.log(thrF.v/s.PL))):'–',thrF.ok&&thrF.v?T('tPriceGt',money(thrF.v)):T('tEnter')]];
   const box=$('mc-tiles');box.textContent='';
   tiles.forEach(([a,b,c])=>{const d=document.createElement('div');d.className='tile';const dt=document.createElement('dt');dt.textContent=a;const dd=document.createElement('dd');dd.textContent=b;const sm=document.createElement('small');sm.textContent=c;dd.appendChild(sm);d.append(dt,dd);box.appendChild(d)});
   const tb=$('mc-tbody');tb.textContent='';
   for(let y=Y0;y<=2035;y++){const gg=mc.janIdx[y];if(gg==null)continue;const t=colStats(gg),tr=document.createElement('tr');if(y===yr)tr.className='start';
-    ['1 jan '+y,money(t.PL),money(t.q(.05)),money(t.q(.25)),money(t.q(.5)),money(t.q(.75)),money(t.q(.95)),pctTxt(t.share(x=>x>0)),pctTxt(t.share(x=>x<Math.log(.5)))].forEach(v=>{const td=document.createElement('td');td.textContent=v;tr.appendChild(td)});tb.appendChild(tr)}
-  $('mc-tnote').textContent=num.format(mc.N)+' paden · midden '+f1(mc.st.mid)+'× · halveringstijd '+f1(mc.st.hl)+' mnd · schok '+f1(mc.st.sig)+'% · seed '+mc.st.seed;
+    [T('rowJan',y),money(t.PL),money(t.q(.05)),money(t.q(.25)),money(t.q(.5)),money(t.q(.75)),money(t.q(.95)),pctTxt(t.share(x=>x>0)),pctTxt(t.share(x=>x<Math.log(.5)))].forEach(v=>{const td=document.createElement('td');td.textContent=v;tr.appendChild(td)});tb.appendChild(tr)}
+  $('mc-tnote').textContent=T('tnote',num.format(mc.N),f1(mc.st.mid),f1(mc.st.hl),f1(mc.st.sig),mc.st.seed);
   drawMC();
 }
 function drawMC(){
@@ -870,20 +1047,19 @@ function drawMC(){
   const mdl=[];for(let t=from;t<=Date.UTC(2035,0,1);t+=14*DAY)mdl.push({x:toYear(t),y:model(daysOf(t)),ms:t});
   const a90=color(btc,.13),a50=color(btc,.3);
   const ds=[
-    {label:'Koers',data:hist,borderColor:price,borderWidth:1.5,pointRadius:0},
+    {label:T('price'),data:hist,borderColor:price,borderWidth:1.5,pointRadius:0},
     {label:'95%',data:band(4),borderWidth:0,pointRadius:0,fill:5,backgroundColor:a90},
     {label:'75%',data:band(3),borderWidth:0,pointRadius:0,fill:4,backgroundColor:a50},
-    {label:'Mediaan',data:band(2),borderColor:btc,borderWidth:2,pointRadius:0},
+    {label:T('median'),data:band(2),borderColor:btc,borderWidth:2,pointRadius:0},
     {label:'25%',data:band(1),borderWidth:0,pointRadius:0},
     {label:'5%',data:band(0),borderWidth:0,pointRadius:0},
     {label:'Model 1×',data:mdl,borderColor:bl,borderWidth:1.5,borderDash:[6,4],pointRadius:0}];
   let lo=Infinity,hi=0;mc.pct[0].forEach(v=>{if(v<lo)lo=v});mc.pct[4].forEach(v=>{if(v>hi)hi=v});hist.forEach(p=>{if(p.y<lo)lo=p.y;if(p.y>hi)hi=p.y});
-  const fmtY=v=>v>=1e6?'$'+(v/1e6).toLocaleString('nl-NL')+' mln':v>=1e3?'$'+(v/1e3)+'k':'$'+v;
   const opts={responsive:true,maintainAspectRatio:false,animation:false,parsing:false,normalized:true,
     interaction:{mode:'mcX',intersect:false},
     plugins:{legend:{display:false},tooltip:{displayColors:false,callbacks:{title:t=>t.length?longDate(t[0].raw.ms):'',label:t=>t.dataset.label+': '+money(t.parsed.y)},itemSort:(a,b)=>b.parsed.y-a.parsed.y}},
     scales:{x:{type:'linear',min:2023,max:2035,afterBuildTicks:sc=>{sc.ticks=[];for(let v=2023;v<=2035;v++)sc.ticks.push({value:v})},ticks:{color:muted,maxRotation:0,autoSkip:true,autoSkipPadding:10,callback:v=>v},grid:{display:false},border:{color:grid}},
-      y:{type:'logarithmic',min:lo/1.3,max:hi*1.3,ticks:{color:muted,callback:v=>{const e=Math.pow(10,Math.floor(Math.log10(v)+1e-9)),m=Math.round(v/e*1000)/1000;return [1,2,5].includes(m)?fmtY(v):''}},grid:{color:grid},border:{display:false}}}};
+      y:{type:'logarithmic',min:lo/1.3,max:hi*1.3,ticks:{color:muted,callback:v=>{const e=Math.pow(10,Math.floor(Math.log10(v)+1e-9)),m=Math.round(v/e*1000)/1000;return [1,2,5].includes(m)?axisUsd(v):''}},grid:{color:grid},border:{display:false}}}};
   if(!Chart.Interaction.modes.mcX)Chart.Interaction.modes.mcX=function(c,e){
     const v=c.scales.x.getValueForPixel(e.x);if(v==null)return [];
     const near=(arr)=>{let lo=0,hi=arr.length-1;if(hi<0)return -1;while(hi-lo>1){const m=(lo+hi)>>1;if(arr[m].x<v)lo=m;else hi=m}return Math.abs(arr[lo].x-v)<=Math.abs(arr[hi].x-v)?lo:hi};
@@ -919,21 +1095,21 @@ function fireMC(r){
 }
 function renderMcFire(m,r){
   const box=$('mc-fire');box.textContent='';
-  if(!m){const p=document.createElement('p');p.className='sub2';p.textContent='Monte Carlo wordt berekend…';box.appendChild(p);return}
+  if(!m){const p=document.createElement('p');p.className='sub2';p.textContent=T('mcRunning');box.appendChild(p);return}
   const ok=m.success>=.9,mid=m.success>=.7;
   box.innerHTML='<div class="mcf-top"><div><span class="lbl"></span><p class="big2"></p><p class="sub2"></p></div><span class="state"></span></div><div class="meter" role="img"><i></i></div><dl></dl><p class="note"></p>';
-  box.querySelector('.lbl').textContent='Monte Carlo · '+num.format(m.N)+' paden · midden '+f1(m.st.mid)+'×';
+  box.querySelector('.lbl').textContent=T('mcfLbl',num.format(m.N),f1(m.st.mid));
   box.querySelector('.big2').textContent=pctTxt(m.success);
-  box.querySelector('.sub2').textContent='slagingskans: je stack houdt het vol t/m '+m.END+(m.depMed?' · gaat het mis, dan mediaan op in '+m.depMed:'');
-  const st=box.querySelector('.state');st.className='state '+(ok?'ok':'no');st.textContent=ok?'Robuust':mid?'Kwetsbaar':'Groot risico';
-  const mt=box.querySelector('.meter');mt.setAttribute('aria-label','Slagingskans '+pctTxt(m.success));mt.querySelector('i').style.width=(m.success*100).toFixed(1)+'%';
+  box.querySelector('.sub2').textContent=T('mcfSub',m.END)+(m.depMed?T('mcfDep',m.depMed):'');
+  const st=box.querySelector('.state');st.className='state '+(ok?'ok':'no');st.textContent=ok?T('sRobust'):mid?T('sFragile'):T('sRisk');
+  const mt=box.querySelector('.meter');mt.setAttribute('aria-label',T('succAria',pctTxt(m.success)));mt.querySelector('i').style.width=(m.success*100).toFixed(1)+'%';
   const rows=[
-    ['Eerste opname '+r.start,money(m.first(.5))+' mediaan',compact(m.first(.1))+' – '+compact(m.first(.9))+' (10–90%)'],
-    ['Totaal opgenomen t/m '+m.END,compact(m.tot(.5))+' mediaan',compact(m.tot(.1))+' – '+compact(m.tot(.9))+' (10–90%)'],
-    ['BTC over eind '+m.END,btcFmt(m.endB(.5))+' mediaan',btcFmt(m.endB(.1))+' – '+btcFmt(m.endB(.9))+' (10–90%)']];
+    [T('mcfFirst',r.start),T('medianW',money(m.first(.5))),compact(m.first(.1))+' – '+compact(m.first(.9))+' (10–90%)'],
+    [T('mcfTot',m.END),T('medianW',compact(m.tot(.5))),compact(m.tot(.1))+' – '+compact(m.tot(.9))+' (10–90%)'],
+    [T('mcfEnd',m.END),T('medianW',btcFmt(m.endB(.5))),btcFmt(m.endB(.1))+' – '+btcFmt(m.endB(.9))+' (10–90%)']];
   const dl=box.querySelector('dl');
   rows.forEach(([a,b,c])=>{const d=document.createElement('div'),dt=document.createElement('dt'),dd=document.createElement('dd');dt.textContent=a;dd.textContent=b;dd.appendChild(document.createElement('br'));dd.appendChild(document.createTextNode(c));d.append(dt,dd);dl.appendChild(d)});
-  box.querySelector('.note').textContent='Slaagt = de stack raakt niet op vóór het einde van je opnameperiode. '+(r.mode!=='usd'&&r.min==null?'Met een percentage raakt de stack zelden op; kijk vooral naar de bandbreedte van je opnames. ':'')+'Instellingen staan in het tabblad Monte Carlo.';
+  box.querySelector('.note').textContent=T('mcfNote1')+(r.mode!=='usd'&&r.min==null?T('mcfNote2'):'')+T('mcfNote3');
 }
 
 $('mc-form').addEventListener('submit',e=>e.preventDefault());
@@ -965,11 +1141,30 @@ if(location.hash==='#fire')showView('fire');else if(location.hash==='#mc')showVi
 window.addEventListener('load',()=>{if(!$('view-fire').hidden)drawFire()});
 
 const rebuild=()=>{
-  if(chart){chart.destroy();buildChart();render()}
+  if(chart){chart.destroy();chart=null;buildChart()}
   if(wChart){wChart.destroy();wChart=null}if(bChart){bChart.destroy();bChart=null}
+  if(mcChart){mcChart.destroy();mcChart=null}
   if(lastRes)renderFire();
+  if(mc)renderMC();
 };
 mq.addEventListener&&mq.addEventListener('change',rebuild);
 new MutationObserver(rebuild).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+
+/* ---------- Taal wisselen ---------- */
+const NUMIDS=['f-btc','f-yrs','f-p0','f-p1','f-pn','f-pf','f-usd','f-inf','f-min','f-max','mc-mid','mc-hl','mc-sig','mc-seed','mc-thr'];
+function setLang(l){
+  if(l===LANG||!I18N[l])return;
+  const vals={};NUMIDS.forEach(id=>{vals[id]=pnum($(id).value,LANG)});
+  LANG=l;try{localStorage.setItem('bpl-lang',l)}catch(e){}
+  mkFmt();
+  NUMIDS.forEach(id=>{const v=vals[id];if(v!=null&&!isNaN(v))$(id).value=String(v).replace('.',DECS())});
+  applyStatic();fillMonths();fillMcDates();zoomHint();freshText();
+  if(sel!=null)syncSelects(sel);
+  expMsg('');
+  render();
+  rebuild();
+  if(!lastRes)renderFire();
+}
+document.querySelectorAll('[data-lang]').forEach(b=>b.addEventListener('click',()=>setLang(b.dataset.lang)));
 })();
 </script>
