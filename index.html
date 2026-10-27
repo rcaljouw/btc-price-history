@@ -87,6 +87,22 @@ footer a{color:inherit}
 .mcf dd{margin:3px 0 0;font:500 14px/1.35 var(--f-data);font-variant-numeric:tabular-nums}
 .meter{height:8px;border-radius:999px;background:color-mix(in srgb,var(--warn) 22%,transparent);overflow:hidden}
 .meter i{display:block;height:100%;background:var(--good);border-radius:999px}
+.pbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:10px 12px}
+.pbar .lbl{margin-right:4px}
+.pbar select{font:500 16px var(--f-data);color:var(--ink);background:var(--bg);border:1px solid var(--btc);border-radius:10px;padding:8px 10px;min-height:42px;min-width:0}
+.pbar .zb{min-width:42px}
+.pbar .sp{flex:1}
+.sect{font:500 11px/1 var(--f-body);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:2px 0 -6px}
+.tiles.t3{grid-template-columns:repeat(auto-fit,minmax(170px,1fr))}
+.probs{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:2px 14px}
+.prow{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.prow:last-child{border-bottom:0}
+.prow .pl{display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-width:0;font-size:14px}
+.prow .pt{font:400 13px var(--f-data);color:var(--muted)}
+.prow .pv{font:600 22px/1 var(--f-display);font-variant-numeric:tabular-nums}
+.prow .fld{flex-direction:row;align-items:center;gap:8px}
+.prow .fld .in{min-height:40px;width:170px;border-color:var(--btc)}
+.prow .fld .msg{margin:0}
 .exp{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 .exp-msg{font-size:13px;color:var(--muted)}
 .exp-msg.bad{color:var(--warn)}
@@ -319,16 +335,28 @@ tr.empty td{color:var(--muted)}
           <button type="button" class="zb" id="mc-def" data-i="mcDefaults">Standaardwaarden uit data</button>
           <p class="note" data-i="mcMeasured">Gemeten t.o.v. je conservatieve lijn (2015–nu): een afwijking halveert in ±10 maanden, met een schok van ±20% per maand. Sinds 2018 lag de koers mediaan op 1,36× je lijn.</p>
         </div>
-        <div class="fgroup">
-          <h2 data-i="refDate">Peildatum</h2>
-          <div class="fld"><label for="mc-date" data-i="date">Datum</label><select id="mc-date"></select></div>
-          <div class="fld" id="mc-thr-w"><label for="mc-thr" data-i="thrLabel">Kans dat de koers boven dit bedrag ligt</label><div class="in"><span class="u" style="padding:0 0 0 12px">$</span><input id="mc-thr" inputmode="decimal" autocomplete="off" value="250000"></div><p class="msg" hidden data-i="msgAmt">Vul een bedrag in.</p></div>
-        </div>
       </form>
       <div class="out">
+        <div class="pbar">
+          <label class="lbl" for="mc-date" data-i="refDate">Peildatum</label>
+          <button type="button" class="zb" id="mc-prev" data-ia="yPrevAria" aria-label="Eén jaar terug">◂</button>
+          <select id="mc-date"></select>
+          <button type="button" class="zb" id="mc-next" data-ia="yNextAria" aria-label="Eén jaar vooruit">▸</button>
+          <span class="sp"></span>
+          <button type="button" class="zb" id="exp-pdf-mc" data-i="expPdf">Exporteer PDF-rapport</button>
+          <span class="exp-msg" id="exp-msg-mc" role="status"></span>
+        </div>
         <p class="headline" id="mc-head" data-i="simRunning">Simulatie wordt berekend…</p>
-        <dl class="tiles" id="mc-tiles"></dl>
+        <p class="sect" data-i="secRange">Bandbreedte</p>
+        <dl class="tiles t3" id="mc-tiles"></dl>
+        <p class="sect" data-i="secProb">Kansen op de peildatum</p>
+        <div class="probs">
+          <div class="prow"><span class="pl"><span data-i="pAboveModel">Boven model</span><span class="pt" id="pt-model">–</span></span><span class="pv" id="pv-model">–</span></div>
+          <div class="prow"><span class="pl"><span data-i="pBelowFloor">Onder bodem 0,5×</span><span class="pt" id="pt-floor">–</span></span><span class="pv" id="pv-floor">–</span></div>
+          <div class="prow"><span class="pl"><label for="mc-thr" data-i="pAboveAmt">Boven</label><span class="fld" id="mc-thr-w"><span class="in"><span class="u" style="padding:0 0 0 12px">$</span><input id="mc-thr" inputmode="decimal" autocomplete="off" value="250000"></span><span class="msg" hidden data-i="msgAmt">Vul een bedrag in.</span></span></span><span class="pv" id="pv-thr">–</span></div>
+        </div>
         <section class="chart-box" data-ia="fanAria" aria-label="Waaiergrafiek">
+          <p class="zhint" data-i="fanHint" style="margin:0 4px 8px">Tik in de grafiek om de peildatum te kiezen.</p>
           <div class="legend">
             <span><i class="sw" style="border-color:var(--price)"></i><span data-i="price">Koers</span></span>
             <span><i class="sw" style="border-color:var(--btc)"></i><span data-i="median">Mediaan</span></span>
@@ -387,6 +415,7 @@ nl:{
   fanCanvas:'Waaiergrafiek van gesimuleerde bitcoin-koerspaden rond de conservatieve Power Law tot 2035, met mediaan, 50%- en 90%-band.',
   on1Jan:'Per 1 januari',chAbove:'Kans > model',chBelow:'Kans < 0,5×',
   mcNote:'Elk pad volgt ln(koers / model): de afwijking van je conservatieve lijn keert met de ingestelde halveringstijd terug naar het midden, plus elke maand een normaal verdeelde schok (Ornstein-Uhlenbeck). Start bij de laatste close. Een scenario-analyse binnen het model, geen voorspelling of financieel advies.',
+  secRange:'Bandbreedte',secProb:'Kansen op de peildatum',pAboveModel:'Boven model',pBelowFloor:'Onder bodem 0,5×',pAboveAmt:'Boven',fanHint:'Tik in de grafiek om de peildatum te kiezen.',
   loading:'Koersdata laden…',source:'Bron:',sourceTail:'(dagelijkse close, UTC). Model en extrapolatie zijn een scenario, geen voorspelling of financieel advies.',
   months:['januari','februari','maart','april','mei','juni','juli','augustus','september','oktober','november','december'],
   mshort:['jan','feb','mrt','apr','mei','jun','jul','aug','sep','okt','nov','dec'],
@@ -405,7 +434,8 @@ nl:{
   eInputs:'Vul eerst geldige gegevens in.',csvDone:'CSV gemaakt.',pdfBusy:'PDF wordt gemaakt…',pdfLib:'De PDF-bibliotheek kon niet laden. Controleer je internetverbinding.',pdfDone:'PDF-rapport gemaakt.',pdfFail:'Het rapport kon niet worden gemaakt.',
   mtDecl:(o)=>'Aflopend %: '+o.p0+'% naar '+o.p1+'% in '+o.n+' jaar',mtPct:(o)=>'Vast %: '+o.pf+'% van de stack per jaar',
   mtUsd:(o)=>'Vast bedrag: '+o.usd+' per jaar'+(o.real?', meegroeiend met inflatie (in $ van nu)':', vast nominaal bedrag'),
-  pdfTitle:'Bitcoin FIRE-plan',pdfFormula:'Conservatieve Power Law: prijs = 4,42 x 10^-17 x (dagen sinds 3 jan 2009)^5,6',pdfMade:'Gemaakt op {0}',pdfThrough:' · koersdata t/m {0}',
+  pdfTitle:'Bitcoin FIRE-plan en Monte Carlo',pMcYearTitle:'Monte Carlo: FIRE-plan per jaar ({0} paden)',pMcYearNote:'Per jaar de opname en de resterende BTC in 10%, 50% (mediaan) en 90% van de paden. "Stack op" = aandeel paden waarin de stack t/m dat jaar op is. Bij een vast bedrag ligt de opname vast zolang de stack niet op is.',
+  pMcYearHead:['Jaar','Opname 10%','Opname mediaan','Opname 90%','BTC over 10%','BTC over mediaan','BTC over 90%','Stack op'],pMcPriceTitle:'Monte Carlo: koers rond je conservatieve lijn',pMcRef:'Peildatum: {0}',pFan:'Waaiergrafiek (log-schaal)',pFanLegend:'Blauw: koers · oranje: mediaan · donkere band: 50% van de paden · lichte band: 90% · stippellijn: model 1x en peildatum.',pdfFormula:'Conservatieve Power Law: prijs = 4,42 x 10^-17 x (dagen sinds 3 jan 2009)^5,6',pdfMade:'Gemaakt op {0}',pdfThrough:' · koersdata t/m {0}',
   pStack:'Bitcoin stack',pFirst:'Eerste opnamejaar',pYears:'Aantal jaren opnemen',pYearsV:'{0} jaar (t/m {1})',pMethod:'Opnamemethode',pInf:'Inflatie',pInfV:'{0}% per jaar',
   pMin:'Minimum per jaar',pMax:'Maximum per jaar',pToday:' (in $ van nu)',pSc:'Gekozen scenario',pAssume:'Uitgangspunten',
   pAssumeV:'Koers per jaar = Power Law op 1 januari x scenariofactor. Opname op 1 januari tegen die koers. Zonder belasting.',
@@ -454,6 +484,7 @@ en:{
   fanCanvas:'Fan chart of simulated bitcoin price paths around the conservative Power Law to 2035, with median, 50% and 90% bands.',
   on1Jan:'On 1 January',chAbove:'Chance > model',chBelow:'Chance < 0.5×',
   mcNote:'Each path follows ln(price / model): the deviation from your conservative line returns to the centre at the set half-life, plus a normally distributed shock every month (Ornstein-Uhlenbeck). Starts at the last close. A scenario analysis within the model, not a forecast or financial advice.',
+  secRange:'Range',secProb:'Probabilities on the reference date',pAboveModel:'Above model',pBelowFloor:'Below floor 0.5×',pAboveAmt:'Above',fanHint:'Tap the chart to pick the reference date.',
   loading:'Loading price data…',source:'Source:',sourceTail:'(daily close, UTC). Model and extrapolation are a scenario, not a forecast or financial advice.',
   months:['January','February','March','April','May','June','July','August','September','October','November','December'],
   mshort:['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],
@@ -472,7 +503,8 @@ en:{
   eInputs:'Enter valid inputs first.',csvDone:'CSV created.',pdfBusy:'Creating PDF…',pdfLib:'The PDF library could not load. Check your internet connection.',pdfDone:'PDF report created.',pdfFail:'The report could not be created.',
   mtDecl:(o)=>'Declining %: '+o.p0+'% to '+o.p1+'% over '+o.n+' years',mtPct:(o)=>'Fixed %: '+o.pf+'% of the stack per year',
   mtUsd:(o)=>'Fixed amount: '+o.usd+' per year'+(o.real?', growing with inflation (in today’s $)':', fixed nominal amount'),
-  pdfTitle:'Bitcoin FIRE plan',pdfFormula:'Conservative Power Law: price = 4.42 x 10^-17 x (days since 3 Jan 2009)^5.6',pdfMade:'Created on {0}',pdfThrough:' · price data through {0}',
+  pdfTitle:'Bitcoin FIRE plan and Monte Carlo',pMcYearTitle:'Monte Carlo: FIRE plan per year ({0} paths)',pMcYearNote:'Per year the withdrawal and the remaining BTC at 10%, 50% (median) and 90% of the paths. "Depleted" = share of paths in which the stack has run out by that year. With a fixed amount the withdrawal is fixed as long as the stack lasts.',
+  pMcYearHead:['Year','Withdrawal 10%','Withdrawal median','Withdrawal 90%','BTC left 10%','BTC left median','BTC left 90%','Depleted'],pMcPriceTitle:'Monte Carlo: price around your conservative line',pMcRef:'Reference date: {0}',pFan:'Fan chart (log scale)',pFanLegend:'Blue: price · orange: median · dark band: 50% of paths · light band: 90% · dashed: model 1x and reference date.',pdfFormula:'Conservative Power Law: price = 4.42 x 10^-17 x (days since 3 Jan 2009)^5.6',pdfMade:'Created on {0}',pdfThrough:' · price data through {0}',
   pStack:'Bitcoin stack',pFirst:'First withdrawal year',pYears:'Years of withdrawals',pYearsV:'{0} years (through {1})',pMethod:'Withdrawal method',pInf:'Inflation',pInfV:'{0}% per year',
   pMin:'Minimum per year',pMax:'Maximum per year',pToday:' (in today\'s $)',pSc:'Selected scenario',pAssume:'Assumptions',
   pAssumeV:'Price per year = Power Law on 1 January x scenario factor. Withdrawal on 1 January at that price. Before tax.',
@@ -518,7 +550,9 @@ mkFmt();
 const money=v=>v>0&&v<100?usd2.format(v):usd.format(v);
 const longDate=ms=>new Date(ms).toLocaleDateString(LOC(),{day:'numeric',month:'long',year:'numeric',timeZone:'UTC'});
 const fx=(v,min,max)=>v.toLocaleString(LOC(),{minimumFractionDigits:min,maximumFractionDigits:max});
-const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const PAL_LIGHT={'--line':'#dfe3ea','--muted':'#5d6676','--btc':'#f2860f','--price':'#2350c8','--band-line':'#8a93a3','--ink':'#141a24','--surface':'#ffffff','--band':'rgba(93,102,118,.14)','--good':'#1f8a5b','--warn':'#c2410c'};
+let PDFMODE=false;
+const css=n=>PDFMODE&&PAL_LIGHT[n]?PAL_LIGHT[n]:getComputedStyle(document.documentElement).getPropertyValue(n).trim();
 const $=id=>document.getElementById(id);
 const opt=(el,v,t)=>{const o=document.createElement('option');o.value=v;o.textContent=t;el.appendChild(o)};
 
@@ -829,8 +863,7 @@ function renderFire(){
   drawFire();
 }
 
-function drawFire(){
-  if(!lastRes||$('view-fire').hidden||!window.Chart)return;
+function fireCfgs(){
   const {r,res}=lastRes, years=res[0].rows.map(w=>w.y), muted=css('--muted'), grid=css('--line');
   const si=Math.max(0,years.indexOf(r.start)), wYears=years.slice(si);
   const ds=(get,from=0)=>SC.map((c,i)=>({label:scName(c)+' ('+scKey(c)+')',data:res[i].rows.slice(from).map(get),borderColor:css(c.col),borderWidth:i===scSel?2.5:1.5,borderDash:c.dash,pointRadius:0,spanGaps:false,tension:0}));
@@ -841,12 +874,17 @@ function drawFire(){
   const usdTick=v=>v===0?'$'+SP()+'0':v>=1e6?'$'+SP()+(v/1e6).toLocaleString(LOC(),{maximumFractionDigits:1})+T('mln'):'$'+SP()+(v/1e3).toLocaleString(LOC(),{maximumFractionDigits:0})+'k';
   const btcTick=v=>{const s=btcFmt(v),d=DECS();return s.includes(d)?s.replace(/0+$/,'').replace(new RegExp('\\'+d+'$'),''):s};
   const wData=ds(w=>w.W>0?w.W:null,si), bData=ds(w=>w.btc);
-  if(wChart){wChart.data.labels=wYears;wChart.data.datasets=wData;wChart.update('none')}else wChart=new Chart($('ch-w'),{type:'line',data:{labels:wYears,datasets:wData},options:common('linear',money,usdTick)});
-  if(bChart){bChart.data.labels=years;bChart.data.datasets=bData;bChart.update('none')}else bChart=new Chart($('ch-b'),{type:'line',data:{labels:years,datasets:bData},options:common('linear',v=>btcFmt(v)+' BTC',btcTick)});
+  return {w:{type:'line',data:{labels:wYears,datasets:wData},options:common('linear',money,usdTick)},b:{type:'line',data:{labels:years,datasets:bData},options:common('linear',v=>btcFmt(v)+' BTC',btcTick)}};
+}
+function drawFire(){
+  if(!lastRes||$('view-fire').hidden||!window.Chart)return;
+  const c=fireCfgs();
+  if(wChart){wChart.data.labels=c.w.data.labels;wChart.data.datasets=c.w.data.datasets;wChart.update('none')}else wChart=new Chart($('ch-w'),c.w);
+  if(bChart){bChart.data.labels=c.b.data.labels;bChart.data.datasets=c.b.data.datasets;bChart.update('none')}else bChart=new Chart($('ch-b'),c.b);
 }
 
 /* ---------- Export ---------- */
-function expMsg(t,bad){const m=$('exp-msg');m.textContent=t||'';m.classList.toggle('bad',!!bad)}
+function expMsg(t,bad){['exp-msg','exp-msg-mc'].forEach(id=>{const m=$(id);if(m){m.textContent=t||'';m.classList.toggle('bad',!!bad)}})}
 async function saveFile(name,data){
   if(window.claude&&typeof window.claude.use==='function'){
     let d=null;try{d=await window.claude.use('downloads')}catch(e){}
@@ -882,15 +920,14 @@ const libs={};
 function loadLib(src){return libs[src]||(libs[src]=new Promise((res,rej)=>{const e=document.createElement('script');e.src=src;e.onload=res;e.onerror=()=>{delete libs[src];rej(new Error('load'))};document.head.appendChild(e)}))}
 const pdfTxt=v=>String(v).replace(/−/g,'-').replace(/≈/g,'~').replace(/[   ]/g,' ').replace(/≥/g,'>=').replace(/[‘’]/g,"'");
 function chartImg(ch){const c=ch.canvas,o=document.createElement('canvas');o.width=c.width;o.height=c.height;const g=o.getContext('2d');g.fillStyle='#ffffff';g.fillRect(0,0,o.width,o.height);g.drawImage(c,0,0);return {url:o.toDataURL('image/png'),ratio:c.height/c.width}}
-$('exp-pdf').addEventListener('click',async()=>{
+async function makePdf(){
   if(!lastRes){expMsg(T('eInputs'),true);return}
-  const btn=$('exp-pdf');btn.disabled=true;expMsg(T('pdfBusy'));
+  const btns=[$('exp-pdf'),$('exp-pdf-mc')];btns.forEach(b=>b.disabled=true);expMsg(T('pdfBusy'));
   try{
     await loadLib('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
     await loadLib('https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js');
-  }catch(e){btn.disabled=false;expMsg(T('pdfLib'),true);return}
+  }catch(e){btns.forEach(b=>b.disabled=false);expMsg(T('pdfLib'),true);return}
   try{
-    drawFire();
     const {r,res}=lastRes,s=res[scSel],sc=SC[scSel];
     const doc=new window.jspdf.jsPDF({unit:'mm',format:'a4'}),W=210,M=14;
     const ORANGE=[242,134,15],INK=[20,26,36],MUTED=[93,102,118];
@@ -935,12 +972,14 @@ $('exp-pdf').addEventListener('click',async()=>{
         styles:{fontSize:8.5,cellPadding:1.8,textColor:INK},headStyles:{fillColor:ORANGE,textColor:255},columnStyles:{0:{cellWidth:48,fontStyle:'bold'}}});
       y=doc.lastAutoTable.finalY+7;
     }else y+=2;
-    const imgs=[[wChart,T('pChW')],[bChart,T('pChB')]].filter(x=>x[0]);
+    let fc=null,fan=null;
+    if(window.Chart){PDFMODE=true;try{const c=fireCfgs();fc=[[offImg(c.w,440,280),T('pChW')],[offImg(c.b,440,280),T('pChB')]];if(mc)fan=offImg(mcCfg(),860,420)}finally{PDFMODE=false}}
+    const imgs=fc||[];
     if(imgs.length){
-      const cw=(W-2*M-6)/2,ratio=chartImg(imgs[0][0]).ratio,ch=Math.min(cw*ratio,62);
+      const cw=(W-2*M-6)/2,ch=cw*imgs[0][0].ratio;
       if(y+ch+10>285){doc.addPage();y=20}
-      doc.setFontSize(10);doc.setFont('helvetica','bold');
-      imgs.forEach(([c,t],i)=>{const x=M+i*(cw+6),im=chartImg(c);doc.text(pdfTxt(t),x,y);doc.addImage(im.url,'PNG',x,y+2,cw,Math.min(cw*im.ratio,62))});
+      doc.setFontSize(10);doc.setFont('helvetica','bold');doc.setTextColor(...INK);
+      imgs.forEach(([im,t],i)=>{const x=M+i*(cw+6);doc.text(pdfTxt(t),x,y);doc.addImage(im.url,'PNG',x,y+2,cw,ch)});
       doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(...MUTED);
       doc.text(pdfTxt(T('pLines')),M,y+ch+6);
       y=y+ch+11;
@@ -954,15 +993,64 @@ $('exp-pdf').addEventListener('click',async()=>{
     doc.autoTable({startY:y+3,head:[cols.map(pdfTxt)],body,theme:'striped',margin:{left:M,right:M,bottom:20},
       styles:{fontSize:7.2,cellPadding:1.4,textColor:INK},headStyles:{fillColor:ORANGE,textColor:255,halign:'right'},columnStyles:right,
       didParseCell:d=>{if(d.section==='head'&&d.column.index===0)d.cell.styles.halign='left';if(d.section==='body'&&s.rows[d.row.index].start)d.cell.styles.fillColor=[253,237,216]}});
+    if(m){
+      doc.addPage();y=20;
+      doc.setFontSize(13);doc.setFont('helvetica','bold');doc.setTextColor(...INK);doc.text(pdfTxt(T('pMcYearTitle',num.format(m.N))),M,y);
+      doc.setFontSize(8.5);doc.setFont('helvetica','normal');doc.setTextColor(...MUTED);
+      const nl=doc.splitTextToSize(pdfTxt(T('pMcYearNote')),W-2*M);doc.text(nl,M,y+6);y+=6+nl.length*3.8;
+      const yr=m.yearly();
+      const yb=yr.map(o=>[o.y,money(o.w10),money(o.w50),money(o.w90),btcFmt(o.b10),btcFmt(o.b50),btcFmt(o.b90),pctTxt(o.dep)].map(pdfTxt));
+      const rr={};for(let i=1;i<8;i++)rr[i]={halign:'right'};
+      doc.autoTable({startY:y,head:[T('pMcYearHead').map(pdfTxt)],body:yb,theme:'striped',margin:{left:M,right:M,bottom:20},
+        styles:{fontSize:7.4,cellPadding:1.4,textColor:INK},headStyles:{fillColor:ORANGE,textColor:255,halign:'right'},columnStyles:rr,
+        didParseCell:d=>{if(d.section==='head'&&d.column.index===0)d.cell.styles.halign='left';if(d.section==='body'&&d.column.index===7&&yr[d.row.index].dep>0)d.cell.styles.textColor=[194,65,12]}});
+    }
+    if(mc){
+      doc.addPage();y=20;
+      doc.setFontSize(13);doc.setFont('helvetica','bold');doc.setTextColor(...INK);doc.text(pdfTxt(T('pMcPriceTitle')),M,y);
+      doc.setFontSize(8.5);doc.setFont('helvetica','normal');doc.setTextColor(...MUTED);
+      doc.text(pdfTxt(T('pMcSet')+': '+T('pMcSetV',num.format(mc.N),f1(mc.st.mid),f1(mc.st.hl),f1(mc.st.sig),mc.st.seed)),M,y+6);
+      const nl=doc.splitTextToSize(pdfTxt(T('mcNote')),W-2*M);doc.text(nl,M,y+11);y+=11+nl.length*3.8+2;
+      const yrRef=+$('mc-date').value,g=mc.janIdx[yrRef];
+      if(g!=null){
+        const st=colStats(g),thrF=field('mc-thr',{min:1});
+        const rows=[
+          [T('tMed'),money(st.q(.5))+' ('+T('tMedS',f1(st.q(.5)/st.PL))+')'],
+          [T('t50'),money(st.q(.25))+' - '+money(st.q(.75))],
+          [T('t90'),money(st.q(.05))+' - '+money(st.q(.95))],
+          [T('pAboveModel')+' ('+money(st.PL)+')',pctTxt(st.share(x=>x>0))],
+          [T('pBelowFloor')+' ('+money(st.PL*.5)+')',pctTxt(st.share(x=>x<Math.log(.5)))]];
+        if(thrF.ok&&thrF.v)rows.push([T('pAboveAmt')+' '+money(thrF.v),pctTxt(st.share(x=>x>Math.log(thrF.v/st.PL)))]);
+        doc.autoTable({startY:y,head:[[pdfTxt(T('pMcRef',T('dateOpt',yrRef))),'']],body:rows.map(x=>x.map(pdfTxt)),theme:'grid',margin:{left:M,right:M},
+          styles:{fontSize:8.5,cellPadding:1.8,textColor:INK},headStyles:{fillColor:ORANGE,textColor:255},columnStyles:{0:{cellWidth:70,fontStyle:'bold'}}});
+        y=doc.lastAutoTable.finalY+6;
+      }
+      if(fan){
+        const fw=W-2*M,fh=fw*fan.ratio;
+        if(y+fh+12>280){doc.addPage();y=20}
+        doc.setFontSize(10);doc.setFont('helvetica','bold');doc.setTextColor(...INK);doc.text(pdfTxt(T('pFan')),M,y);
+        doc.addImage(fan.url,'PNG',M,y+2,fw,fh);
+        doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(...MUTED);doc.text(pdfTxt(T('pFanLegend')),M,y+fh+6);
+        y+=fh+11;
+      }
+      const jb=[];for(let yy=Y0;yy<=2035;yy++){const gg=mc.janIdx[yy];if(gg==null)continue;const t=colStats(gg);jb.push([T('rowJan',yy),money(t.PL),money(t.q(.05)),money(t.q(.25)),money(t.q(.5)),money(t.q(.75)),money(t.q(.95)),pctTxt(t.share(x=>x>0)),pctTxt(t.share(x=>x<Math.log(.5)))].map(pdfTxt))}
+      if(y>235){doc.addPage();y=20}
+      const rr={};for(let i=1;i<9;i++)rr[i]={halign:'right'};
+      doc.autoTable({startY:y,head:[[T('date'),'Model','5%','25%',T('median'),'75%','95%',T('chAbove'),T('chBelow')].map(pdfTxt)],body:jb,theme:'striped',margin:{left:M,right:M,bottom:20},
+        styles:{fontSize:7.4,cellPadding:1.4,textColor:INK},headStyles:{fillColor:ORANGE,textColor:255,halign:'right'},columnStyles:rr,
+        didParseCell:d=>{if(d.section==='head'&&d.column.index===0)d.cell.styles.halign='left';if(d.section==='body'&&jb[d.row.index][0]===pdfTxt(T('rowJan',yrRef)))d.cell.styles.fillColor=[253,237,216]}});
+    }
     const n=doc.getNumberOfPages();
     for(let i=1;i<=n;i++){doc.setPage(i);doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.setTextColor(...MUTED);
       doc.text(pdfTxt(T('pFoot1')),M,286);doc.text(pdfTxt(T('pFoot2')),M,290);
       doc.text(T('pPage',i,n),W-M,290,{align:'right'})}
     const ok=await saveFile(T('pdfFile',numTxt(r.btc),r.start,r.yrs,stamp())+'.pdf',doc.output('blob'));
     if(ok)expMsg(T('pdfDone'));else if(!$('exp-msg').classList.contains('bad'))expMsg('');
-  }catch(e){console.error(e);expMsg(T('pdfFail'),true)}
-  btn.disabled=false;
-});
+  }catch(e){console.error(e);PDFMODE=false;expMsg(T('pdfFail'),true)}
+  btns.forEach(b=>b.disabled=false);
+}
+$('exp-pdf').addEventListener('click',makePdf);
+$('exp-pdf-mc').addEventListener('click',makePdf);
 
 /* ---------- Monte Carlo ---------- */
 const MCDEF={mid:1,hl:10,sig:20,n:5000,seed:42};
@@ -1024,10 +1112,11 @@ function renderMC(){
   const tiles=[
     [T('tMed'),money(med),T('tMedS',f1(med/s.PL))],
     [T('t50'),compact(s.q(.25))+' – '+compact(s.q(.75)),T('t50S')],
-    [T('t90'),compact(lo)+' – '+compact(hi),T('t90S')],
-    [T('tAbove'),pctTxt(s.share(x=>x>0)),T('tPriceGt',compact(s.PL))],
-    [T('tBelow'),pctTxt(s.share(x=>x<Math.log(.5))),T('tPriceLt',compact(s.PL*.5))],
-    [T('tThr'),thrF.ok&&thrF.v?pctTxt(s.share(x=>x>Math.log(thrF.v/s.PL))):'–',thrF.ok&&thrF.v?T('tPriceGt',money(thrF.v)):T('tEnter')]];
+    [T('t90'),compact(lo)+' – '+compact(hi),T('t90S')]];
+  $('pt-model').textContent=money(s.PL);$('pv-model').textContent=pctTxt(s.share(x=>x>0));
+  $('pt-floor').textContent=money(s.PL*.5);$('pv-floor').textContent=pctTxt(s.share(x=>x<Math.log(.5)));
+  $('pv-thr').textContent=thrF.ok&&thrF.v?pctTxt(s.share(x=>x>Math.log(thrF.v/s.PL))):'–';
+  mcSync();
   const box=$('mc-tiles');box.textContent='';
   tiles.forEach(([a,b,c])=>{const d=document.createElement('div');d.className='tile';const dt=document.createElement('dt');dt.textContent=a;const dd=document.createElement('dd');dd.textContent=b;const sm=document.createElement('small');sm.textContent=c;dd.appendChild(sm);d.append(dt,dd);box.appendChild(d)});
   const tb=$('mc-tbody');tb.textContent='';
@@ -1036,8 +1125,7 @@ function renderMC(){
   $('mc-tnote').textContent=T('tnote',num.format(mc.N),f1(mc.st.mid),f1(mc.st.hl),f1(mc.st.sig),mc.st.seed);
   drawMC();
 }
-function drawMC(){
-  if(!mc||$('view-mc').hidden||!window.Chart)return;
+function mcCfg(){
   const muted=css('--muted'),grid=css('--line'),btc=css('--btc'),price=css('--price'),bl=css('--band-line');
   const xs=Array.from({length:mc.nMonthly},(_,g)=>toYear(mc.grid[g]));
   const band=(k)=>xs.map((x,g)=>({x,y:mc.pct[k][g],ms:mc.grid[g]}));
@@ -1055,8 +1143,10 @@ function drawMC(){
     {label:'5%',data:band(0),borderWidth:0,pointRadius:0},
     {label:'Model 1×',data:mdl,borderColor:bl,borderWidth:1.5,borderDash:[6,4],pointRadius:0}];
   let lo=Infinity,hi=0;mc.pct[0].forEach(v=>{if(v<lo)lo=v});mc.pct[4].forEach(v=>{if(v>hi)hi=v});hist.forEach(p=>{if(p.y<lo)lo=p.y;if(p.y>hi)hi=p.y});
+  const refX=toYear(Date.UTC(+$('mc-date').value,0,1)),ink=css('--ink');
   const opts={responsive:true,maintainAspectRatio:false,animation:false,parsing:false,normalized:true,
     interaction:{mode:'mcX',intersect:false},
+    onClick:(e,els,c)=>{const v=c.scales.x.getValueForPixel(e.x);if(v==null)return;const y=Math.round(v),el=$('mc-date');if([...el.options].some(o=>+o.value===y)){el.value=String(y);mcSave();renderMC()}},
     plugins:{legend:{display:false},tooltip:{displayColors:false,callbacks:{title:t=>t.length?longDate(t[0].raw.ms):'',label:t=>t.dataset.label+': '+money(t.parsed.y)},itemSort:(a,b)=>b.parsed.y-a.parsed.y}},
     scales:{x:{type:'linear',min:2023,max:2035,afterBuildTicks:sc=>{sc.ticks=[];for(let v=2023;v<=2035;v++)sc.ticks.push({value:v})},ticks:{color:muted,maxRotation:0,autoSkip:true,autoSkipPadding:10,callback:v=>v},grid:{display:false},border:{color:grid}},
       y:{type:'logarithmic',min:lo/1.3,max:hi*1.3,ticks:{color:muted,callback:v=>{const e=Math.pow(10,Math.floor(Math.log10(v)+1e-9)),m=Math.round(v/e*1000)/1000;return [1,2,5].includes(m)?axisUsd(v):''}},grid:{color:grid},border:{display:false}}}};
@@ -1068,8 +1158,22 @@ function drawMC(){
     const i=near(d[3].data);if(i<0)return [];
     return [1,2,3,4,5].map(k=>({datasetIndex:k,index:i,element:c.getDatasetMeta(k).data[i]})).filter(x=>x.element);
   };
-  if(mcChart){mcChart.data.datasets=ds;mcChart.options.scales.y.min=opts.scales.y.min;mcChart.options.scales.y.max=opts.scales.y.max;mcChart.update('none')}
-  else mcChart=new Chart($('ch-mc'),{type:'line',data:{datasets:ds},options:opts});
+  const refPlugin={id:'refLine',afterDatasetsDraw(c){const x=c.scales.x.getPixelForValue(c.$refX??refX),a=c.chartArea;if(x<a.left||x>a.right)return;const g=c.ctx;g.save();g.strokeStyle=ink;g.globalAlpha=.4;g.setLineDash([3,3]);g.beginPath();g.moveTo(x,a.top);g.lineTo(x,a.bottom);g.stroke();g.restore()}};
+  return {type:'line',data:{datasets:ds},options:opts,plugins:[refPlugin],refX};
+}
+function drawMC(){
+  if(!mc||$('view-mc').hidden||!window.Chart)return;
+  const c=mcCfg();
+  if(mcChart){mcChart.data.datasets=c.data.datasets;mcChart.$refX=c.refX;mcChart.options.scales.y.min=c.options.scales.y.min;mcChart.options.scales.y.max=c.options.scales.y.max;mcChart.update('none')}
+  else{mcChart=new Chart($('ch-mc'),c);mcChart.$refX=c.refX;mcChart.update('none')}
+}
+function offImg(cfg,w,h){
+  const host=document.createElement('div');host.style.cssText='position:fixed;left:-20000px;top:0;width:'+w+'px;height:'+h+'px;pointer-events:none';
+  const cv=document.createElement('canvas');cv.width=w;cv.height=h;cv.style.width=w+'px';cv.style.height=h+'px';host.appendChild(cv);document.body.appendChild(host);
+  const o=Object.assign({},cfg.options,{responsive:false,maintainAspectRatio:false,animation:false,devicePixelRatio:3});
+  const c=new Chart(cv,{type:cfg.type,data:cfg.data,options:o,plugins:cfg.plugins||[]});
+  if(cfg.refX!=null){c.$refX=cfg.refX;c.update('none')}
+  const img=chartImg(c);c.destroy();host.remove();return img;
 }
 function color(hex,a){const h=hex.replace('#','');if(h.length!==6)return hex;const n=parseInt(h,16);return 'rgba('+(n>>16&255)+','+(n>>8&255)+','+(n&255)+','+a+')'}
 
@@ -1078,6 +1182,7 @@ function fireMC(r){
   const N=mc.N,END=r.start+r.yrs-1;
   if(mc.janIdx[r.start]==null||mc.janIdx[END]==null)return null;
   const first=new Float64Array(N),tot=new Float64Array(N),endB=new Float64Array(N),deps=[];let fails=0;
+  const Y=END-r.start+1,Wy=new Float32Array(Y*N),By=new Float32Array(Y*N);
   for(let i=0;i<N;i++){
     let btc=r.btc,t=0,f=0,dep=null;
     for(let y=r.start;y<=END;y++){
@@ -1086,12 +1191,19 @@ function fireMC(r){
       const W=wCalc(r,y,btc*P,inf);
       if(y===r.start)f=W;
       t+=W;btc-=W/P;if(btc<1e-9){btc=0;if(dep===null)dep=y}
+      const k=(y-r.start)*N+i;Wy[k]=W;By[k]=btc;
     }
     first[i]=f;tot[i]=t;endB[i]=btc;if(dep!==null){fails++;deps.push(dep)}
   }
   const qs=a=>{const s=Float64Array.from(a).sort();return p=>s[Math.round(p*(N-1))]};
   deps.sort((a,b)=>a-b);
-  return {N,END,success:1-fails/N,first:qs(first),tot:qs(tot),endB:qs(endB),depMed:deps.length?deps[deps.length>>1]:null,st:{...mc.st}};
+  const yearly=()=>{const out=[],buf=new Float32Array(N);let di=0;
+    for(let k=0;k<Y;k++){const y=r.start+k;while(di<deps.length&&deps[di]<=y)di++;
+      const q=(arr)=>{buf.set(arr.subarray(k*N,(k+1)*N));buf.sort();return p=>buf[Math.round(p*(N-1))]};
+      const w=q(Wy),w10=w(.1),w50=w(.5),w90=w(.9),b=q(By),b10=b(.1),b50=b(.5),b90=b(.9);
+      out.push({y,w10,w50,w90,b10,b50,b90,dep:di/N})}
+    return out};
+  return {N,END,success:1-fails/N,first:qs(first),tot:qs(tot),endB:qs(endB),depMed:deps.length?deps[deps.length>>1]:null,st:{...mc.st},yearly};
 }
 function renderMcFire(m,r){
   const box=$('mc-fire');box.textContent='';
@@ -1115,6 +1227,10 @@ function renderMcFire(m,r){
 $('mc-form').addEventListener('submit',e=>e.preventDefault());
 ['mc-mid','mc-hl','mc-sig','mc-seed'].forEach(id=>$(id).addEventListener('input',mcSchedule));
 $('mc-date').addEventListener('change',()=>{mcSave();renderMC()});
+function mcStep(k){const el=$('mc-date'),v=+el.value+k;if([...el.options].some(o=>+o.value===v)){el.value=String(v);mcSave();renderMC()}}
+function mcSync(){const el=$('mc-date'),v=+el.value,ys=[...el.options].map(o=>+o.value);$('mc-prev').disabled=v<=Math.min(...ys);$('mc-next').disabled=v>=Math.max(...ys)}
+$('mc-prev').addEventListener('click',()=>mcStep(-1));
+$('mc-next').addEventListener('click',()=>mcStep(1));
 $('mc-thr').addEventListener('input',()=>{mcSave();renderMC()});
 document.querySelectorAll('[data-n]').forEach(b=>b.addEventListener('click',()=>{MCS.n=+b.dataset.n;mcFill();mcSchedule()}));
 $('mc-def').addEventListener('click',()=>{Object.assign(MCS,MCDEF);mcFill();mcSchedule()});
