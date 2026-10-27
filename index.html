@@ -72,6 +72,9 @@ footer a{color:inherit}
 .zb:disabled{opacity:.4;cursor:default}
 .zb:focus-visible{outline:2px solid var(--btc);outline-offset:2px}
 .zr:not(:disabled){border-color:var(--btc);color:var(--btc)}
+.exp{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.exp-msg{font-size:13px;color:var(--muted)}
+.exp-msg.bad{color:var(--warn)}
 .zhint{font-size:12px;color:var(--muted);margin:0 4px 8px}
 .tabs{display:inline-flex;gap:4px;padding:4px;background:var(--surface);border:1px solid var(--line);border-radius:12px;align-self:flex-start}
 .tab{font:500 14px var(--f-body);color:var(--muted);background:transparent;border:0;border-radius:9px;padding:9px 16px;cursor:pointer;min-height:40px}
@@ -247,6 +250,11 @@ tr.empty td{color:var(--muted)}
       </form>
 
       <div class="out">
+        <div class="exp">
+          <button type="button" class="zb" id="exp-csv">Exporteer CSV</button>
+          <button type="button" class="zb" id="exp-pdf">Exporteer PDF-rapport</button>
+          <span class="exp-msg" id="exp-msg" role="status"></span>
+        </div>
         <p class="headline" id="fire-head">–</p>
         <div class="scen" id="scen" role="group" aria-label="Scenario"></div>
         <div class="charts2">
@@ -585,6 +593,113 @@ function drawFire(){
   if(wChart){wChart.data.labels=years;wChart.data.datasets=wData;wChart.update('none')}else wChart=new Chart($('ch-w'),{type:'line',data:{labels:years,datasets:wData},options:common('logarithmic',money)});
   if(bChart){bChart.data.labels=years;bChart.data.datasets=bData;bChart.update('none')}else bChart=new Chart($('ch-b'),{type:'line',data:{labels:years,datasets:bData},options:common('linear',v=>btcFmt(v)+' BTC')});
 }
+
+
+/* ---------- Export ---------- */
+const DEC=(v,d)=>v.toFixed(d).replace('.',',');
+function expMsg(t,bad){const m=$('exp-msg');m.textContent=t||'';m.classList.toggle('bad',!!bad)}
+async function saveFile(name,data){
+  if(window.claude&&typeof window.claude.use==='function'){
+    let d=null;try{d=await window.claude.use('downloads')}catch(e){}
+    if(d){
+      try{await d.save({filename:name,data});return true}
+      catch(e){if(e&&e.code==='declined')return false;expMsg(e&&e.code==='rate_limited'?'Er staat al een opslagvraag open; probeer het zo nog eens.':'Opslaan lukte niet in deze weergave. Gebruik de app via GitHub Pages.',true);return false}
+    }
+    if(window.parent!==window){expMsg('Exporteren is in deze weergave niet beschikbaar. Gebruik de app via GitHub Pages.',true);return false}
+  }
+  const blob=data instanceof Blob?data:new Blob([data],{type:name.endsWith('.csv')?'text/csv;charset=utf-8':'application/octet-stream'});
+  const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),4000);return true;
+}
+const stamp=()=>iso(TODAY);
+function baseName(r){return 'fire-plan_'+String(r.btc).replace('.',',')+'BTC_'+r.start+'_'+r.yrs+'jr_'+stamp()}
+function methodText(r){
+  if(r.mode==='decl')return 'Aflopend %: '+String(r.p0).replace('.',',')+'% naar '+String(r.p1).replace('.',',')+'% in '+r.n+' jaar';
+  if(r.mode==='pct')return 'Vast %: '+String(r.pf).replace('.',',')+'% van de stack per jaar';
+  return 'Vast bedrag: '+money(r.usd)+' per jaar'+(r.real?', meegroeiend met inflatie (in $ van nu)':', vast nominaal bedrag');
+}
+$('exp-csv').addEventListener('click',async()=>{
+  if(!lastRes){expMsg('Vul eerst geldige gegevens in.',true);return}
+  expMsg('');const {r,res}=lastRes;
+  const head=['Scenario','Factor','Jaar','Koers 1 jan (USD)','Groei (%)','Opname (%)','BTC verkocht','Opname (USD)','Opname in USD van nu','Cumulatief (USD)','BTC over','Waarde (USD)'];
+  const lines=[head.join(';')];
+  SC.forEach((c,i)=>res[i].rows.forEach(w=>lines.push([c.name,DEC(c.f,1),w.y,DEC(w.P,2),DEC(w.growth*100,2),DEC(w.pct*100,2),DEC(w.sold,8),DEC(w.W,2),DEC(w.Wr,2),DEC(w.cum,2),DEC(w.btc,8),DEC(w.V,2)].join(';'))));
+  const ok=await saveFile(baseName(r)+'.csv','﻿'+lines.join('\r\n')+'\r\n');
+  if(ok)expMsg('CSV gemaakt.');
+});
+const libs={};
+function loadLib(src){return libs[src]||(libs[src]=new Promise((res,rej)=>{const e=document.createElement('script');e.src=src;e.onload=res;e.onerror=()=>{delete libs[src];rej(new Error('load'))};document.head.appendChild(e)}))}
+const pdfTxt=v=>String(v).replace(/−/g,'-').replace(/≈/g,'~').replace(/[   ]/g,' ').replace(/≥/g,'>=');
+function chartImg(ch){const c=ch.canvas,o=document.createElement('canvas');o.width=c.width;o.height=c.height;const g=o.getContext('2d');g.fillStyle='#ffffff';g.fillRect(0,0,o.width,o.height);g.drawImage(c,0,0);return {url:o.toDataURL('image/png'),ratio:c.height/c.width}}
+$('exp-pdf').addEventListener('click',async()=>{
+  if(!lastRes){expMsg('Vul eerst geldige gegevens in.',true);return}
+  const btn=$('exp-pdf');btn.disabled=true;expMsg('PDF wordt gemaakt…');
+  try{
+    await loadLib('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
+    await loadLib('https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js');
+  }catch(e){btn.disabled=false;expMsg('De PDF-bibliotheek kon niet laden. Controleer je internetverbinding.',true);return}
+  try{
+    drawFire();
+    const {r,res}=lastRes,s=res[scSel],sc=SC[scSel];
+    const doc=new window.jspdf.jsPDF({unit:'mm',format:'a4'}),W=210,M=14;
+    const ORANGE=[242,134,15],INK=[20,26,36],MUTED=[93,102,118];
+    doc.setFont('helvetica','bold');doc.setFontSize(18);doc.setTextColor(...INK);doc.text('Bitcoin FIRE-plan',M,20);
+    doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(...MUTED);
+    doc.text(pdfTxt('Conservatieve Power Law: prijs = 4,42 x 10^-17 x (dagen sinds 3 jan 2009)^5,6'),M,26);
+    doc.text(pdfTxt('Gemaakt op '+longDate(TODAY)+(lastMs?' · koersdata t/m '+longDate(lastMs):'')),M,31);
+    doc.setFontSize(11);doc.setTextColor(...INK);
+    const head=pdfTxt($('fire-head').textContent);
+    const hl=doc.splitTextToSize(head,W-2*M);doc.text(hl,M,40);
+    let y=40+hl.length*5+3;
+    const params=[
+      ['Bitcoin stack',r.btc.toLocaleString('nl-NL',{maximumFractionDigits:8})+' BTC'],
+      ['Eerste opnamejaar',String(r.start)],
+      ['Aantal jaren opnemen',r.yrs+' jaar (t/m '+(r.start+r.yrs-1)+')'],
+      ['Opnamemethode',methodText(r)],
+      ['Inflatie',String(r.inf).replace('.',',')+'% per jaar'],
+      ['Minimum per jaar',r.min!=null?money(r.min)+' (in $ van nu)':'geen'],
+      ['Maximum per jaar',r.max!=null?money(r.max)+' (in $ van nu)':'geen'],
+      ['Gekozen scenario',sc.name+' ('+sc.key+')'],
+      ['Uitgangspunten','Koers per jaar = Power Law op 1 januari x scenariofactor. Opname op 1 januari tegen die koers. Zonder belasting.']
+    ].map(x=>x.map(pdfTxt));
+    doc.autoTable({startY:y,head:[['Parameter','Waarde']],body:params,theme:'grid',margin:{left:M,right:M},
+      styles:{fontSize:9,cellPadding:2,textColor:INK},headStyles:{fillColor:ORANGE,textColor:255},columnStyles:{0:{cellWidth:48,fontStyle:'bold'}},
+      didParseCell:d=>{if(d.section==='body'&&d.row.index===7)d.cell.styles.fillColor=[253,237,216]}});
+    y=doc.lastAutoTable.finalY+6;
+    const sum=SC.map((c,i)=>{const x=res[i];return [c.name+(i===scSel?' (gekozen)':''),c.key,x.first!=null?money(x.first):'-',money(x.avg),money(x.total),btcFmt(x.endBtc),money(x.endV),x.dep?'Op in '+x.dep:'Houdt stand t/m '+x.end].map(pdfTxt)});
+    doc.autoTable({startY:y,head:[['Scenario','Factor','Eerste opname','Gem. per jaar','Totaal opgenomen','BTC eind','Waarde eind','Status']],body:sum,theme:'grid',margin:{left:M,right:M},
+      styles:{fontSize:8,cellPadding:1.8,textColor:INK},headStyles:{fillColor:ORANGE,textColor:255},
+      columnStyles:{2:{halign:'right'},3:{halign:'right'},4:{halign:'right'},5:{halign:'right'},6:{halign:'right'}},
+      didParseCell:d=>{if(d.section==='body'&&d.row.index===scSel)d.cell.styles.fillColor=[253,237,216]}});
+    y=doc.lastAutoTable.finalY+7;
+    const imgs=[[wChart,'Opname per jaar (USD, log)'],[bChart,'Bitcoin over']].filter(x=>x[0]);
+    if(imgs.length){
+      const cw=(W-2*M-6)/2,ratio=chartImg(imgs[0][0]).ratio,ch=Math.min(cw*ratio,62);
+      if(y+ch+10>285){doc.addPage();y=20}
+      doc.setFontSize(10);doc.setFont('helvetica','bold');
+      imgs.forEach(([c,t],i)=>{const x=M+i*(cw+6),im=chartImg(c);doc.text(pdfTxt(t),x,y);doc.addImage(im.url,'PNG',x,y+2,cw,Math.min(cw*im.ratio,62))});
+      doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(...MUTED);
+      doc.text(pdfTxt('Lijnen: Bodem 0,5x (grijs, gestreept) · Model 1x (oranje) · Bovenkant 2x (blauw, gestippeld).'),M,y+ch+6);
+      y=y+ch+11;
+    }
+    const real=r.inf>0;
+    const cols=['Jaar','Koers 1 jan','Groei','Opname %','BTC verkocht','Opname'].concat(real?['In $ van nu']:[],['Cumulatief','BTC over','Waarde']);
+    const body=s.rows.map(w=>{const c=[w.y,money(w.P),pct1(w.growth),w.W?pct1(w.pct):'-',w.sold?'-'+btcFmt(w.sold):'-',w.W?money(w.W):'-'];if(real)c.push(w.W?money(w.Wr):'-');c.push(w.cum?money(w.cum):'-',btcFmt(w.btc),money(w.V));return c.map(pdfTxt)});
+    if(y>240){doc.addPage();y=20}
+    doc.setFontSize(11);doc.setFont('helvetica','bold');doc.setTextColor(...INK);doc.text(pdfTxt('Per jaar: '+sc.name+' ('+sc.key+')'),M,y);
+    const right={};for(let i=1;i<cols.length;i++)right[i]={halign:'right'};
+    doc.autoTable({startY:y+3,head:[cols.map(pdfTxt)],body,theme:'striped',margin:{left:M,right:M,bottom:20},
+      styles:{fontSize:7.2,cellPadding:1.4,textColor:INK},headStyles:{fillColor:ORANGE,textColor:255,halign:'right'},columnStyles:right,
+      didParseCell:d=>{if(d.section==='head'&&d.column.index===0)d.cell.styles.halign='left';if(d.section==='body'&&s.rows[d.row.index].start)d.cell.styles.fillColor=[253,237,216]}});
+    const n=doc.getNumberOfPages();
+    for(let i=1;i<=n;i++){doc.setPage(i);doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.setTextColor(...MUTED);
+      doc.text(pdfTxt('Scenario op basis van de conservatieve Power Law; geen voorspelling of financieel advies.'),M,286);doc.text('Bron koersdata: github.com/rcaljouw/btc-price-history',M,290);
+      doc.text('Pagina '+i+' van '+n,W-M,290,{align:'right'})}
+    const ok=await saveFile(baseName(r)+'.pdf',doc.output('blob'));
+    if(ok)expMsg('PDF-rapport gemaakt.');else if(!$('exp-msg').classList.contains('bad'))expMsg('');
+  }catch(e){console.error(e);expMsg('Het rapport kon niet worden gemaakt.',true)}
+  btn.disabled=false;
+});
 
 function setMode(m){mode=m;document.querySelectorAll('.seg [data-mode]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.mode===m)));$('m-decl').hidden=m!=='decl';$('m-pct').hidden=m!=='pct';$('m-usd').hidden=m!=='usd';renderFire()}
 document.querySelectorAll('.seg [data-mode]').forEach(b=>b.addEventListener('click',()=>setMode(b.dataset.mode)));
