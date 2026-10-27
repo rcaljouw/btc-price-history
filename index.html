@@ -420,6 +420,28 @@ nl:{
   on1Jan:'Per 1 januari',chAbove:'Kans > model',chBelow:'Kans < 0,5×',
   mcNote:'Elk pad volgt ln(koers / model): de afwijking van je conservatieve lijn keert met de ingestelde halveringstijd terug naar het midden, plus elke maand een normaal verdeelde schok (Ornstein-Uhlenbeck). Start bij de laatste close. Een scenario-analyse binnen het model, geen voorspelling of financieel advies.',
   secRange:'Bandbreedte',secProb:'Kansen op de peildatum',pAboveModel:'Boven model',pBelowFloor:'Onder bodem 0,5×',pAboveAmt:'Boven',fanHint:'Tik in de grafiek om de peildatum te kiezen.',
+  info:{title:'Methode en bronnen',
+    intro:'Deze pagina legt uit hoe de Monte Carlo-berekeningen in dit rapport werken en waar je er meer over kunt lezen.',
+    secs:[
+      {h:'1. Monte Carlo-simulatie',ps:[
+        'Een Monte Carlo-simulatie rekent niet één toekomst uit, maar duizenden mogelijke toekomsten, elk met toeval erin. Daarna wordt geteld hoe vaak iets gebeurt. De methode werd in de jaren 40 in Los Alamos ontwikkeld door Stanislaw Ulam, John von Neumann en Nicholas Metropolis, en in 1949 gepubliceerd door Metropolis en Ulam. De naam verwijst naar het casino van Monte Carlo: de toevalsgetallen zijn de dobbelstenen.',
+        'In dit rapport laat de app {N} koerspaden lopen vanaf de laatste slotkoers: per maand tot 2035, daarna per jaar. Op elke datum worden de {N} koersen op volgorde gezet. De waarde op 5% van de rij is de 5%-grens, op 50% de mediaan en op 95% de 95%-grens. Een kans, zoals "kans boven het model", is het aandeel paden waarin dat gebeurt. Voor het FIRE-plan wordt elk pad doorlopen met je opnameregels; de slagingskans is het aandeel paden waarin de stack niet opraakt. Een vaste startwaarde voor het toeval (seed {seed}) maakt de uitkomst reproduceerbaar.']},
+      {h:'2. Ornstein-Uhlenbeck: terugkeer naar de lijn',ps:[
+        'Het Ornstein-Uhlenbeck-proces (OU) is een willekeurig proces dat steeds teruggetrokken wordt naar een gemiddelde: een veer met duwtjes. Het werd in 1930 beschreven door de Utrechtse natuurkundigen George Uhlenbeck en Leonard Ornstein, oorspronkelijk voor de snelheid van een deeltje in Brownse beweging. In de financiële wereld wordt het gebruikt voor grootheden die terugkeren naar een evenwicht, zoals rentes (Vasicek, 1977) en prijsverschillen.',
+        'Hier volgt X = ln(koers / model) een OU-proces. X is de afwijking van je conservatieve Power Law op logaritmische schaal. Continu geschreven: dX = theta x (mu - X) dt + sigma dW, met mu = ln(midden) en theta = ln(2) / halveringstijd. De app rekent met de exacte stap, zonder benadering:'],
+       mono:['X(t+dt) = mu + phi^dt x (X(t) - mu) + s(dt) x Z','phi    = 0,5^(1 / halveringstijd in maanden)','s(dt)  = schok x wortel( (1 - phi^(2 dt)) / (1 - phi^2) ),   Z ~ standaardnormaal'],
+       ps2:['Zo is de schok per maand precies de standaardafwijking van de afwijking over één maand, ook als een stap korter of langer is. Op lange termijn wordt de spreiding stabiel: standaardafwijking = schok / wortel(1 - phi^2).',
+        'Met de instellingen van dit rapport (midden {mid}x, halveringstijd {hl} mnd, schok {sig}% per maand) verdwijnt per maand {dec}% van de afwijking, en ligt de koers op lange termijn in 90% van de paden tussen {lo}x en {hi}x het midden.']},
+      {h:'3. Basis: de Bitcoin Power Law',ps:[
+        'Het model onder alle berekeningen is een machtswet in de tijd: prijs = A x (dagen sinds het genesisblok op 3 januari 2009)^n. Deze vorm is onder meer gepopulariseerd door natuurkundige Giovanni Santostasi, vaak met A ~ 1 x 10^-17 en n ~ 5,8. Dit rapport gebruikt een conservatieve variant: A = 4,42 x 10^-17 en n = 5,6, wat lagere modelprijzen geeft.']},
+      {h:'4. Waar de standaardwaarden vandaan komen',ps:[
+        'Gemeten op de dagelijkse slotkoersen in rcaljouw/btc-price-history, met een maandelijkse AR(1)-regressie van ln(koers / model): sinds 2015 een halveringstijd van ±10,5 maanden en een schok van ±19,5% per maand; sinds 2011 ±8,5 maanden en ±24,5%; sinds 2018 ±6,2 maanden en ±18,6%. Sinds 2018 lag de koers mediaan op 1,36x de conservatieve lijn, en 5% van de dagen onder 0,76x.']},
+      {h:'5. Beperkingen',ps:[
+        '- Het model gaat ervan uit dat de Power Law blijft gelden. Het risico dat die relatie breekt, zit er niet in.',
+        '- De schokken zijn normaal verdeeld. Bitcoin heeft dikkere staarten: extreme bubbels en crashes komen in werkelijkheid vaker voor dan in deze simulatie.',
+        '- Halveringstijd en schok zijn constant verondersteld; in werkelijkheid verschillen ze per periode.',
+        '- De uitkomsten zijn scenario\'s binnen het model, geen voorspelling of financieel advies.']}],
+    srcTitle:'6. Bronnen'},
   loading:'Koersdata laden…',source:'Bron:',sourceTail:'(dagelijkse close, UTC). Model en extrapolatie zijn een scenario, geen voorspelling of financieel advies.',
   months:['januari','februari','maart','april','mei','juni','juli','augustus','september','oktober','november','december'],
   mshort:['jan','feb','mrt','apr','mei','jun','jul','aug','sep','okt','nov','dec'],
@@ -489,6 +511,28 @@ en:{
   on1Jan:'On 1 January',chAbove:'Chance > model',chBelow:'Chance < 0.5×',
   mcNote:'Each path follows ln(price / model): the deviation from your conservative line returns to the centre at the set half-life, plus a normally distributed shock every month (Ornstein-Uhlenbeck). Starts at the last close. A scenario analysis within the model, not a forecast or financial advice.',
   secRange:'Range',secProb:'Probabilities on the reference date',pAboveModel:'Above model',pBelowFloor:'Below floor 0.5×',pAboveAmt:'Above',fanHint:'Tap the chart to pick the reference date.',
+  info:{title:'Method and sources',
+    intro:'This page explains how the Monte Carlo calculations in this report work and where you can read more about them.',
+    secs:[
+      {h:'1. Monte Carlo simulation',ps:[
+        'A Monte Carlo simulation does not calculate one future but thousands of possible futures, each with randomness in it, and then counts how often something happens. The method was developed at Los Alamos in the 1940s by Stanislaw Ulam, John von Neumann and Nicholas Metropolis, and published by Metropolis and Ulam in 1949. The name refers to the Monte Carlo casino: the random numbers are the dice.',
+        'In this report the app runs {N} price paths from the last close: monthly until 2035, yearly after that. On each date the {N} prices are sorted. The value at 5% of the list is the 5% bound, at 50% the median and at 95% the 95% bound. A probability, such as "chance above model", is the share of paths in which that happens. For the FIRE plan each path is run through your withdrawal rules; the success rate is the share of paths in which the stack does not run out. A fixed random seed ({seed}) makes the result reproducible.']},
+      {h:'2. Ornstein-Uhlenbeck: return to the line',ps:[
+        'The Ornstein-Uhlenbeck process (OU) is a random process that is continually pulled back towards a mean: a spring with kicks. It was described in 1930 by the Utrecht physicists George Uhlenbeck and Leonard Ornstein, originally for the velocity of a particle in Brownian motion. In finance it is used for quantities that revert to an equilibrium, such as interest rates (Vasicek, 1977) and price spreads.',
+        'Here X = ln(price / model) follows an OU process. X is the deviation from your conservative Power Law on a log scale. In continuous form: dX = theta x (mu - X) dt + sigma dW, with mu = ln(centre) and theta = ln(2) / half-life. The app uses the exact step, without approximation:'],
+       mono:['X(t+dt) = mu + phi^dt x (X(t) - mu) + s(dt) x Z','phi    = 0.5^(1 / half-life in months)','s(dt)  = shock x sqrt( (1 - phi^(2 dt)) / (1 - phi^2) ),   Z ~ standard normal'],
+       ps2:['This makes the monthly shock exactly the standard deviation of the deviation over one month, even when a step is shorter or longer. In the long run the spread becomes stable: standard deviation = shock / sqrt(1 - phi^2).',
+        'With the settings of this report (centre {mid}x, half-life {hl} mo, shock {sig}% per month), {dec}% of the deviation disappears each month, and in the long run the price is between {lo}x and {hi}x the centre in 90% of the paths.']},
+      {h:'3. Basis: the Bitcoin Power Law',ps:[
+        'The model behind all calculations is a power law in time: price = A x (days since the genesis block on 3 January 2009)^n. This form was popularised by, among others, physicist Giovanni Santostasi, often with A ~ 1 x 10^-17 and n ~ 5.8. This report uses a conservative variant: A = 4.42 x 10^-17 and n = 5.6, which gives lower model prices.']},
+      {h:'4. Where the defaults come from',ps:[
+        'Measured on the daily closes in rcaljouw/btc-price-history, with a monthly AR(1) regression of ln(price / model): since 2015 a half-life of about 10.5 months and a shock of about 19.5% per month; since 2011 about 8.5 months and 24.5%; since 2018 about 6.2 months and 18.6%. Since 2018 the median price was 1.36x the conservative line, and 5% of days were below 0.76x.']},
+      {h:'5. Limitations',ps:[
+        '- The model assumes the Power Law keeps holding. The risk that the relationship breaks is not included.',
+        '- The shocks are normally distributed. Bitcoin has fatter tails: extreme bubbles and crashes happen more often in reality than in this simulation.',
+        '- Half-life and shock are assumed constant; in reality they differ between periods.',
+        '- The results are scenarios within the model, not a forecast or financial advice.']}],
+    srcTitle:'6. Sources'},
   loading:'Loading price data…',source:'Source:',sourceTail:'(daily close, UTC). Model and extrapolation are a scenario, not a forecast or financial advice.',
   months:['January','February','March','April','May','June','July','August','September','October','November','December'],
   mshort:['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],
@@ -924,6 +968,34 @@ const libs={};
 function loadLib(src){return libs[src]||(libs[src]=new Promise((res,rej)=>{const e=document.createElement('script');e.src=src;e.onload=res;e.onerror=()=>{delete libs[src];rej(new Error('load'))};document.head.appendChild(e)}))}
 const pdfTxt=v=>String(v).replace(/−/g,'-').replace(/≈/g,'~').replace(/[   ]/g,' ').replace(/≥/g,'>=').replace(/[‘’]/g,"'");
 function chartImg(ch){const c=ch.canvas,o=document.createElement('canvas');o.width=c.width;o.height=c.height;const g=o.getContext('2d');g.fillStyle='#ffffff';g.fillRect(0,0,o.width,o.height);g.drawImage(c,0,0);return {url:o.toDataURL('image/png'),ratio:c.height/c.width}}
+
+const SOURCES=[
+  ['Metropolis, N. & Ulam, S. (1949). The Monte Carlo Method. Journal of the American Statistical Association 44(247), 335-341.','https://wucj.lab.westlake.edu.cn/Others/MetropolisUlam49.pdf'],
+  ['Uhlenbeck, G.E. & Ornstein, L.S. (1930). On the theory of the Brownian motion. Physical Review 36, 823-841. (Utrecht University repository)','https://dspace.library.uu.nl/handle/1874/7519'],
+  ['Encyclopedia of Mathematics: Ornstein-Uhlenbeck process.','https://encyclopediaofmath.org/wiki/Ornstein-Uhlenbeck_process'],
+  ['Hudson & Thames: Mean-reverting spread modeling - caveats in calibrating the OU process.','https://hudsonthames.org/caveats-in-calibrating-the-ou-process/'],
+  ['A First Course in Monte Carlo Methods (arXiv:2405.16359).','https://arxiv.org/pdf/2405.16359'],
+  ['Vasicek, O. (1977). An equilibrium characterization of the term structure. Journal of Financial Economics 5(2), 177-188.',null],
+  ['Decrypt (2024). The Bitcoin Power Law: a mathematical approach to predicting Bitcoin\'s price.','https://decrypt.co/resources/the-bitcoin-power-law-a-mathematical-approach-to-predicting-bitcoins-price'],
+  ['Price data: rcaljouw/btc-price-history (Bitstamp daily closes).','https://github.com/rcaljouw/btc-price-history']];
+function pdfInfo(doc,M,W,INK,MUTED,ORANGE){
+  const I=T('info'),st=mc?mc.st:MCS,N=mc?mc.N:MCS.n;
+  const phi=Math.pow(.5,1/st.hl),sd=st.sig/100/Math.sqrt(1-phi*phi);
+  const fill=t=>t.replace(/\{(\w+)\}/g,(_,k)=>({N:num.format(N),seed:st.seed,mid:f1(st.mid),hl:f1(st.hl),sig:f1(st.sig),dec:fx((1-phi)*100,1,1),lo:fx(Math.exp(-1.645*sd),2,2),hi:fx(Math.exp(1.645*sd),2,2)})[k]??'');
+  doc.addPage();let y=20;const need=h=>{if(y+h>278){doc.addPage();y=20}};
+  const para=(t,size,color,font,lh,indent)=>{doc.setFont(font||'helvetica','normal');doc.setFontSize(size);doc.setTextColor(...color);const ls=doc.splitTextToSize(pdfTxt(fill(t)),W-2*M-(indent||0));ls.forEach(l=>{need(lh);doc.text(l,M+(indent||0),y);y+=lh})};
+  doc.setFont('helvetica','bold');doc.setFontSize(16);doc.setTextColor(...INK);doc.text(pdfTxt(I.title),M,y);y+=7;
+  para(I.intro,9.5,MUTED,'helvetica',4.4);y+=3;
+  I.secs.forEach(sec=>{
+    need(14);doc.setFont('helvetica','bold');doc.setFontSize(11);doc.setTextColor(...ORANGE);doc.text(pdfTxt(sec.h),M,y);y+=5.5;
+    sec.ps.forEach(t=>{para(t,9,INK,'helvetica',4.3);y+=1.6});
+    if(sec.mono){need(sec.mono.length*4.4+5);doc.setFillColor(246,247,249);doc.rect(M,y-3.6,W-2*M,sec.mono.length*4.4+2.4,'F');sec.mono.forEach(t=>{doc.setFont('courier','normal');doc.setFontSize(8.4);doc.setTextColor(...INK);doc.text(pdfTxt(t),M+3,y);y+=4.4});y+=2.6}
+    (sec.ps2||[]).forEach(t=>{para(t,9,INK,'helvetica',4.3);y+=1.6});
+    y+=2.5;
+  });
+  need(14);doc.setFont('helvetica','bold');doc.setFontSize(11);doc.setTextColor(...ORANGE);doc.text(pdfTxt(I.srcTitle),M,y);y+=5.5;
+  SOURCES.forEach(([t,u])=>{para(t,8.6,INK,'helvetica',4);if(u){need(4);doc.setFont('helvetica','normal');doc.setFontSize(8.2);doc.setTextColor(35,80,200);doc.textWithLink(u,M+3,y,{url:u});y+=4}y+=1.6});
+}
 async function makePdf(){
   if(!lastRes){expMsg(T('eInputs'),true);return}
   const btns=[$('exp-pdf')];btns.forEach(b=>b.disabled=true);expMsg(T('pdfBusy'));
@@ -1044,6 +1116,7 @@ async function makePdf(){
         styles:{fontSize:7.4,cellPadding:1.4,textColor:INK},headStyles:{fillColor:ORANGE,textColor:255,halign:'right'},columnStyles:rr,
         didParseCell:d=>{if(d.section==='head'&&d.column.index===0)d.cell.styles.halign='left';if(d.section==='body'&&jb[d.row.index][0]===pdfTxt(T('rowJan',yrRef)))d.cell.styles.fillColor=[253,237,216]}});
     }
+    pdfInfo(doc,M,W,INK,MUTED,ORANGE);
     const n=doc.getNumberOfPages();
     for(let i=1;i<=n;i++){doc.setPage(i);doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.setTextColor(...MUTED);
       doc.text(pdfTxt(T('pFoot1')),M,286);doc.text(pdfTxt(T('pFoot2')),M,290);
