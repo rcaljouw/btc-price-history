@@ -421,7 +421,13 @@ tr.cur td{background:color-mix(in srgb,var(--btc) 12%,transparent);font-weight:5
               <button type="button" data-eqr="5y" aria-pressed="false" data-i="eq5y">5 jaar</button>
               <button type="button" data-eqr="2y" aria-pressed="false" data-i="eq2y">2 jaar</button>
             </div>
+            <div class="zbtns">
+              <button type="button" class="zb" id="eq-z-out" data-ia="zoomOut" aria-label="Uitzoomen" disabled>−</button>
+              <button type="button" class="zb" id="eq-z-in" data-ia="zoomIn" aria-label="Inzoomen">+</button>
+              <button type="button" class="zb zr" id="eq-z-reset" disabled data-i="reset">Beginstand</button>
+            </div>
           </div>
+          <p class="zhint" id="eq-zhint" hidden></p>
           <div class="canvas"><canvas id="ch-eq" role="img" data-ia="eqCanvas" aria-label="Logaritmische grafiek van de bitcoin-koers met walk-forward kwantielbanden in regenboogkleuren."></canvas></div>
         </section>
         <div class="tbl-wrap">
@@ -465,7 +471,7 @@ nl:{
   eqTPrice:'Koers',eqTMid:'Mediaan (fair)',eqTMidS:'koers = {0}× mediaan',eqTRisk:'Risk (asymmetrisch)',eqTRiskS:'op close: {0}',eqTBand:'Band',eqTBandS:'DCA-factor {0}×',
   eqTPl:'Conservatieve PL',eqTPlS:'conservatieve versie · koers = {0}×',eqR2:'Walk-forward R²',eqCent:'Centering',eqCentS:'dagen boven mediaan',
   eqRail:'Rail',eqBnote:'per {0} · huidige band gemarkeerd',eqBtNote:'elke week $100 sinds {0}, op de close',eqFixed:'Vaste DCA',eqDyn:'EQM-DCA',
-  eqTipPrice:'Koers',eqTipMid:'Mediaan',eqTipRisk:'Risk',
+  eqHintTouch:'Knijp om te zoomen, veeg opzij om te schuiven.',eqHintMouse:'Zoom met Ctrl + scrollwiel of knijp op je trackpad, sleep om te schuiven.',eqTipPrice:'Koers',eqTipMid:'Mediaan',eqTipRisk:'Risk',
   bLow:'Onder 1%',bFire:'Fire sale',bAcc:'Accumulate',bCheap:'Goedkoop',bValue:'Waarde',bBelow:'Onder midden',bAbove:'Boven midden',bWarm:'Warm',bHot:'Heet',bFomo:'FOMO',bBubble:'Bubbel',bHigh:'Boven 99%',
   panelAria:'Berekening voor een datum',pickDate:'Kies een datum',day:'Dag',month:'Maand',year:'Jaar',
   yPrev:'− 1 jaar',yNext:'+ 1 jaar',yPrevAria:'Eén jaar terug',yNextAria:'Eén jaar vooruit',quickAria:'Snelkeuze',
@@ -570,7 +576,7 @@ en:{
   eqTPrice:'Price',eqTMid:'Median (fair)',eqTMidS:'price = {0}× median',eqTRisk:'Risk (asymmetric)',eqTRiskS:'on close: {0}',eqTBand:'Band',eqTBandS:'DCA factor {0}×',
   eqTPl:'Conservative PL',eqTPlS:'conservative version · price = {0}×',eqR2:'Walk-forward R²',eqCent:'Centering',eqCentS:'days above median',
   eqRail:'Rail',eqBnote:'as of {0} · current band highlighted',eqBtNote:'$100 every week since {0}, at the close',eqFixed:'Fixed DCA',eqDyn:'EQM DCA',
-  eqTipPrice:'Price',eqTipMid:'Median',eqTipRisk:'Risk',
+  eqHintTouch:'Pinch to zoom, swipe sideways to pan.',eqHintMouse:'Zoom with Ctrl + scroll wheel or pinch on your trackpad, drag to pan.',eqTipPrice:'Price',eqTipMid:'Median',eqTipRisk:'Risk',
   bLow:'Below 1%',bFire:'Fire sale',bAcc:'Accumulate',bCheap:'Cheap',bValue:'Value',bBelow:'Below mid',bAbove:'Above mid',bWarm:'Warm',bHot:'Hot',bFomo:'FOMO',bBubble:'Bubble',bHigh:'Above 99%',
   panelAria:'Calculation for a date',pickDate:'Pick a date',day:'Day',month:'Month',year:'Year',
   yPrev:'− 1 year',yNext:'+ 1 year',yPrevAria:'One year back',yNextAria:'One year forward',quickAria:'Quick picks',
@@ -1426,7 +1432,6 @@ function eqSave(){try{localStorage.setItem('bpl-eq',JSON.stringify(EQS))}catch(e
 function eqSync(){
   document.querySelectorAll('[data-eqtr]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.eqtr===EQS.trend)));
   document.querySelectorAll('[data-eqw]').forEach(b=>b.setAttribute('aria-pressed',String(+b.dataset.eqw===EQS.hl)));
-  document.querySelectorAll('[data-eqr]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.eqr===EQS.range)));
 }
 function eqCompute(){
   const ms=[...prices.keys()],n=ms.length;
@@ -1504,40 +1509,99 @@ function renderEq(){
   $('eq-btnote').textContent=T('eqBtNote',longDate(eq.start));
   drawEq();
 }
-function eqRangeMin(){const now=toYear(eq.ms[eq.n-1]);return EQS.range==='5y'?now-5:EQS.range==='2y'?now-2:toYear(eq.start)}
+let eqX=null, eqView=null, eqPanEnd=0, eqRaf=0;
+const EQ_TARGET=700;
+const eqLim=()=>({min:eqX[EQ_MIN],max:eqX[eq.n-1]+.05});
+function eqPreset(k){const L=eqLim(),now=eqX[eq.n-1];return k==='5y'?[now-5,L.max]:k==='2y'?[now-2,L.max]:[L.min,L.max]}
+const eqIsFull=()=>{const L=eqLim();return eqView.min<=L.min+1e-6&&eqView.max>=L.max-1e-6};
+function eqIdx(v){let lo=EQ_MIN,hi=eq.n-1;while(lo<hi){const m=(lo+hi)>>1;if(eqX[m]<v)lo=m+1;else hi=m}return lo}
+// Level of detail: alleen het zichtbare venster plus één vensterbreedte marge aan elke kant, ±700 punten in beeld
+function eqData(){
+  const w=eqView.max-eqView.min,i0=Math.max(EQ_MIN,eqIdx(eqView.min-w)-1),i1=Math.min(eq.n-1,eqIdx(eqView.max+w)+1);
+  const vis=Math.max(1,eqIdx(eqView.max)-eqIdx(eqView.min)),st=Math.max(1,Math.floor(vis/EQ_TARGET));
+  const I=[];for(let t=i0-(i0-EQ_MIN)%st;t<=i1;t+=st)if(t>=EQ_MIN)I.push(t);if(I[I.length-1]!==i1)I.push(i1);
+  return I;
+}
+let eqSpan=[0,0];
+function eqFill(){
+  const I=eqData(),pi=eqChart.data.datasets.length-1;eqSpan=[eqX[I[0]],eqX[I[I.length-1]]];
+  for(let k=0;k<EQ_Q.length;k++)eqChart.data.datasets[k].data=I.map(t=>({x:eqX[t],y:eq.Q[k][t]}));
+  eqChart.data.datasets[pi-1].data=I.map(t=>({x:eqX[t],y:eq.Q[6][t]}));
+  eqChart.data.datasets[pi].data=I.map(t=>({x:eqX[t],y:prices.get(eq.ms[t]),t}));
+  eqrChart.data.datasets[0].data=I.map(t=>({x:eqX[t],y:eq.riskA[t]*100,t}));
+}
+function eqYFit(sc){
+  const xo=sc.chart.options.scales.x;let lo=Infinity,hi=0;const a=eqIdx(xo.min),b=Math.min(eq.n-1,eqIdx(xo.max));
+  for(let t=Math.max(EQ_MIN,a-1);t<=b;t++){const p=prices.get(eq.ms[t]);if(eq.Q[0][t]<lo)lo=eq.Q[0][t];if(p<lo)lo=p;if(eq.Q[12][t]>hi)hi=eq.Q[12][t];if(p>hi)hi=p}
+  if(isFinite(lo)&&hi>0){sc.min=lo/1.12;sc.max=hi*1.12}
+}
+function eqSetRange(min,max){
+  if(!eq||!eqX)return;const L=eqLim();
+  let span=Math.max(.25,Math.min(max-min,L.max-L.min));
+  if(min<L.min)min=L.min;max=min+span;if(max>L.max){max=L.max;min=max-span}
+  eqView={min,max};
+  if(!eqChart)return;
+  for(const c of [eqChart,eqrChart]){const x=c.options.scales.x;x.min=min;x.max=max}
+  eqFill();eqChart.update('none');eqrChart.update('none');eqSyncZoom();
+}
+function eqSyncZoom(){
+  const full=eqIsFull();$('eq-z-reset').disabled=full;$('eq-z-out').disabled=full;$('eq-z-in').disabled=eqView.max-eqView.min<=.26;
+  document.querySelectorAll('[data-eqr]').forEach(b=>{const [a,c]=eqPreset(b.dataset.eqr);b.setAttribute('aria-pressed',String(Math.abs(a-eqView.min)<.02&&Math.abs(c-eqView.max)<.02))});
+}
+function eqZoomBy(f){const c=(eqView.min+eqView.max)/2,h=(eqView.max-eqView.min)*f/2;eqSetRange(c-h,c+h)}
+function eqHint(){const h=$('eq-zhint');if(!hasZoom){h.hidden=true;return}h.textContent=matchMedia('(pointer: coarse)').matches?T('eqHintTouch'):T('eqHintMouse');h.hidden=false}
+function eqXTicks(sc){
+  const span=sc.max-sc.min,ppy=(sc.width||600)/span;
+  let i=STEPS.findIndex(t=>t*ppy>=52);if(i<0)i=STEPS.length-1;
+  while(i>0&&span/STEPS[i]<2.2)i--;
+  const st=STEPS[i];sc._btcStep=st;
+  const out=[];for(let v=Math.ceil(sc.min/st-1e-6)*st;v<=sc.max+1e-6;v+=st)out.push({value:+v.toFixed(6)});
+  sc.ticks=out;
+}
+const eqTickCb=function(v){return (this._btcStep||1)>=1?Math.round(v):monLabel(v)};
+const eqYTick=v=>{const e=Math.pow(10,Math.floor(Math.log10(v)+1e-9)),m=Math.round(v/e*1000)/1000;const sc=eqChart&&eqChart.scales.y;const dec=sc?Math.log10(sc.max/sc.min):3;return (dec>2.5?[1]:dec>1?[1,2,5]:[1,1.5,2,3,5,7]).includes(m)?axisUsd(v):''};
 function drawEq(){
   if(!eq||!window.Chart||$('view-eqm').hidden)return;
   if(eqChart){eqChart.destroy();eqChart=null}if(eqrChart){eqrChart.destroy();eqrChart=null}
+  eqX=new Float64Array(eq.n);for(let t=0;t<eq.n;t++)eqX[t]=toYear(eq.ms[t]);
+  if(!eqView){const [a,c]=eqPreset(EQS.range);eqView={min:a,max:c}}
   const grid=css('--line'),muted=css('--muted'),ink=css('--ink');
-  const xmin=eqRangeMin(),xmax=toYear(eq.ms[eq.n-1])+.05;
-  const span=xmax-xmin,stp=span>8?3:span>3?2:1;
-  const I=[];for(let t=EQ_MIN;t<eq.n;t+=stp)I.push(t);if(I[I.length-1]!==eq.n-1)I.push(eq.n-1);
-  const Iv=I.filter(t=>toYear(eq.ms[t])>=xmin-.02);
-  const ds=EQ_Q.map((q,k)=>({label:'q'+q,data:Iv.map(t=>({x:toYear(eq.ms[t]),y:eq.Q[k][t]})),borderWidth:0,pointRadius:0,fill:k?'-1':false,backgroundColor:k?color(EQ_COL[k-1],.82):'transparent',order:3}));
-  ds.push({label:'mid',data:Iv.map(t=>({x:toYear(eq.ms[t]),y:eq.Q[6][t]})),borderColor:'rgba(255,255,255,.9)',borderWidth:1.3,pointRadius:0,fill:false,order:2});
-  ds.push({label:'price',data:Iv.map(t=>({x:toYear(eq.ms[t]),y:prices.get(eq.ms[t]),t})),borderColor:ink,borderWidth:1.6,pointRadius:0,fill:false,order:1});
-  let lo=Infinity,hi=0;for(const t of Iv){lo=Math.min(lo,eq.Q[0][t],prices.get(eq.ms[t]));hi=Math.max(hi,eq.Q[12][t],prices.get(eq.ms[t]))}
-  const xs={type:'linear',min:xmin,max:xmax,ticks:{color:muted,maxRotation:0,autoSkipPadding:12,callback:v=>span>3?(Math.abs(v-Math.round(v))<1e-6?String(Math.round(v)):''):monLabel(v)},grid:{display:false},border:{color:grid},afterBuildTicks:span>3?undefined:xTicks};
-  const pi=ds.length-1;
+  const ds=EQ_Q.map((q,k)=>({label:'q'+q,data:[],borderWidth:0,pointRadius:0,fill:k?'-1':false,backgroundColor:k?color(EQ_COL[k-1],.82):'transparent',order:3}));
+  ds.push({label:'mid',data:[],borderColor:'rgba(255,255,255,.9)',borderWidth:1.3,pointRadius:0,fill:false,order:2});
+  ds.push({label:'price',data:[],borderColor:ink,borderWidth:1.6,pointRadius:0,fill:false,order:1});
+  const pi=ds.length-1,L=eqLim();
+  const xs=()=>({type:'linear',min:eqView.min,max:eqView.max,afterBuildTicks:eqXTicks,ticks:{color:muted,autoSkip:true,autoSkipPadding:10,maxRotation:0,callback:eqTickCb},grid:{display:false},border:{color:grid}});
+  const after=({chart:c})=>{cancelAnimationFrame(eqRaf);eqRaf=0;eqSetRange(c.scales.x.min,c.scales.x.max)};
+  const live=({chart:c})=>{if(eqRaf)return;eqRaf=requestAnimationFrame(()=>{eqRaf=0;if(!eqChart)return;const a=c.scales.x.min,b=c.scales.x.max,m=(b-a)*.25;
+    if((a-m<eqSpan[0]&&eqSpan[0]>L.min+1e-6)||(b+m>eqSpan[1]&&eqSpan[1]<eqX[eq.n-1]-1e-6)||b-a<(eqView.max-eqView.min)*.6){eqView={min:a,max:b};eqFill();eqChart.update('none')}
+    const r=eqrChart.options.scales.x;r.min=a;r.max=b;eqrChart.update('none')})};
+  const zoom=hasZoom?{limits:{x:{min:L.min,max:L.max,minRange:.25}},
+    pan:{enabled:true,mode:'x',threshold:6,onPan:live,onPanComplete:a=>{eqPanEnd=Date.now();after(a)}},
+    zoom:{wheel:{enabled:true,modifierKey:'ctrl'},pinch:{enabled:true},mode:'x',onZoom:live,onZoomComplete:after}}:false;
   eqChart=new Chart($('ch-eq'),{type:'line',data:{datasets:ds},
     options:{responsive:true,maintainAspectRatio:false,animation:false,parsing:false,normalized:true,
       interaction:{mode:'nearest',axis:'x',intersect:false},
-      plugins:{legend:{display:false},decimation:{enabled:false},
+      plugins:{legend:{display:false},decimation:{enabled:false},zoom,
         tooltip:{displayColors:false,filter:it=>it.datasetIndex===pi,callbacks:{
           title:it=>it.length?longDate(eq.ms[it[0].raw.t]):'',
           label:it=>{const t=it.raw.t,b=eqBand(eq.riskA[t]);return [T('eqTipPrice')+': '+money(it.raw.y),T('eqTipMid')+': '+money(eq.Q[6][t]),T('eqTipRisk')+': '+fx(eq.riskA[t]*100,1,1)+'% · '+b.name]}}}},
-      scales:{x:xs,y:{type:'logarithmic',min:lo/1.15,max:hi*1.15,ticks:{color:muted,callback:v=>{const e=Math.pow(10,Math.floor(Math.log10(v)+1e-9)),m=Math.round(v/e*1000)/1000;return (span>8?[1]:[1,2,5]).includes(m)?axisUsd(v):''}},grid:{color:grid},border:{display:false}}}}});
-  const rd=Iv.map(t=>({x:toYear(eq.ms[t]),y:eq.riskA[t]*100}));
-  eqrChart=new Chart($('ch-eqr'),{type:'line',data:{datasets:[{data:rd,borderColor:ink,borderWidth:1.2,pointRadius:0,fill:false}]},
-    options:{responsive:true,maintainAspectRatio:false,animation:false,parsing:false,
+      scales:{x:xs(),y:{type:'logarithmic',afterDataLimits:eqYFit,ticks:{color:muted,autoSkip:false,callback:eqYTick},grid:{color:grid},border:{display:false}}}}});
+  eqrChart=new Chart($('ch-eqr'),{type:'line',data:{datasets:[{data:[],borderColor:ink,borderWidth:1.2,pointRadius:0,fill:false}]},
+    options:{responsive:true,maintainAspectRatio:false,animation:false,parsing:false,normalized:true,
       interaction:{mode:'nearest',axis:'x',intersect:false},
-      plugins:{legend:{display:false},tooltip:{displayColors:false,callbacks:{title:it=>it.length?longDate(msOfYear(it[0].raw.x)):'',label:it=>fx(it.raw.y,1,1)+'% · '+eqBand(it.raw.y/100).name}}},
-      scales:{x:{...xs},y:{min:0,max:100,ticks:{color:muted,stepSize:20,callback:v=>v+'%'},grid:{color:grid},border:{display:false}}}},
+      plugins:{legend:{display:false},decimation:{enabled:false},tooltip:{displayColors:false,callbacks:{title:it=>it.length?longDate(eq.ms[it[0].raw.t]):'',label:it=>fx(it.raw.y,1,1)+'% · '+eqBand(it.raw.y/100).name}}},
+      scales:{x:xs(),y:{min:0,max:100,ticks:{color:muted,stepSize:20,callback:v=>v+'%'},grid:{color:grid},border:{display:false}}}},
     plugins:[{id:'eqZones',beforeDatasetsDraw(c){const g=c.ctx,a=c.chartArea,sy=c.scales.y;g.save();for(let k=0;k<12;k++){const y0=sy.getPixelForValue(EQ_Q[k]*100),y1=sy.getPixelForValue(EQ_Q[k+1]*100);g.fillStyle=color(EQ_COL[k],.28);g.fillRect(a.left,y1,a.right-a.left,y0-y1)}g.restore()}}]});
+  if(hasZoom)eqChart.canvas.style.touchAction='pan-y';
+  eqSetRange(eqView.min,eqView.max);
 }
 document.querySelectorAll('[data-eqtr]').forEach(b=>b.addEventListener('click',()=>{EQS.trend=b.dataset.eqtr;eqSync();eqSave();eqSchedule()}));
 document.querySelectorAll('[data-eqw]').forEach(b=>b.addEventListener('click',()=>{EQS.hl=+b.dataset.eqw;eqSync();eqSave();eqSchedule()}));
-document.querySelectorAll('[data-eqr]').forEach(b=>b.addEventListener('click',()=>{EQS.range=b.dataset.eqr;eqSync();eqSave();drawEq()}));
+document.querySelectorAll('[data-eqr]').forEach(b=>b.addEventListener('click',()=>{EQS.range=b.dataset.eqr;eqSave();if(eq&&eqX){const [a,c]=eqPreset(EQS.range);eqSetRange(a,c)}}));
+$('eq-z-in').addEventListener('click',()=>eqZoomBy(.5));
+$('eq-z-out').addEventListener('click',()=>eqZoomBy(2));
+$('eq-z-reset').addEventListener('click',()=>{const L=eqLim();eqSetRange(L.min,L.max)});
+eqHint();
 eqLoad();eqSync();
 
 function showView(v){
@@ -1574,7 +1638,7 @@ function setLang(l){
   LANG=l;try{localStorage.setItem('bpl-lang',l)}catch(e){}
   mkFmt();
   NUMIDS.forEach(id=>{const v=vals[id];if(v!=null&&!isNaN(v))$(id).value=String(v).replace('.',DECS())});
-  applyStatic();fillMonths();fillMcDates();zoomHint();freshText();
+  applyStatic();fillMonths();fillMcDates();zoomHint();eqHint();freshText();
   if(sel!=null)syncSelects(sel);
   expMsg('');
   render();
