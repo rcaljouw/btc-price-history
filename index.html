@@ -500,7 +500,7 @@ nl:{
   mcNote:'Elk pad volgt ln(koers / model): de afwijking van je conservatieve lijn keert met de ingestelde halveringstijd terug naar het midden, plus elke maand een normaal verdeelde schok (Ornstein-Uhlenbeck). Start bij de laatste close. Een scenario-analyse binnen het model, geen voorspelling of financieel advies.',
   secRange:'Bandbreedte',secProb:'Kansen op de peildatum',pAboveModel:'Boven model',pBelowFloor:'Onder bodem 0,5×',pAboveAmt:'Boven',fanHint:'Tik in de grafiek om de peildatum te kiezen.',
   info:{title:'Methode en bronnen',
-    intro:'Deze pagina legt uit hoe de Monte Carlo-berekeningen in dit rapport werken en waar je er meer over kunt lezen.',
+    intro:'Deze pagina legt uit hoe de berekeningen in dit rapport werken (Monte Carlo en het kwantielmodel) en waar je er meer over kunt lezen.',
     secs:[
       {h:'1. Monte Carlo-simulatie',ps:[
         'Een Monte Carlo-simulatie rekent niet één toekomst uit, maar duizenden mogelijke toekomsten, elk met toeval erin. Daarna wordt geteld hoe vaak iets gebeurt. De methode werd in de jaren 40 in Los Alamos ontwikkeld door Stanislaw Ulam, John von Neumann en Nicholas Metropolis, en in 1949 gepubliceerd door Metropolis en Ulam. De naam verwijst naar het casino van Monte Carlo: de toevalsgetallen zijn de dobbelstenen.',
@@ -515,12 +515,25 @@ nl:{
         'Het model onder alle berekeningen is een machtswet in de tijd: prijs = A x (dagen sinds het genesisblok op 3 januari 2009)^n. Deze vorm is onder meer gepopulariseerd door natuurkundige Giovanni Santostasi, vaak met A ~ 1 x 10^-17 en n ~ 5,8. Dit rapport gebruikt een conservatieve variant: A = 4,42 x 10^-17 en n = 5,6, wat lagere modelprijzen geeft.']},
       {h:'4. Waar de standaardwaarden vandaan komen',ps:[
         'Gemeten op de dagelijkse slotkoersen in rcaljouw/btc-price-history, met een maandelijkse AR(1)-regressie van ln(koers / model): sinds 2015 een halveringstijd van ±10,5 maanden en een schok van ±19,5% per maand; sinds 2011 ±8,5 maanden en ±24,5%; sinds 2018 ±6,2 maanden en ±18,6%. Sinds 2018 lag de koers mediaan op 1,36x de conservatieve lijn, en 5% van de dagen onder 0,76x.']},
-      {h:'5. Beperkingen',ps:[
+      {h:'5. Kwantielmodel (Empirical Quantile Model)',ps:[
+        'Het kwantielmodel beantwoordt een andere vraag dan de Monte Carlo: niet "wat kan er gebeuren?", maar "hoe goedkoop of duur is de koers nu, vergeleken met de eigen geschiedenis?". Het idee komt van het Empirical Quantile Model (EQM) dat @btcanalytica op X publiceert. De rekenmethode daarvan is niet openbaar; deze app gebruikt een eigen, transparante implementatie.',
+        'Stap 1, trend: een power law in log-log, log10(koers) = a + b x log10(dagen sinds 3 januari 2009). Bij "Eigen fit" worden a en b elke week opnieuw geschat met kleinste kwadraten op alle data tot dat moment. Bij "Conservatieve PL" liggen ze vast (A = 4,42 x 10^-17, n = 5,6).',
+        'Stap 2, afwijkingen: per dag de afwijking r = log10(koers) - trend. Stap 3, empirische kwantielen: de afwijkingen tot dat moment worden op volgorde gezet; de waarde op 10% van de rij is de 10%-grens, enzovoort (Hyndman & Fan, 1996). Er wordt geen normale verdeling aangenomen, dus de dikke staarten van bitcoin zitten er vanzelf in. Een band in dollars is trend plus kwantiel, terug omgerekend:'],
+       mono:['r(t)      = log10(P(t)) - (a + b x log10(dagen))','band_q(t) = 10^( a + b x log10(dagen) + Q_q{ r(s) : s < t } )','risk(t)   = aandeel van de eerdere r(s) dat <= r(t) is'],
+       ps2:['Walk-forward: elke dag wordt alleen berekend met data van eerdere dagen, zoals je het destijds had kunnen zien. Er is dus geen look-ahead, en oude banden veranderen achteraf niet (Pardo, 2008).',
+        'Risk is het percentiel van de afwijking van vandaag. Asymmetrisch: staat de koers boven de mediaan, dan telt de daghoogste koers; staat hij eronder, dan de daglaagste. Zo is het model voorzichtig: hitte wordt eerder gezien, kou pas als die echt optreedt.',
+        'Weging "Recent (4 jr)": oudere afwijkingen krijgen een exponentieel afnemend gewicht met een halveringstijd van 4 jaar, zoals in de hybride historische simulatie van Boudoukh, Richardson & Whitelaw (1998). Zo rekken de extreme bubbels van 2011-2013 de bovenste banden minder op.',
+        'Betrouwbaarheid: walk-forward R² meet hoe goed de mediaan de koers volgt op data die het model nog niet kende; centering is het aandeel dagen boven de mediaan (rond 50% is goed gekalibreerd). De DCA-factoren per band (3x bij fire sale tot 0x bij FOMO en bubbel) zijn een eigen keuze, geen onderdeel van het model.',
+        'In dit rapport: trendlijn {eqtr}, weging {eqw}, walk-forward R² {r2}, centering {cent}.']},
+      {h:'6. Beperkingen',ps:[
         '- Het model gaat ervan uit dat de Power Law blijft gelden. Het risico dat die relatie breekt, zit er niet in.',
         '- De schokken zijn normaal verdeeld. Bitcoin heeft dikkere staarten: extreme bubbels en crashes komen in werkelijkheid vaker voor dan in deze simulatie.',
         '- Halveringstijd en schok zijn constant verondersteld; in werkelijkheid verschillen ze per periode.',
+        '- Kwantielen beschrijven het verleden. Een "fire sale" kan nog goedkoper worden: in 2022 zakte de koers onder alle banden van dat moment.',
+        '- De bovenste banden worden sterk bepaald door de vroege bubbels; boven 90% zeggen ze weinig.',
+        '- Historische kwantielen reageren traag op veranderend risico (Pritsker, 2001).',
         '- De uitkomsten zijn scenario\'s binnen het model, geen voorspelling of financieel advies.']}],
-    srcTitle:'6. Bronnen'},
+    srcTitle:'7. Bronnen'},
   loading:'Koersdata laden…',source:'Bron:',sourceTail:'(dagelijkse close, UTC). Model en extrapolatie zijn een scenario, geen voorspelling of financieel advies.',
   months:['januari','februari','maart','april','mei','juni','juli','augustus','september','oktober','november','december'],
   mshort:['jan','feb','mrt','apr','mei','jun','jul','aug','sep','okt','nov','dec'],
@@ -539,7 +552,13 @@ nl:{
   eInputs:'Vul eerst geldige gegevens in.',csvDone:'CSV gemaakt.',pdfBusy:'PDF wordt gemaakt…',pdfLib:'De PDF-bibliotheek kon niet laden. Controleer je internetverbinding.',pdfDone:'PDF-rapport gemaakt.',pdfFail:'Het rapport kon niet worden gemaakt.',
   mtDecl:(o)=>'Aflopend %: '+o.p0+'% naar '+o.p1+'% in '+o.n+' jaar',mtPct:(o)=>'Vast %: '+o.pf+'% van de stack per jaar',
   mtUsd:(o)=>'Vast bedrag: '+o.usd+' per jaar'+(o.real?', meegroeiend met inflatie (in $ van nu)':', vast nominaal bedrag'),
-  pdfTitle:'Bitcoin FIRE-plan en Monte Carlo',pMcYearTitle:'Monte Carlo: FIRE-plan per jaar ({0} paden)',pMcYearNote:'Per jaar de opname en de resterende BTC in 10%, 50% (mediaan) en 90% van de paden. "Stack op" = aandeel paden waarin de stack t/m dat jaar op is. Bij een vast bedrag ligt de opname vast zolang de stack niet op is.',
+  pdfTitle:'Bitcoin: marktbeeld, FIRE-plan en Monte Carlo',pFireTitle:'FIRE-plan',
+  pMkTitle:'Marktbeeld vandaag',pMkSub:'Slotkoers {0}: {1}',pMkModel:'Model: conservatieve Power Law',pMkQuant:'Kwantielen (Empirical Quantile Model)',
+  pMkPl:'Modelwaarde (conservatieve versie)',pMkRatio:'Koers / model',pMkBand:'Band 0,5× – 2×',pMkPos:'Positie',posBelow:'onder de band (< 0,5×)',posIn:'binnen de band',posAbove:'boven de band (> 2×)',
+  pMkRisk:'Risk asymmetrisch (op close)',pMkBandQ:'Band en DCA-factor',pMkMid:'Mediaan (fair)',pMkCheap:'Goedkoper dan',pMkCheapV:'{0} van de historie',pMkSet:'Instellingen',pMkSetV:'trendlijn: {0}; weging: {1}',pMkRel:'Betrouwbaarheid',pMkRelV:'walk-forward R² {0}; centering {1}',
+  pMkChPl:'Koers en conservatieve Power Law (log-schaal)',pMkChPlLeg:'Koers (blauw) · Power Law 1× (oranje) · band 0,5×–2× (grijs). Gestippeld = extrapolatie na vandaag.',
+  pMkChEq:'Kwantielbanden, walk-forward (log-schaal)',pMkChEqLeg:'Van donkerblauw (goedkoop, onder 10%) via groen en geel naar rood (duur, boven 90%). Witte lijn = mediaan, donkere lijn = koers. Elke dag berekend met alleen de data tot dat moment.',
+  pMkMeter:'Risk-meter: {0}',pMkBandsTitle:'Kwantielbands per {0}',pMkBtTitle:'DCA-backtest',pMkBtNote:'Elke week $100 sinds {0}, op de close. EQM-DCA vermenigvuldigt de inleg met de DCA-factor van de band (asymmetrisch risk). De factoren zijn achteraf gekozen, dus de backtest is een illustratie, geen bewijs.',pMcYearTitle:'Monte Carlo: FIRE-plan per jaar ({0} paden)',pMcYearNote:'Per jaar de opname en de resterende BTC in 10%, 50% (mediaan) en 90% van de paden. "Stack op" = aandeel paden waarin de stack t/m dat jaar op is. Bij een vast bedrag ligt de opname vast zolang de stack niet op is.',
   pMcYearHead:['Jaar','Opname 10%','Opname mediaan','Opname 90%','BTC over 10%','BTC over mediaan','BTC over 90%','Stack op'],pMcPriceTitle:'Monte Carlo: koers rond je conservatieve lijn',pMcRef:'Peildatum: {0}',pFan:'Waaiergrafiek (log-schaal)',pFanLegend:'Blauw: koers · oranje: mediaan · donkere band: 50% van de paden · lichte band: 90% · stippellijn: model 1x en peildatum.',pdfFormula:'Conservatieve Power Law: prijs = 4,42 x 10^-17 x (dagen sinds 3 jan 2009)^5,6',pdfMade:'Gemaakt op {0}',pdfThrough:' · koersdata t/m {0}',
   pStack:'Bitcoin stack',pFirst:'Eerste opnamejaar',pYears:'Aantal jaren opnemen',pYearsV:'{0} jaar (t/m {1})',pMethod:'Opnamemethode',pInf:'Inflatie',pInfV:'{0}% per jaar',
   pMin:'Minimum per jaar',pMax:'Maximum per jaar',pToday:' (in $ van nu)',pSc:'Gekozen scenario',pAssume:'Uitgangspunten',
@@ -605,7 +624,7 @@ en:{
   mcNote:'Each path follows ln(price / model): the deviation from your conservative line returns to the centre at the set half-life, plus a normally distributed shock every month (Ornstein-Uhlenbeck). Starts at the last close. A scenario analysis within the model, not a forecast or financial advice.',
   secRange:'Range',secProb:'Probabilities on the reference date',pAboveModel:'Above model',pBelowFloor:'Below floor 0.5×',pAboveAmt:'Above',fanHint:'Tap the chart to pick the reference date.',
   info:{title:'Method and sources',
-    intro:'This page explains how the Monte Carlo calculations in this report work and where you can read more about them.',
+    intro:'This page explains how the calculations in this report work (Monte Carlo and the quantile model) and where you can read more about them.',
     secs:[
       {h:'1. Monte Carlo simulation',ps:[
         'A Monte Carlo simulation does not calculate one future but thousands of possible futures, each with randomness in it, and then counts how often something happens. The method was developed at Los Alamos in the 1940s by Stanislaw Ulam, John von Neumann and Nicholas Metropolis, and published by Metropolis and Ulam in 1949. The name refers to the Monte Carlo casino: the random numbers are the dice.',
@@ -620,12 +639,25 @@ en:{
         'The model behind all calculations is a power law in time: price = A x (days since the genesis block on 3 January 2009)^n. This form was popularised by, among others, physicist Giovanni Santostasi, often with A ~ 1 x 10^-17 and n ~ 5.8. This report uses a conservative variant: A = 4.42 x 10^-17 and n = 5.6, which gives lower model prices.']},
       {h:'4. Where the defaults come from',ps:[
         'Measured on the daily closes in rcaljouw/btc-price-history, with a monthly AR(1) regression of ln(price / model): since 2015 a half-life of about 10.5 months and a shock of about 19.5% per month; since 2011 about 8.5 months and 24.5%; since 2018 about 6.2 months and 18.6%. Since 2018 the median price was 1.36x the conservative line, and 5% of days were below 0.76x.']},
-      {h:'5. Limitations',ps:[
+      {h:'5. Quantile model (Empirical Quantile Model)',ps:[
+        'The quantile model answers a different question than the Monte Carlo: not "what could happen?", but "how cheap or expensive is the price now, compared with its own history?". The idea comes from the Empirical Quantile Model (EQM) that @btcanalytica publishes on X. Its exact method is not public; this app uses its own, transparent implementation.',
+        'Step 1, trend: a power law in log-log, log10(price) = a + b x log10(days since 3 January 2009). With "Own fit", a and b are re-estimated every week by least squares on all data up to that point. With "Conservative PL" they are fixed (A = 4.42 x 10^-17, n = 5.6).',
+        'Step 2, deviations: for each day the deviation r = log10(price) - trend. Step 3, empirical quantiles: the deviations up to that point are sorted; the value at 10% of the list is the 10% bound, and so on (Hyndman & Fan, 1996). No normal distribution is assumed, so bitcoin\'s fat tails are included automatically. A band in dollars is trend plus quantile, converted back:'],
+       mono:['r(t)      = log10(P(t)) - (a + b x log10(days))','band_q(t) = 10^( a + b x log10(days) + Q_q{ r(s) : s < t } )','risk(t)   = share of earlier r(s) that are <= r(t)'],
+       ps2:['Walk-forward: each day is computed only with data from earlier days, as you could have seen it at the time. So there is no look-ahead, and old bands do not change afterwards (Pardo, 2008).',
+        'Risk is the percentile of today\'s deviation. Asymmetric: when the price is above the median, the daily high counts; below it, the daily low. This makes the model cautious: heat is seen earlier, cold only when it really happens.',
+        'Weighting "Recent (4 yr)": older deviations get an exponentially declining weight with a half-life of 4 years, as in the hybrid historical simulation of Boudoukh, Richardson & Whitelaw (1998). This way the extreme 2011-2013 bubbles stretch the upper bands less.',
+        'Reliability: walk-forward R² measures how well the median follows the price on data the model had not yet seen; centering is the share of days above the median (around 50% is well calibrated). The DCA factors per band (3x in fire sale down to 0x in FOMO and bubble) are an own choice, not part of the model.',
+        'In this report: trend line {eqtr}, weighting {eqw}, walk-forward R² {r2}, centering {cent}.']},
+      {h:'6. Limitations',ps:[
         '- The model assumes the Power Law keeps holding. The risk that the relationship breaks is not included.',
         '- The shocks are normally distributed. Bitcoin has fatter tails: extreme bubbles and crashes happen more often in reality than in this simulation.',
         '- Half-life and shock are assumed constant; in reality they differ between periods.',
+        '- Quantiles describe the past. A "fire sale" can get cheaper still: in 2022 the price fell below all bands of that moment.',
+        '- The upper bands are largely driven by the early bubbles; above 90% they say little.',
+        '- Historical quantiles respond slowly to changing risk (Pritsker, 2001).',
         '- The results are scenarios within the model, not a forecast or financial advice.']}],
-    srcTitle:'6. Sources'},
+    srcTitle:'7. Sources'},
   loading:'Loading price data…',source:'Source:',sourceTail:'(daily close, UTC). Model and extrapolation are a scenario, not a forecast or financial advice.',
   months:['January','February','March','April','May','June','July','August','September','October','November','December'],
   mshort:['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],
@@ -644,7 +676,13 @@ en:{
   eInputs:'Enter valid inputs first.',csvDone:'CSV created.',pdfBusy:'Creating PDF…',pdfLib:'The PDF library could not load. Check your internet connection.',pdfDone:'PDF report created.',pdfFail:'The report could not be created.',
   mtDecl:(o)=>'Declining %: '+o.p0+'% to '+o.p1+'% over '+o.n+' years',mtPct:(o)=>'Fixed %: '+o.pf+'% of the stack per year',
   mtUsd:(o)=>'Fixed amount: '+o.usd+' per year'+(o.real?', growing with inflation (in today’s $)':', fixed nominal amount'),
-  pdfTitle:'Bitcoin FIRE plan and Monte Carlo',pMcYearTitle:'Monte Carlo: FIRE plan per year ({0} paths)',pMcYearNote:'Per year the withdrawal and the remaining BTC at 10%, 50% (median) and 90% of the paths. "Depleted" = share of paths in which the stack has run out by that year. With a fixed amount the withdrawal is fixed as long as the stack lasts.',
+  pdfTitle:'Bitcoin: market view, FIRE plan and Monte Carlo',pFireTitle:'FIRE plan',
+  pMkTitle:'Market view today',pMkSub:'Close {0}: {1}',pMkModel:'Model: conservative Power Law',pMkQuant:'Quantiles (Empirical Quantile Model)',
+  pMkPl:'Model value (conservative version)',pMkRatio:'Price / model',pMkBand:'Band 0.5× – 2×',pMkPos:'Position',posBelow:'below the band (< 0.5×)',posIn:'within the band',posAbove:'above the band (> 2×)',
+  pMkRisk:'Risk asymmetric (on close)',pMkBandQ:'Band and DCA factor',pMkMid:'Median (fair)',pMkCheap:'Cheaper than',pMkCheapV:'{0} of history',pMkSet:'Settings',pMkSetV:'trend line: {0}; weighting: {1}',pMkRel:'Reliability',pMkRelV:'walk-forward R² {0}; centering {1}',
+  pMkChPl:'Price and conservative Power Law (log scale)',pMkChPlLeg:'Price (blue) · Power Law 1× (orange) · band 0.5×–2× (grey). Dashed = extrapolation after today.',
+  pMkChEq:'Quantile bands, walk-forward (log scale)',pMkChEqLeg:'From dark blue (cheap, below 10%) through green and yellow to red (expensive, above 90%). White line = median, dark line = price. Each day computed with only the data up to that point.',
+  pMkMeter:'Risk meter: {0}',pMkBandsTitle:'Quantile bands as of {0}',pMkBtTitle:'DCA backtest',pMkBtNote:'$100 every week since {0}, at the close. EQM DCA multiplies the amount by the band\'s DCA factor (asymmetric risk). The factors were chosen in hindsight, so the backtest is an illustration, not proof.',pMcYearTitle:'Monte Carlo: FIRE plan per year ({0} paths)',pMcYearNote:'Per year the withdrawal and the remaining BTC at 10%, 50% (median) and 90% of the paths. "Depleted" = share of paths in which the stack has run out by that year. With a fixed amount the withdrawal is fixed as long as the stack lasts.',
   pMcYearHead:['Year','Withdrawal 10%','Withdrawal median','Withdrawal 90%','BTC left 10%','BTC left median','BTC left 90%','Depleted'],pMcPriceTitle:'Monte Carlo: price around your conservative line',pMcRef:'Reference date: {0}',pFan:'Fan chart (log scale)',pFanLegend:'Blue: price · orange: median · dark band: 50% of paths · light band: 90% · dashed: model 1x and reference date.',pdfFormula:'Conservative Power Law: price = 4.42 x 10^-17 x (days since 3 Jan 2009)^5.6',pdfMade:'Created on {0}',pdfThrough:' · price data through {0}',
   pStack:'Bitcoin stack',pFirst:'First withdrawal year',pYears:'Years of withdrawals',pYearsV:'{0} years (through {1})',pMethod:'Withdrawal method',pInf:'Inflation',pInfV:'{0}% per year',
   pMin:'Minimum per year',pMax:'Maximum per year',pToday:' (in today\'s $)',pSc:'Selected scenario',pAssume:'Assumptions',
@@ -1061,7 +1099,7 @@ $('exp-csv').addEventListener('click',async()=>{
 });
 const libs={};
 function loadLib(src){return libs[src]||(libs[src]=new Promise((res,rej)=>{const e=document.createElement('script');e.src=src;e.onload=res;e.onerror=()=>{delete libs[src];rej(new Error('load'))};document.head.appendChild(e)}))}
-const pdfTxt=v=>String(v).replace(/−/g,'-').replace(/≈/g,'~').replace(/[   ]/g,' ').replace(/≥/g,'>=').replace(/[‘’]/g,"'");
+const pdfTxt=v=>String(v).replace(/²/g,'2').replace(/−/g,'-').replace(/≈/g,'~').replace(/[   ]/g,' ').replace(/≥/g,'>=').replace(/[‘’]/g,"'");
 function chartImg(ch){const c=ch.canvas,o=document.createElement('canvas');o.width=c.width;o.height=c.height;const g=o.getContext('2d');g.fillStyle='#ffffff';g.fillRect(0,0,o.width,o.height);g.drawImage(c,0,0);return {url:o.toDataURL('image/png'),ratio:c.height/c.width}}
 
 const SOURCES=[
@@ -1072,11 +1110,16 @@ const SOURCES=[
   ['A First Course in Monte Carlo Methods (arXiv:2405.16359).','https://arxiv.org/pdf/2405.16359'],
   ['Vasicek, O. (1977). An equilibrium characterization of the term structure. Journal of Financial Economics 5(2), 177-188.',null],
   ['Decrypt (2024). The Bitcoin Power Law: a mathematical approach to predicting Bitcoin\'s price.','https://decrypt.co/resources/the-bitcoin-power-law-a-mathematical-approach-to-predicting-bitcoins-price'],
+  ['@btcanalytica (X): Bitcoin Empirical Quantile Model (EQM) Rainbow - the concept behind the quantile model.','https://x.com/btcanalytica'],
+  ['Hyndman, R.J. & Fan, Y. (1996). Sample quantiles in statistical packages. The American Statistician 50(4), 361-365.','https://doi.org/10.2307/2684934'],
+  ['Boudoukh, J., Richardson, M. & Whitelaw, R. (1998). The best of both worlds: a hybrid approach to calculating value at risk. Risk 11(5), 64-67.','https://faculty.runi.ac.il/kobi/thebestrisk.pdf'],
+  ['Pritsker, M. (2001). The hidden dangers of historical simulation. Federal Reserve Board, FEDS 2001-27.','https://www.federalreserve.gov/econres/feds/the-hidden-dangers-of-historical-simulation.htm'],
+  ['Pardo, R. (2008). The Evaluation and Optimization of Trading Strategies, 2nd ed. Wiley (walk-forward analysis).',null],
   ['Price data: rcaljouw/btc-price-history (Bitstamp daily closes).','https://github.com/rcaljouw/btc-price-history']];
 function pdfInfo(doc,M,W,INK,MUTED,ORANGE){
   const I=T('info'),st=mc?mc.st:MCS,N=mc?mc.N:MCS.n;
   const phi=Math.pow(.5,1/st.hl),sd=st.sig/100/Math.sqrt(1-phi*phi);
-  const fill=t=>t.replace(/\{(\w+)\}/g,(_,k)=>({N:num.format(N),seed:st.seed,mid:f1(st.mid),hl:f1(st.hl),sig:f1(st.sig),dec:fx((1-phi)*100,1,1),lo:fx(Math.exp(-1.645*sd),2,2),hi:fx(Math.exp(1.645*sd),2,2)})[k]??'');
+  const fill=t=>t.replace(/\{(\w+)\}/g,(_,k)=>({N:num.format(N),seed:st.seed,mid:f1(st.mid),hl:f1(st.hl),sig:f1(st.sig),dec:fx((1-phi)*100,1,1),lo:fx(Math.exp(-1.645*sd),2,2),hi:fx(Math.exp(1.645*sd),2,2),eqtr:EQS.trend==='pl'?T('eqTrPl'):T('eqTrFit'),eqw:EQS.hl?T('eqW4'):T('eqWEq'),r2:eq?fx(eq.r2,3,3):'-',cent:eq?fx(eq.cent*100,1,1)+'%':'-'})[k]??'');
   doc.addPage();let y=20;const need=h=>{if(y+h>278){doc.addPage();y=20}};
   const para=(t,size,color,font,lh,indent)=>{doc.setFont(font||'helvetica','normal');doc.setFontSize(size);doc.setTextColor(...color);const ls=doc.splitTextToSize(pdfTxt(fill(t)),W-2*M-(indent||0));ls.forEach(l=>{need(lh);doc.text(l,M+(indent||0),y);y+=lh})};
   doc.setFont('helvetica','bold');doc.setFontSize(16);doc.setTextColor(...INK);doc.text(pdfTxt(I.title),M,y);y+=7;
@@ -1089,7 +1132,103 @@ function pdfInfo(doc,M,W,INK,MUTED,ORANGE){
     y+=2.5;
   });
   need(14);doc.setFont('helvetica','bold');doc.setFontSize(11);doc.setTextColor(...ORANGE);doc.text(pdfTxt(I.srcTitle),M,y);y+=5.5;
-  SOURCES.forEach(([t,u])=>{para(t,8.6,INK,'helvetica',4);if(u){need(4);doc.setFont('helvetica','normal');doc.setFontSize(8.2);doc.setTextColor(35,80,200);doc.textWithLink(u,M+3,y,{url:u});y+=4}y+=1.6});
+  SOURCES.forEach(([t,u])=>{doc.setFontSize(8.6);need(doc.splitTextToSize(pdfTxt(t),W-2*M).length*4+(u?4:0));para(t,8.6,INK,'helvetica',4);if(u){need(4);doc.setFont('helvetica','normal');doc.setFontSize(8.2);doc.setTextColor(35,80,200);doc.textWithLink(u,M+3,y,{url:u});y+=4}y+=1.6});
+}
+/* ---------- PDF: marktbeeld (Model + Kwantielen) ---------- */
+function hexRgb(h){const n=parseInt(h.slice(1),16);return [n>>16&255,n>>8&255,n&255]}
+function plCfg(){
+  const grid=css('--line'),muted=css('--muted'),btc=css('--btc'),price=css('--price'),band=css('--band'),bandLine=css('--band-line');
+  const pts=[];let i=0;for(const [k,v] of prices){if(i++%3===0)pts.push({x:toYear(k),y:v})}
+  const line=f=>{const o=[];for(let ms=Date.UTC(2011,0,1);ms<=Date.UTC(2035,0,1);ms+=14*DAY)o.push({x:toYear(ms),y:model(daysOf(ms))*f});return o};
+  const NOWX=toYear(lastMs??TODAY),dash={borderDash:c=>c.p0.parsed.x>=NOWX?[5,4]:undefined};
+  return {type:'line',data:{datasets:[
+    {data:pts,borderColor:price,borderWidth:1.3,pointRadius:0,order:1},
+    {data:line(2),borderColor:bandLine,borderWidth:.8,pointRadius:0,fill:'+1',backgroundColor:band,segment:dash,order:3},
+    {data:line(.5),borderColor:bandLine,borderWidth:.8,pointRadius:0,segment:dash,order:3},
+    {data:line(1),borderColor:btc,borderWidth:1.8,pointRadius:0,segment:dash,order:2}]},
+    options:{parsing:false,normalized:true,plugins:{legend:{display:false},tooltip:{enabled:false}},
+      scales:{x:{type:'linear',min:2011,max:2035,ticks:{color:muted,stepSize:2,maxRotation:0,callback:v=>Math.round(v)},grid:{display:false},border:{color:grid}},
+        y:{type:'logarithmic',min:1,max:3e6,ticks:{color:muted,callback:v=>[1,10,100,1e3,1e4,1e5,1e6].includes(v)?axisUsd(v):''},grid:{color:grid},border:{display:false}}}}};
+}
+function eqCfg(){
+  const grid=css('--line'),muted=css('--muted'),ink=css('--ink');
+  const I=[];for(let t=EQ_MIN;t<eq.n;t+=4)I.push(t);if(I[I.length-1]!==eq.n-1)I.push(eq.n-1);
+  const X=t=>toYear(eq.ms[t]);
+  const ds=EQ_Q.map((q,k)=>({data:I.map(t=>({x:X(t),y:eq.Q[k][t]})),borderWidth:0,pointRadius:0,fill:k?'-1':false,backgroundColor:k?color(EQ_COL[k-1],.85):'transparent',order:3}));
+  ds.push({data:I.map(t=>({x:X(t),y:eq.Q[6][t]})),borderColor:'#ffffff',borderWidth:1.3,pointRadius:0,order:2});
+  ds.push({data:I.map(t=>({x:X(t),y:prices.get(eq.ms[t])})),borderColor:ink,borderWidth:1.3,pointRadius:0,order:1});
+  return {type:'line',data:{datasets:ds},
+    options:{parsing:false,normalized:true,plugins:{legend:{display:false},tooltip:{enabled:false}},
+      scales:{x:{type:'linear',min:Math.floor(X(EQ_MIN)),max:X(eq.n-1)+.1,ticks:{color:muted,stepSize:1,maxRotation:0,callback:v=>Math.round(v)},grid:{display:false},border:{color:grid}},
+        y:{type:'logarithmic',ticks:{color:muted,callback:v=>[1,10,100,1e3,1e4,1e5,1e6,1e7].includes(v)?axisUsd(v):''},grid:{color:grid},border:{display:false}}}}};
+}
+function pdfMarket(doc,M,W,INK,MUTED,ORANGE){
+  const t=eq.n-1,dms=eq.ms[t],p=prices.get(dms),pl=model(daysOf(dms)),mid=eq.Q[6][t],rA=eq.riskA[t],r=eq.risk[t],bd=eqBand(rA);
+  const pc=v=>fx(v*100,1,1)+'%',ratio=p/pl;
+  let y=40;
+  doc.setFont('helvetica','bold');doc.setFontSize(14);doc.setTextColor(...INK);doc.text(pdfTxt(T('pMkTitle')),M,y);
+  doc.setFont('helvetica','normal');doc.setFontSize(10);doc.setTextColor(...MUTED);
+  doc.text(pdfTxt(T('pMkSub',longDate(dms),money(p))),M,y+6);y+=11;
+  const tbl=(title,rows,hi)=>{doc.autoTable({startY:y,head:[[pdfTxt(title),'']],body:rows.map(x=>x.map(pdfTxt)),theme:'grid',margin:{left:M,right:M},
+    styles:{fontSize:9,cellPadding:1.9,textColor:INK},headStyles:{fillColor:ORANGE,textColor:255},columnStyles:{0:{cellWidth:62,fontStyle:'bold'}},
+    didParseCell:d=>{if(d.section==='body'&&hi!=null&&d.row.index===hi)d.cell.styles.fillColor=[253,237,216]}});y=doc.lastAutoTable.finalY+5};
+  const pos=ratio<.5?T('posBelow'):ratio>2?T('posAbove'):T('posIn');
+  tbl(T('pMkModel'),[
+    [T('pMkPl'),money(pl)],
+    [T('pMkRatio'),fx(ratio,2,2)+'×'],
+    [T('pMkBand'),money(pl*.5)+' – '+money(pl*2)],
+    [T('pMkPos'),pos]],1);
+  // PL-grafiek
+  let plImg=null,eqImg=null;
+  PDFMODE=true;try{plImg=offImg(plCfg(),860,330);eqImg=offImg(eqCfg(),860,400)}finally{PDFMODE=false}
+  const fw=W-2*M;
+  doc.setFont('helvetica','bold');doc.setFontSize(10);doc.setTextColor(...INK);doc.text(pdfTxt(T('pMkChPl')),M,y);
+  const ph=fw*plImg.ratio;doc.addImage(plImg.url,'PNG',M,y+2,fw,ph);
+  doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(...MUTED);doc.text(pdfTxt(T('pMkChPlLeg')),M,y+ph+6);
+  y+=ph+12;
+  const trTxt=EQS.trend==='pl'?T('eqTrPl'):T('eqTrFit'),wTxt=EQS.hl?T('eqW4'):T('eqWEq');
+  tbl(T('pMkQuant'),[
+    [T('pMkRisk'),pc(rA)+' ('+pc(r)+')'],
+    [T('pMkBandQ'),bd.name+' · '+fx(bd.m,2,2)+'×'],
+    [T('pMkMid'),money(mid)+' ('+T('eqTMidS',fx(p/mid,2,2))+')'],
+    [T('pMkCheap'),T('pMkCheapV',fx((1-rA)*100,0,0)+'%')],
+    [T('pMkSet'),T('pMkSetV',trTxt,wTxt)],
+    [T('pMkRel'),T('pMkRelV',fx(eq.r2,3,3),pc(eq.cent))]],1);
+  // risk-meter
+  if(y+16>280){doc.addPage();y=20}
+  doc.setFont('helvetica','bold');doc.setFontSize(9);doc.setTextColor(...INK);doc.text(pdfTxt(T('pMkMeter',pc(rA)+' · '+bd.name)),M,y);y+=3;
+  const tot=EQ_Q[12]-EQ_Q[0];let x=M;
+  for(let k=0;k<12;k++){const w=fw*(EQ_Q[k+1]-EQ_Q[k])/tot;doc.setFillColor(...hexRgb(EQ_COL[k]));doc.rect(x,y,w,4,'F');x+=w}
+  const mx=M+fw*Math.min(Math.max((rA-EQ_Q[0])/tot,0),1);
+  doc.setFillColor(...INK);doc.rect(mx-.6,y-1.5,1.2,7,'F');
+  doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.setTextColor(...MUTED);
+  doc.text('0%',M,y+9);doc.text('50%',M+fw/2,y+9,{align:'center'});doc.text('100%',M+fw,y+9,{align:'right'});
+  // pagina 2: kwantielgrafiek, bands en backtest
+  doc.addPage();y=20;
+  doc.setFont('helvetica','bold');doc.setFontSize(10);doc.setTextColor(...INK);doc.text(pdfTxt(T('pMkChEq')),M,y);
+  const eh=fw*eqImg.ratio;doc.addImage(eqImg.url,'PNG',M,y+2,fw,eh);
+  doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(...MUTED);
+  const lg=doc.splitTextToSize(pdfTxt(T('pMkChEqLeg')),fw);doc.text(lg,M,y+eh+6);y+=eh+7+lg.length*3.6;
+  const q=k=>money(eq.Q[k][t]);
+  const rows=[[T('eqRail')+' 99,9%','99–99,9%',q(11),q(12),'0×',10]];
+  for(let k=9;k>=0;k--)rows.push([T(EQ_B[k][0]),fx(EQ_Q[k+1]*100,0,0)+'–'+fx(EQ_Q[k+2]*100,0,0)+'%',q(k+1),q(k+2),fx(EQ_B[k][1],2,2)+'×',k]);
+  rows.push([T('eqRail')+' 0,1%','0,1–1%',q(0),q(1),'3×',-1]);
+  const fixDec=s=>LANG==='en'?s.replace(/(\d),(\d)/g,'$1.$2'):s;
+  const curRow=rows.findIndex(rw=>rw[5]===bd.k);
+  doc.setFont('helvetica','bold');doc.setFontSize(10);doc.setTextColor(...INK);doc.text(pdfTxt(T('pMkBandsTitle',longDate(dms))),M,y);
+  doc.autoTable({startY:y+2,head:[['Band',T('eqPct'),T('eqFrom'),T('eqTo'),T('eqDca')].map(pdfTxt)],body:rows.map(rw=>rw.slice(0,5).map((v,i)=>pdfTxt(i<2?fixDec(v):v))),theme:'grid',margin:{left:M,right:M},
+    styles:{fontSize:8.2,cellPadding:1.5,textColor:INK},headStyles:{fillColor:ORANGE,textColor:255},columnStyles:{1:{halign:'right'},2:{halign:'right'},3:{halign:'right'},4:{halign:'right'}},
+    didParseCell:d=>{if(d.section==='body'){if(d.row.index===curRow)d.cell.styles.fillColor=[253,237,216];if(d.column.index===0)d.cell.styles.fontStyle='bold'}},
+    didDrawCell:d=>{if(d.section==='body'&&d.column.index===0){const k=rows[d.row.index][5];doc.setFillColor(...hexRgb(EQ_COL[k+1]));doc.rect(d.cell.x+d.cell.width-5,d.cell.y+1.4,3,d.cell.height-2.8,'F')}}});
+  y=doc.lastAutoTable.finalY+7;
+  if(y+40>280){doc.addPage();y=20}
+  doc.setFont('helvetica','bold');doc.setFontSize(10);doc.setTextColor(...INK);doc.text(pdfTxt(T('pMkBtTitle')),M,y);
+  doc.autoTable({startY:y+2,head:[[T('eqStrat'),T('eqInv'),'BTC',T('eqAvg'),T('eqVal'),T('eqMult')].map(pdfTxt)],
+    body:eq.bt.map(b=>[T(b.k),money(b.inv),fx(b.btc,4,4),money(b.avg),money(b.val),fx(b.x,1,1)+'×'].map(pdfTxt)),theme:'grid',margin:{left:M,right:M},
+    styles:{fontSize:8.5,cellPadding:1.8,textColor:INK},headStyles:{fillColor:ORANGE,textColor:255},columnStyles:{1:{halign:'right'},2:{halign:'right'},3:{halign:'right'},4:{halign:'right'},5:{halign:'right'}}});
+  y=doc.lastAutoTable.finalY+4;
+  doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(...MUTED);
+  doc.text(doc.splitTextToSize(pdfTxt(T('pMkBtNote',longDate(eq.start))),fw),M,y+2);
 }
 async function makePdf(){
   if(!lastRes){expMsg(T('eInputs'),true);return}
@@ -1106,10 +1245,12 @@ async function makePdf(){
     doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(...MUTED);
     doc.text(pdfTxt(T('pdfFormula')),M,26);
     doc.text(pdfTxt(T('pdfMade',longDate(TODAY))+(lastMs?T('pdfThrough',longDate(lastMs)):'')),M,31);
-    doc.setFontSize(11);doc.setTextColor(...INK);
+    let yS=40;
+    if(eq&&window.Chart){pdfMarket(doc,M,W,INK,MUTED,ORANGE);doc.addPage();doc.setFont('helvetica','bold');doc.setFontSize(14);doc.setTextColor(...INK);doc.text(pdfTxt(T('pFireTitle')),M,20);yS=29}
+    doc.setFont('helvetica','normal');doc.setFontSize(11);doc.setTextColor(...INK);
     const head=pdfTxt($('fire-head').textContent);
-    const hl=doc.splitTextToSize(head,W-2*M);doc.text(hl,M,40);
-    let y=40+hl.length*5+3;
+    const hl=doc.splitTextToSize(head,W-2*M);doc.text(hl,M,yS);
+    let y=yS+hl.length*5+3;
     const params=[
       [T('pStack'),r.btc.toLocaleString(LOC(),{maximumFractionDigits:8})+' BTC'],
       [T('pFirst'),String(r.start)],
