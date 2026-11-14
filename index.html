@@ -172,6 +172,13 @@ tr.empty td{color:var(--muted)}
 .lang button{font:600 12px/1 var(--f-body);letter-spacing:.06em;color:var(--muted);background:transparent;border:0;border-radius:999px;padding:7px 11px;min-height:30px;cursor:pointer}
 .lang button[aria-pressed="true"]{background:var(--ink);color:var(--surface)}
 .lang button:focus-visible{outline:2px solid var(--btc);outline-offset:2px}
+.eq-l{text-transform:none;letter-spacing:0;font-size:12px}
+.eq-meter{position:relative;height:14px;margin:4px 0 2px}
+.eq-bar{height:10px;margin-top:2px;border-radius:999px;display:flex;overflow:hidden}
+.eq-bar i{display:block;height:100%}
+#eq-mark{position:absolute;top:-3px;width:4px;height:20px;margin-left:-2px;border-radius:2px;background:var(--ink);box-shadow:0 0 0 2px var(--surface)}
+.eq-dot{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:8px;vertical-align:-1px}
+tr.cur td{background:color-mix(in srgb,var(--btc) 12%,transparent);font-weight:500}
 </style>
 
 <div class="wrap">
@@ -200,6 +207,7 @@ tr.empty td{color:var(--muted)}
     <button class="tab" role="tab" id="tab-model" aria-controls="view-model" aria-selected="true" data-i="tabModel">Model</button>
     <button class="tab" role="tab" id="tab-fire" aria-controls="view-fire" aria-selected="false" data-i="tabFire">FIRE-plan</button>
     <button class="tab" role="tab" id="tab-mc" aria-controls="view-mc" aria-selected="false" data-i="tabMc">Monte Carlo</button>
+    <button class="tab" role="tab" id="tab-eqm" aria-controls="view-eqm" aria-selected="false" data-i="tabEqm">Kwantielen</button>
   </div>
 
   <div class="view" id="view-model" role="tabpanel" aria-labelledby="tab-model">
@@ -379,6 +387,57 @@ tr.empty td{color:var(--muted)}
     </div>
   </div>
 
+  <div class="view" id="view-eqm" role="tabpanel" aria-labelledby="tab-eqm" hidden>
+    <div class="fire-grid">
+      <form class="form" id="eq-form" novalidate>
+        <div class="fgroup">
+          <h2 data-i="eqSettings">Instellingen</h2>
+          <div class="fld"><span class="lbl eq-l" id="eq-tr-l" data-i="eqTrend">Trendlijn</span>
+            <div class="seg" role="group" aria-labelledby="eq-tr-l">
+              <button type="button" data-eqtr="fit" aria-pressed="true" data-i="eqTrFit">Eigen fit</button>
+              <button type="button" data-eqtr="pl" aria-pressed="false" data-i="eqTrPl">Conservatieve PL</button>
+            </div></div>
+          <div class="fld"><span class="lbl eq-l" id="eq-w-l" data-i="eqWeight">Weging historie</span>
+            <div class="seg" role="group" aria-labelledby="eq-w-l">
+              <button type="button" data-eqw="0" aria-pressed="true" data-i="eqWEq">Gelijk</button>
+              <button type="button" data-eqw="4" aria-pressed="false" data-i="eqW4">Recent (4 jr)</button>
+            </div></div>
+          <p class="note" data-i="eqSetNote">Eigen fit: elke week een nieuwe power law-fit op alleen de data tot dat moment. Conservatieve PL: je vaste lijn 4,42 × 10⁻¹⁷ × dagen^5,6. Recent: oudere afwijkingen tellen minder mee (halvering na 4 jaar), zodat de bubbels van 2011–2013 de bands minder oprekken.</p>
+        </div>
+        <div class="fgroup">
+          <h2 data-i="eqDiag">Betrouwbaarheid</h2>
+          <dl class="tiles" id="eq-diag" style="grid-template-columns:1fr 1fr"></dl>
+          <p class="note" data-i="eqDiagNote">R² en centering zijn walk-forward gemeten: elke dag vergeleken met een mediaan die alleen eerdere data kende. Centering rond 50% betekent een goed gekalibreerde mediaan.</p>
+        </div>
+      </form>
+      <div class="out">
+        <p class="headline" id="eq-head" data-i="eqRunning">Kwantielmodel wordt berekend…</p>
+        <div class="eq-meter" aria-hidden="true"><div class="eq-bar" id="eq-bar"></div><i id="eq-mark"></i></div>
+        <dl class="tiles t3" id="eq-tiles"></dl>
+        <section class="chart-box" data-ia="eqChartAria" aria-label="Kwantielgrafiek">
+          <div class="zbar">
+            <div class="seg" role="group" data-ia="rangeAria" aria-label="Periode">
+              <button type="button" data-eqr="all" aria-pressed="true" data-i="eqAll">Alles</button>
+              <button type="button" data-eqr="5y" aria-pressed="false" data-i="eq5y">5 jaar</button>
+              <button type="button" data-eqr="2y" aria-pressed="false" data-i="eq2y">2 jaar</button>
+            </div>
+          </div>
+          <div class="canvas"><canvas id="ch-eq" role="img" data-ia="eqCanvas" aria-label="Logaritmische grafiek van de bitcoin-koers met walk-forward kwantielbanden in regenboogkleuren."></canvas></div>
+        </section>
+        <div class="tbl-wrap">
+          <div class="tbl-head"><h3 data-i="eqBandsToday">Bands vandaag</h3><span class="note" id="eq-bnote"></span></div>
+          <div class="tbl-scroll"><table><thead><tr><th>Band</th><th data-i="eqPct">Kwantiel</th><th data-i="eqFrom">Van</th><th data-i="eqTo">Tot</th><th data-i="eqDca">DCA-factor</th></tr></thead><tbody id="eq-tbody"></tbody></table></div>
+        </div>
+        <section class="chart-box"><h3 data-i="eqRiskHist">Risk door de tijd</h3><div class="canvas sm"><canvas id="ch-eqr" role="img" data-ia="eqRiskAria" aria-label="Lijngrafiek van het asymmetrische risk-percentiel van 0 tot 100 procent door de tijd."></canvas></div></section>
+        <div class="tbl-wrap">
+          <div class="tbl-head"><h3 data-i="eqBt">DCA-backtest</h3><span class="note" id="eq-btnote"></span></div>
+          <div class="tbl-scroll"><table><thead><tr><th data-i="eqStrat">Strategie</th><th data-i="eqInv">Ingelegd</th><th>BTC</th><th data-i="eqAvg">Gem. prijs</th><th data-i="eqVal">Waarde nu</th><th data-i="eqMult">× inleg</th></tr></thead><tbody id="eq-bt"></tbody></table></div>
+        </div>
+        <p class="note" data-i="eqNote">Gebaseerd op het Empirical Quantile Model van @btcanalytica, eigen implementatie. Trend: power law in log-log. Bands: empirische kwantielen van de afwijkingen van die trend, walk-forward (geen look-ahead). Risk = percentiel van de afwijking van vandaag; asymmetrisch: boven de mediaan telt de daghoogste koers, eronder de daglaagste. Zegt hoe goedkoop of duur de koers historisch is, niet wanneer de bodem komt. Geen financieel advies.</p>
+      </div>
+    </div>
+  </div>
+
   <footer>
     <span id="fresh">Koersdata laden…</span>
     <span><span data-i="source">Bron:</span> <a href="https://github.com/rcaljouw/btc-price-history" target="_blank" rel="noopener">rcaljouw/btc-price-history</a> <span data-i="sourceTail">(dagelijkse close, UTC). Model en extrapolatie zijn een scenario, geen voorspelling of financieel advies.</span></span>
@@ -394,6 +453,20 @@ const I18N={
 nl:{
   formula:'Prijs = 4,42 × 10⁻¹⁷ × (dagen sinds 3 jan 2009)<sup>5,6</sup>',
   tag:'Conservatieve versie',tabsAria:'Weergave',tabModel:'Model',tabFire:'FIRE-plan',tabMc:'Monte Carlo',
+  tabEqm:'Kwantielen',eqSettings:'Instellingen',eqTrend:'Trendlijn',eqTrFit:'Eigen fit',eqTrPl:'Conservatieve PL',eqWeight:'Weging historie',eqWEq:'Gelijk',eqW4:'Recent (4 jr)',
+  eqSetNote:'Eigen fit: elke week een nieuwe power law-fit op alleen de data tot dat moment. Conservatieve PL: je vaste lijn 4,42 × 10⁻¹⁷ × dagen^5,6. Recent: oudere afwijkingen tellen minder mee (halvering na 4 jaar), zodat de bubbels van 2011–2013 de bands minder oprekken.',
+  eqDiag:'Betrouwbaarheid',eqDiagNote:'R² en centering zijn walk-forward gemeten: elke dag vergeleken met een mediaan die alleen eerdere data kende. Centering rond 50% betekent een goed gekalibreerde mediaan.',
+  eqRunning:'Kwantielmodel wordt berekend…',eqFail:'Geen koersdata beschikbaar.',eqChartAria:'Kwantielgrafiek',eqAll:'Alles',eq5y:'5 jaar',eq2y:'2 jaar',
+  eqCanvas:'Logaritmische grafiek van de bitcoin-koers met walk-forward kwantielbanden in regenboogkleuren.',
+  eqBandsToday:'Bands vandaag',eqPct:'Kwantiel',eqFrom:'Van',eqTo:'Tot',eqDca:'DCA-factor',eqRiskHist:'Risk door de tijd',eqRiskAria:'Lijngrafiek van het asymmetrische risk-percentiel van 0 tot 100 procent door de tijd.',
+  eqBt:'DCA-backtest',eqStrat:'Strategie',eqInv:'Ingelegd',eqAvg:'Gem. prijs',eqVal:'Waarde nu',eqMult:'× inleg',
+  eqNote:'Gebaseerd op het Empirical Quantile Model van @btcanalytica, eigen implementatie. Trend: power law in log-log. Bands: empirische kwantielen van de afwijkingen van die trend, walk-forward (geen look-ahead). Risk = percentiel van de afwijking van vandaag; asymmetrisch: boven de mediaan telt de daghoogste koers, eronder de daglaagste. Zegt hoe goedkoop of duur de koers historisch is, niet wanneer de bodem komt. Geen financieel advies.',
+  eqHead:'Op {0} staat bitcoin op {1}: band {2}, goedkoper dan {3} van de historie.',
+  eqTPrice:'Koers',eqTMid:'Mediaan (fair)',eqTMidS:'koers = {0}× mediaan',eqTRisk:'Risk (asymmetrisch)',eqTRiskS:'op close: {0}',eqTBand:'Band',eqTBandS:'DCA-factor {0}×',
+  eqTPl:'Conservatieve PL',eqTPlS:'conservatieve versie · koers = {0}×',eqR2:'Walk-forward R²',eqCent:'Centering',eqCentS:'dagen boven mediaan',
+  eqRail:'Rail',eqBnote:'per {0} · huidige band gemarkeerd',eqBtNote:'elke week $100 sinds {0}, op de close',eqFixed:'Vaste DCA',eqDyn:'EQM-DCA',
+  eqTipPrice:'Koers',eqTipMid:'Mediaan',eqTipRisk:'Risk',
+  bLow:'Onder 1%',bFire:'Fire sale',bAcc:'Accumulate',bCheap:'Goedkoop',bValue:'Waarde',bBelow:'Onder midden',bAbove:'Boven midden',bWarm:'Warm',bHot:'Heet',bFomo:'FOMO',bBubble:'Bubbel',bHigh:'Boven 99%',
   panelAria:'Berekening voor een datum',pickDate:'Kies een datum',day:'Dag',month:'Maand',year:'Jaar',
   yPrev:'− 1 jaar',yNext:'+ 1 jaar',yPrevAria:'Eén jaar terug',yNextAria:'Eén jaar vooruit',quickAria:'Snelkeuze',
   today:'Vandaag',jan2030:'1 jan 2030',end2034:'Eind 2034',tapHint:'Of tik in de grafiek op een moment.',
@@ -485,6 +558,20 @@ nl:{
 en:{
   formula:'Price = 4.42 × 10⁻¹⁷ × (days since 3 Jan 2009)<sup>5.6</sup>',
   tag:'Conservative version',tabsAria:'View',tabModel:'Model',tabFire:'FIRE plan',tabMc:'Monte Carlo',
+  tabEqm:'Quantiles',eqSettings:'Settings',eqTrend:'Trend line',eqTrFit:'Own fit',eqTrPl:'Conservative PL',eqWeight:'History weighting',eqWEq:'Equal',eqW4:'Recent (4 yr)',
+  eqSetNote:'Own fit: a fresh power law fit every week, using only data up to that point. Conservative PL: your fixed line 4.42 × 10⁻¹⁷ × days^5.6. Recent: older deviations count less (half-life 4 years), so the 2011–2013 bubbles stretch the bands less.',
+  eqDiag:'Reliability',eqDiagNote:'R² and centering are measured walk-forward: each day against a median that only knew earlier data. Centering near 50% means a well-calibrated median.',
+  eqRunning:'Computing quantile model…',eqFail:'No price data available.',eqChartAria:'Quantile chart',eqAll:'All',eq5y:'5 years',eq2y:'2 years',
+  eqCanvas:'Log chart of the bitcoin price with walk-forward quantile bands in rainbow colours.',
+  eqBandsToday:'Bands today',eqPct:'Quantile',eqFrom:'From',eqTo:'To',eqDca:'DCA factor',eqRiskHist:'Risk over time',eqRiskAria:'Line chart of the asymmetric risk percentile from 0 to 100 percent over time.',
+  eqBt:'DCA backtest',eqStrat:'Strategy',eqInv:'Invested',eqAvg:'Avg price',eqVal:'Value now',eqMult:'× invested',
+  eqNote:'Based on the Empirical Quantile Model by @btcanalytica, own implementation. Trend: power law in log-log. Bands: empirical quantiles of the deviations from that trend, walk-forward (no look-ahead). Risk = percentile of today\'s deviation; asymmetric: above the median the daily high counts, below it the daily low. Shows how cheap or expensive the price is historically, not when the bottom comes. Not financial advice.',
+  eqHead:'On {0} bitcoin is at {1}: band {2}, cheaper than {3} of history.',
+  eqTPrice:'Price',eqTMid:'Median (fair)',eqTMidS:'price = {0}× median',eqTRisk:'Risk (asymmetric)',eqTRiskS:'on close: {0}',eqTBand:'Band',eqTBandS:'DCA factor {0}×',
+  eqTPl:'Conservative PL',eqTPlS:'conservative version · price = {0}×',eqR2:'Walk-forward R²',eqCent:'Centering',eqCentS:'days above median',
+  eqRail:'Rail',eqBnote:'as of {0} · current band highlighted',eqBtNote:'$100 every week since {0}, at the close',eqFixed:'Fixed DCA',eqDyn:'EQM DCA',
+  eqTipPrice:'Price',eqTipMid:'Median',eqTipRisk:'Risk',
+  bLow:'Below 1%',bFire:'Fire sale',bAcc:'Accumulate',bCheap:'Cheap',bValue:'Value',bBelow:'Below mid',bAbove:'Above mid',bWarm:'Warm',bHot:'Hot',bFomo:'FOMO',bBubble:'Bubble',bHigh:'Above 99%',
   panelAria:'Calculation for a date',pickDate:'Pick a date',day:'Day',month:'Month',year:'Year',
   yPrev:'− 1 year',yNext:'+ 1 year',yPrevAria:'One year back',yNextAria:'One year forward',quickAria:'Quick picks',
   today:'Today',jan2030:'1 Jan 2030',end2034:'End of 2034',tapHint:'Or tap a moment in the chart.',
@@ -615,6 +702,7 @@ function applyStatic(){
 }
 applyStatic();
 
+const hiLo=new Map();
 let prices=new Map(), lastMs=null, chart=null, sel=null, dataState='loading', libOk=true;
 const now=new Date(), TODAY=Date.UTC(now.getUTCFullYear(),now.getUTCMonth(),now.getUTCDate());
 const END=Date.UTC(2034,11,31);
@@ -772,14 +860,15 @@ setDate(TODAY);
 freshText();
 
 fetch('data/btc-usd-daily.csv',{cache:'no-cache'}).then(r=>{if(!r.ok)throw new Error(r.status);return r.text()}).then(t=>{
-  const rows=t.trim().split('\n');const h=rows.shift().split(',');const di=h.indexOf('date'),ci=h.indexOf('close');
-  for(const line of rows){const c=line.split(',');const ms=parseIso(c[di]);const v=+c[ci];if(!isNaN(ms)&&v>0)prices.set(ms,v)}
+  const rows=t.trim().split('\n');const h=rows.shift().split(',');const di=h.indexOf('date'),ci=h.indexOf('close'),hi=h.indexOf('high'),li=h.indexOf('low');
+  for(const line of rows){const c=line.split(',');const ms=parseIso(c[di]);const v=+c[ci];if(!isNaN(ms)&&v>0){prices.set(ms,v);const H=hi>=0?+c[hi]:v,L=li>=0?+c[li]:v;hiLo.set(ms,[H>0?H:v,L>0?L:v])}}
   lastMs=[...prices.keys()].pop();dataState='ok';
 }).catch(()=>{dataState='fail'}).finally(()=>{
   if(window.Chart)buildChart(); else libOk=false;
   freshText();
   render();
   mcRecompute();
+  eqRecompute();
 });
 
 const mq=matchMedia('(prefers-color-scheme: dark)');
@@ -1318,18 +1407,152 @@ $('fire-form').addEventListener('input',renderFire);
 $('fire-form').addEventListener('change',renderFire);
 $('fire-form').addEventListener('submit',e=>e.preventDefault());
 
+/* ---------- Empirical Quantile Model (walk-forward) ---------- */
+const EQ_Q=[.001,.01,.1,.2,.3,.4,.5,.6,.7,.8,.9,.99,.999];
+const EQ_COL=['#16295a','#1f4e8c','#2f7fb5','#2fa39a','#4caf50','#9ccc65','#e6d84a','#fbc02d','#fb8c00','#f4511e','#d32f2f','#8e1b1b'];
+// band k ligt tussen EQ_Q[k+1] en EQ_Q[k+2]; kleur EQ_COL[k+1]
+const EQ_B=[['bFire',3],['bAcc',2],['bCheap',1.5],['bValue',1.25],['bBelow',1],['bAbove',.75],['bWarm',.5],['bHot',.25],['bFomo',0],['bBubble',0]];
+const EQ_MIN=730, EQ_STEP=7;
+const EQS={trend:'fit',hl:0,range:'all'};
+let eq=null, eqChart=null, eqrChart=null, eqTimer=null;
+function eqBand(r){
+  if(r<EQ_Q[1])return {k:-1,name:T('bLow'),m:EQ_B[0][1],col:EQ_COL[0]};
+  if(r>=EQ_Q[11])return {k:10,name:T('bHigh'),m:0,col:EQ_COL[11]};
+  let k=0;while(k<9&&r>=EQ_Q[k+2])k++;
+  return {k,name:T(EQ_B[k][0]),m:EQ_B[k][1],col:EQ_COL[k+1]};
+}
+function eqLoad(){try{const o=JSON.parse(localStorage.getItem('bpl-eq')||'null');if(!o)return;if(['fit','pl'].includes(o.trend))EQS.trend=o.trend;if([0,4].includes(o.hl))EQS.hl=o.hl;if(['all','5y','2y'].includes(o.range))EQS.range=o.range}catch(e){}}
+function eqSave(){try{localStorage.setItem('bpl-eq',JSON.stringify(EQS))}catch(e){}}
+function eqSync(){
+  document.querySelectorAll('[data-eqtr]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.eqtr===EQS.trend)));
+  document.querySelectorAll('[data-eqw]').forEach(b=>b.setAttribute('aria-pressed',String(+b.dataset.eqw===EQS.hl)));
+  document.querySelectorAll('[data-eqr]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.eqr===EQS.range)));
+}
+function eqCompute(){
+  const ms=[...prices.keys()],n=ms.length;
+  if(n<=EQ_MIN+10)return null;
+  const x=new Float64Array(n),y=new Float64Array(n),yh=new Float64Array(n),yl=new Float64Array(n);
+  for(let i=0;i<n;i++){x[i]=Math.log10(daysOf(ms[i]));const c=prices.get(ms[i]),hl=hiLo.get(ms[i])||[c,c];y[i]=Math.log10(c);yh[i]=Math.log10(Math.max(hl[0],c));yl[i]=Math.log10(Math.min(hl[1],c))}
+  const cx=new Float64Array(n),cy=new Float64Array(n),cxx=new Float64Array(n),cxy=new Float64Array(n);
+  let sx=0,sy=0,sxx=0,sxy=0;for(let i=0;i<n;i++){sx+=x[i];sy+=y[i];sxx+=x[i]*x[i];sxy+=x[i]*y[i];cx[i]=sx;cy[i]=sy;cxx[i]=sxx;cxy[i]=sxy}
+  const Q=EQ_Q.map(()=>new Float64Array(n).fill(NaN)),risk=new Float64Array(n).fill(NaN),riskA=new Float64Array(n).fill(NaN);
+  let a=0,b=0,rs=null,cw=null;
+  const idx=new Uint32Array(n),rr=new Float64Array(n);
+  const pct=r=>{let lo=0,hi=rs.length;while(lo<hi){const m=(lo+hi)>>1;if(rs[m]<=r)lo=m+1;else hi=m}return lo?cw[lo-1]:0};
+  const qv=q=>{let lo=0,hi=cw.length-1;while(lo<hi){const m=(lo+hi)>>1;if(cw[m]<q)lo=m+1;else hi=m}return rs[lo]};
+  let qcur=null;
+  for(let t=EQ_MIN;t<n;t++){
+    if((t-EQ_MIN)%EQ_STEP===0){
+      const m=t;
+      if(EQS.trend==='fit'){const X=cx[m-1],Y=cy[m-1];b=(m*cxy[m-1]-X*Y)/(m*cxx[m-1]-X*X);a=(Y-b*X)/m}
+      else{a=Math.log10(A);b=B}
+      for(let j=0;j<m;j++){rr[j]=y[j]-(a+b*x[j]);idx[j]=j}
+      const id=idx.subarray(0,m).sort((p,q)=>rr[p]-rr[q]);
+      rs=new Float64Array(m);cw=new Float64Array(m);let s=0;
+      const lam=EQS.hl?Math.LN2/(EQS.hl*365.25*DAY):0;
+      for(let k=0;k<m;k++){const j=id[k];rs[k]=rr[j];s+=lam?Math.exp(-lam*(ms[m-1]-ms[j])):1;cw[k]=s}
+      for(let k=0;k<m;k++)cw[k]/=s;
+      qcur=EQ_Q.map(qv);
+    }
+    const tr=a+b*x[t];
+    for(let k=0;k<EQ_Q.length;k++)Q[k][t]=Math.pow(10,tr+qcur[k]);
+    risk[t]=pct(y[t]-tr);
+    riskA[t]=risk[t]>=.5?pct(yh[t]-tr):pct(yl[t]-tr);
+  }
+  // walk-forward diagnostiek
+  let my=0,cnt=0;for(let t=EQ_MIN;t<n;t++){my+=y[t];cnt++}my/=cnt;
+  let sse=0,sst=0,above=0;for(let t=EQ_MIN;t<n;t++){const m=Math.log10(Q[6][t]);sse+=(y[t]-m)**2;sst+=(y[t]-my)**2;if(y[t]>m)above++}
+  // DCA-backtest: elke 7 dagen $100, factor op basis van asymmetrisch risk
+  const last=prices.get(ms[n-1]);const bt=[{k:'eqFixed',inv:0,btc:0},{k:'eqDyn',inv:0,btc:0}];
+  for(let t=EQ_MIN;t<n;t+=7){const p=prices.get(ms[t]),f=eqBand(riskA[t]).m;bt[0].inv+=100;bt[0].btc+=100/p;bt[1].inv+=100*f;bt[1].btc+=100*f/p}
+  bt.forEach(r=>{r.val=r.btc*last;r.avg=r.btc?r.inv/r.btc:0;r.x=r.inv?r.val/r.inv:0});
+  return {ms,n,Q,risk,riskA,r2:1-sse/sst,cent:above/cnt,bt,start:ms[EQ_MIN]};
+}
+function eqRecompute(){
+  if(dataState!=='ok'){$('eq-head').textContent=dataState==='fail'?T('eqFail'):T('eqRunning');return}
+  eq=eqCompute();renderEq();
+}
+function eqSchedule(){clearTimeout(eqTimer);$('eq-head').textContent=T('eqRunning');eqTimer=setTimeout(eqRecompute,30)}
+function renderEq(){
+  if(!eq){$('eq-head').textContent=dataState==='fail'?T('eqFail'):T('eqRunning');return}
+  const t=eq.n-1,dms=eq.ms[t],p=prices.get(dms),mid=eq.Q[6][t],rA=eq.riskA[t],r=eq.risk[t],bd=eqBand(rA);
+  const pc=v=>fx(v*100,1,1)+SP()+'%';
+  $('eq-head').innerHTML=T('eqHead',longDate(dms),'<b>'+money(p)+'</b>','<b>'+bd.name+'</b>','<b>'+fx((1-rA)*100,0,0)+'%</b>');
+  // meter
+  const bar=$('eq-bar');bar.textContent='';
+  for(let k=0;k<12;k++){const i=document.createElement('i');i.style.width=((EQ_Q[k+1]-EQ_Q[k])*100/(EQ_Q[12]-EQ_Q[0]))+'%';i.style.background=EQ_COL[k];bar.appendChild(i)}
+  $('eq-mark').style.left=(Math.min(Math.max((rA-EQ_Q[0])/(EQ_Q[12]-EQ_Q[0]),0),1)*100)+'%';
+  const pl=model(daysOf(dms));
+  const tiles=[
+    [T('eqTPrice'),money(p),longDate(dms)],
+    [T('eqTMid'),money(mid),T('eqTMidS',fx(p/mid,2,2))],
+    [T('eqTRisk'),pc(rA),T('eqTRiskS',pc(r))],
+    [T('eqTBand'),'<span class="eq-dot" style="background:'+bd.col+'"></span>'+bd.name,T('eqTBandS',fx(bd.m,2,2))],
+    [T('eqTPl'),money(pl),T('eqTPlS',fx(p/pl,2,2))]
+  ];
+  $('eq-tiles').innerHTML=tiles.map(([a,b,c])=>'<div class="tile"><dt>'+a+'</dt><dd>'+b+'<small>'+c+'</small></dd></div>').join('');
+  $('eq-diag').innerHTML='<div class="tile"><dt>'+T('eqR2')+'</dt><dd>'+fx(eq.r2,3,3)+'</dd></div><div class="tile"><dt>'+T('eqCent')+'</dt><dd>'+pc(eq.cent)+'<small>'+T('eqCentS')+'</small></dd></div>';
+  // bands-tabel (van duur naar goedkoop)
+  const q=k=>eq.Q[k][t];const rows=[];
+  const p999=fx(99.9,1,1)+'%';
+  rows.push('<tr'+(bd.k===10?' class="cur"':'')+'><td><span class="eq-dot" style="background:'+EQ_COL[11]+'"></span>'+T('eqRail')+' '+p999+'</td><td>99–'+p999+'</td><td>'+money(q(11))+'</td><td>'+money(q(12))+'</td><td>0×</td></tr>');
+  for(let k=9;k>=0;k--){rows.push('<tr'+(bd.k===k?' class="cur"':'')+'><td><span class="eq-dot" style="background:'+EQ_COL[k+1]+'"></span>'+T(EQ_B[k][0])+'</td><td>'+fx(EQ_Q[k+1]*100,0,0)+'–'+fx(EQ_Q[k+2]*100,0,0)+'%</td><td>'+money(q(k+1))+'</td><td>'+money(q(k+2))+'</td><td>'+fx(EQ_B[k][1],2,2)+'×</td></tr>')}
+  rows.push('<tr'+(bd.k===-1?' class="cur"':'')+'><td><span class="eq-dot" style="background:'+EQ_COL[0]+'"></span>'+T('eqRail')+' '+fx(.1,1,1)+'%</td><td>'+fx(.1,1,1)+'–1%</td><td>'+money(q(0))+'</td><td>'+money(q(1))+'</td><td>3×</td></tr>');
+  $('eq-tbody').innerHTML=rows.join('');
+  $('eq-bnote').textContent=T('eqBnote',longDate(dms));
+  $('eq-bt').innerHTML=eq.bt.map(b=>'<tr><td>'+T(b.k)+'</td><td>'+money(b.inv)+'</td><td>'+fx(b.btc,4,4)+'</td><td>'+money(b.avg)+'</td><td>'+money(b.val)+'</td><td>'+fx(b.x,1,1)+'×</td></tr>').join('');
+  $('eq-btnote').textContent=T('eqBtNote',longDate(eq.start));
+  drawEq();
+}
+function eqRangeMin(){const now=toYear(eq.ms[eq.n-1]);return EQS.range==='5y'?now-5:EQS.range==='2y'?now-2:toYear(eq.start)}
+function drawEq(){
+  if(!eq||!window.Chart||$('view-eqm').hidden)return;
+  if(eqChart){eqChart.destroy();eqChart=null}if(eqrChart){eqrChart.destroy();eqrChart=null}
+  const grid=css('--line'),muted=css('--muted'),ink=css('--ink');
+  const xmin=eqRangeMin(),xmax=toYear(eq.ms[eq.n-1])+.05;
+  const span=xmax-xmin,stp=span>8?3:span>3?2:1;
+  const I=[];for(let t=EQ_MIN;t<eq.n;t+=stp)I.push(t);if(I[I.length-1]!==eq.n-1)I.push(eq.n-1);
+  const Iv=I.filter(t=>toYear(eq.ms[t])>=xmin-.02);
+  const ds=EQ_Q.map((q,k)=>({label:'q'+q,data:Iv.map(t=>({x:toYear(eq.ms[t]),y:eq.Q[k][t]})),borderWidth:0,pointRadius:0,fill:k?'-1':false,backgroundColor:k?color(EQ_COL[k-1],.82):'transparent',order:3}));
+  ds.push({label:'mid',data:Iv.map(t=>({x:toYear(eq.ms[t]),y:eq.Q[6][t]})),borderColor:'rgba(255,255,255,.9)',borderWidth:1.3,pointRadius:0,fill:false,order:2});
+  ds.push({label:'price',data:Iv.map(t=>({x:toYear(eq.ms[t]),y:prices.get(eq.ms[t]),t})),borderColor:ink,borderWidth:1.6,pointRadius:0,fill:false,order:1});
+  let lo=Infinity,hi=0;for(const t of Iv){lo=Math.min(lo,eq.Q[0][t],prices.get(eq.ms[t]));hi=Math.max(hi,eq.Q[12][t],prices.get(eq.ms[t]))}
+  const xs={type:'linear',min:xmin,max:xmax,ticks:{color:muted,maxRotation:0,autoSkipPadding:12,callback:v=>span>3?(Math.abs(v-Math.round(v))<1e-6?String(Math.round(v)):''):monLabel(v)},grid:{display:false},border:{color:grid},afterBuildTicks:span>3?undefined:xTicks};
+  const pi=ds.length-1;
+  eqChart=new Chart($('ch-eq'),{type:'line',data:{datasets:ds},
+    options:{responsive:true,maintainAspectRatio:false,animation:false,parsing:false,normalized:true,
+      interaction:{mode:'nearest',axis:'x',intersect:false},
+      plugins:{legend:{display:false},decimation:{enabled:false},
+        tooltip:{displayColors:false,filter:it=>it.datasetIndex===pi,callbacks:{
+          title:it=>it.length?longDate(eq.ms[it[0].raw.t]):'',
+          label:it=>{const t=it.raw.t,b=eqBand(eq.riskA[t]);return [T('eqTipPrice')+': '+money(it.raw.y),T('eqTipMid')+': '+money(eq.Q[6][t]),T('eqTipRisk')+': '+fx(eq.riskA[t]*100,1,1)+'% · '+b.name]}}}},
+      scales:{x:xs,y:{type:'logarithmic',min:lo/1.15,max:hi*1.15,ticks:{color:muted,callback:v=>{const e=Math.pow(10,Math.floor(Math.log10(v)+1e-9)),m=Math.round(v/e*1000)/1000;return (span>8?[1]:[1,2,5]).includes(m)?axisUsd(v):''}},grid:{color:grid},border:{display:false}}}}});
+  const rd=Iv.map(t=>({x:toYear(eq.ms[t]),y:eq.riskA[t]*100}));
+  eqrChart=new Chart($('ch-eqr'),{type:'line',data:{datasets:[{data:rd,borderColor:ink,borderWidth:1.2,pointRadius:0,fill:false}]},
+    options:{responsive:true,maintainAspectRatio:false,animation:false,parsing:false,
+      interaction:{mode:'nearest',axis:'x',intersect:false},
+      plugins:{legend:{display:false},tooltip:{displayColors:false,callbacks:{title:it=>it.length?longDate(msOfYear(it[0].raw.x)):'',label:it=>fx(it.raw.y,1,1)+'% · '+eqBand(it.raw.y/100).name}}},
+      scales:{x:{...xs},y:{min:0,max:100,ticks:{color:muted,stepSize:20,callback:v=>v+'%'},grid:{color:grid},border:{display:false}}}},
+    plugins:[{id:'eqZones',beforeDatasetsDraw(c){const g=c.ctx,a=c.chartArea,sy=c.scales.y;g.save();for(let k=0;k<12;k++){const y0=sy.getPixelForValue(EQ_Q[k]*100),y1=sy.getPixelForValue(EQ_Q[k+1]*100);g.fillStyle=color(EQ_COL[k],.28);g.fillRect(a.left,y1,a.right-a.left,y0-y1)}g.restore()}}]});
+}
+document.querySelectorAll('[data-eqtr]').forEach(b=>b.addEventListener('click',()=>{EQS.trend=b.dataset.eqtr;eqSync();eqSave();eqSchedule()}));
+document.querySelectorAll('[data-eqw]').forEach(b=>b.addEventListener('click',()=>{EQS.hl=+b.dataset.eqw;eqSync();eqSave();eqSchedule()}));
+document.querySelectorAll('[data-eqr]').forEach(b=>b.addEventListener('click',()=>{EQS.range=b.dataset.eqr;eqSync();eqSave();drawEq()}));
+eqLoad();eqSync();
+
 function showView(v){
-  ['model','fire','mc'].forEach(k=>{$('view-'+k).hidden=k!==v;$('tab-'+k).setAttribute('aria-selected',String(k===v))});
+  ['model','fire','mc','eqm'].forEach(k=>{$('view-'+k).hidden=k!==v;$('tab-'+k).setAttribute('aria-selected',String(k===v))});
   try{history.replaceState(null,'','#'+v)}catch(e){}
-  if(v==='fire')drawFire();else if(v==='mc')drawMC();else if(chart)chart.resize();
+  if(v==='fire')drawFire();else if(v==='mc')drawMC();else if(v==='eqm')drawEq();else if(chart)chart.resize();
 }
 $('tab-model').addEventListener('click',()=>showView('model'));
 $('tab-fire').addEventListener('click',()=>showView('fire'));
 $('tab-mc').addEventListener('click',()=>showView('mc'));
+$('tab-eqm').addEventListener('click',()=>showView('eqm'));
 
 loadState();
 setMode(mode);
-if(location.hash==='#fire')showView('fire');else if(location.hash==='#mc')showView('mc');
+if(location.hash==='#fire')showView('fire');else if(location.hash==='#mc')showView('mc');else if(location.hash==='#eqm')showView('eqm');
 window.addEventListener('load',()=>{if(!$('view-fire').hidden)drawFire()});
 
 const rebuild=()=>{
@@ -1338,6 +1561,7 @@ const rebuild=()=>{
   if(mcChart){mcChart.destroy();mcChart=null}
   if(lastRes)renderFire();
   if(mc)renderMC();
+  if(eq)renderEq();
 };
 mq.addEventListener&&mq.addEventListener('change',rebuild);
 new MutationObserver(rebuild).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
