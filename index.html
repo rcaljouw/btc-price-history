@@ -110,6 +110,8 @@ footer a{color:inherit}
 .tabs{display:inline-flex;gap:4px;padding:4px;background:var(--surface);border:1px solid var(--line);border-radius:12px;align-self:flex-start}
 .tab{font:500 14px var(--f-body);color:var(--muted);background:transparent;border:0;border-radius:9px;padding:9px 16px;cursor:pointer;min-height:40px}
 .tab[aria-selected="true"]{background:var(--btc);color:#fff}
+.tabs{max-width:100%;flex-wrap:wrap}
+@media (max-width:640px){.tab{padding:8px 9px;font-size:13px;white-space:nowrap}}
 .tab:focus-visible,.seg button:focus-visible,.fld input:focus-visible,.fld select:focus-visible{outline:2px solid var(--btc);outline-offset:2px}
 .fire-grid{display:grid;grid-template-columns:minmax(0,300px) minmax(0,1fr);gap:18px;align-items:start}
 @media (max-width:760px){.fire-grid{grid-template-columns:minmax(0,1fr)}}
@@ -208,6 +210,7 @@ tr.cur td{background:color-mix(in srgb,var(--btc) 12%,transparent);font-weight:5
     <button class="tab" role="tab" id="tab-fire" aria-controls="view-fire" aria-selected="false" data-i="tabFire">FIRE-plan</button>
     <button class="tab" role="tab" id="tab-mc" aria-controls="view-mc" aria-selected="false" data-i="tabMc">Monte Carlo</button>
     <button class="tab" role="tab" id="tab-eqm" aria-controls="view-eqm" aria-selected="false" data-i="tabEqm">Kwantielen</button>
+    <button class="tab" role="tab" id="tab-dca" aria-controls="view-dca" aria-selected="false" data-i="tabDca">DCA</button>
   </div>
 
   <div class="view" id="view-model" role="tabpanel" aria-labelledby="tab-model">
@@ -444,6 +447,48 @@ tr.cur td{background:color-mix(in srgb,var(--btc) 12%,transparent);font-weight:5
     </div>
   </div>
 
+  <div class="view" id="view-dca" role="tabpanel" aria-labelledby="tab-dca" hidden>
+    <div class="fire-grid">
+      <form class="form" id="dca-form" novalidate>
+        <div class="fgroup">
+          <h2 data-i="dcaPlan">Aankoopplan</h2>
+          <div class="fld" id="dca-start-w"><label for="dca-start" data-i="dcaStart">Startdatum</label><div class="in"><input id="dca-start" type="date" value="2022-01-01"></div><p class="msg" hidden data-i="dcaMsgStart">Kies een datum vanaf 18 aug 2011.</p>
+            <div class="chips"><button type="button" class="chip" data-dcas="2018-01-01">2018</button><button type="button" class="chip" data-dcas="2022-01-01">2022</button><button type="button" class="chip" data-dcas="last" data-i="dcaChipLast">Laatste koers</button></div></div>
+          <div class="fld" id="dca-end-w"><label for="dca-end" data-i="dcaEnd">Einddatum</label><div class="in"><input id="dca-end" type="date"></div><p class="msg" hidden data-i="dcaMsgEnd">Na de startdatum en uiterlijk 31 dec 2034.</p>
+            <div class="chips"><button type="button" class="chip" data-dcae="last" data-i="dcaChipLast">Laatste koers</button><button type="button" class="chip" data-dcae="2030-01-01">1-1-2030</button><button type="button" class="chip" data-dcae="2034-12-31" data-i="dcaChip2034">Eind 2034</button></div></div>
+          <div class="fld" id="dca-amt-w"><label for="dca-amt" data-i="dcaAmt">Bedrag per aankoop</label><div class="in"><span class="u" style="padding:0 0 0 12px">$</span><input id="dca-amt" inputmode="decimal" autocomplete="off" value="100"></div><p class="msg" hidden data-i="dcaMsgAmt">Vul een bedrag groter dan 0 in.</p></div>
+          <div class="fld"><span class="lbl eq-l" id="dca-f-l" data-i="dcaFreq">Hoe vaak</span>
+            <div class="seg" role="group" aria-labelledby="dca-f-l">
+              <button type="button" data-dcaf="d" aria-pressed="false" data-i="dcaFd">Dag</button>
+              <button type="button" data-dcaf="w" aria-pressed="true" data-i="dcaFw">Week</button>
+              <button type="button" data-dcaf="2w" aria-pressed="false" data-i="dcaF2w">2 weken</button>
+              <button type="button" data-dcaf="m" aria-pressed="false" data-i="dcaFm">Maand</button>
+            </div></div>
+          <div class="fld" id="dca-fee-w"><label for="dca-fee" data-i="dcaFee">Kosten per aankoop</label><div class="in"><input id="dca-fee" inputmode="decimal" autocomplete="off" value="0"><span class="u">%</span></div><p class="msg" hidden>0–10%</p></div>
+          <p class="note" data-i="dcaFormNote">Aankoop op de slotkoers (UTC) van elke aankoopdag. Na de laatste koers rekent de app verder met de Monte Carlo-paden (instellingen in die tab).</p>
+        </div>
+      </form>
+      <div class="out">
+        <p class="headline" id="dca-head" data-i="dcaRunning">DCA wordt berekend…</p>
+        <dl class="tiles t3" id="dca-tiles"></dl>
+        <div class="tbl-wrap">
+          <div class="tbl-head"><h3 data-i="dcaCompare">Vergelijking</h3><span class="note" id="dca-cnote"></span></div>
+          <div class="tbl-scroll"><table><thead><tr><th data-i="eqStrat">Strategie</th><th data-i="eqInv">Ingelegd</th><th>BTC</th><th data-i="eqAvg">Gem. prijs</th><th data-i="dcaValEnd">Waarde eind</th><th data-i="eqMult">× inleg</th></tr></thead><tbody id="dca-cmp"></tbody></table></div>
+        </div>
+        <section class="chart-box">
+          <h3 data-i="dcaChart">Waarde van je stack</h3>
+          <div class="legend" id="dca-legend"></div>
+          <div class="canvas sm" style="height:320px"><canvas id="ch-dca" role="img" data-ia="dcaChartAria" aria-label="Lijngrafiek van de waarde van de opgebouwde bitcoin per strategie en het ingelegde bedrag door de tijd."></canvas></div>
+        </section>
+        <div class="tbl-wrap">
+          <div class="tbl-head"><h3 data-i="dcaPerYear">Per jaar (gewone DCA)</h3><span class="note" id="dca-ynote"></span></div>
+          <div class="tbl-scroll"><table><thead><tr><th data-i="thYear">Jaar</th><th data-i="dcaBuys">Aankopen</th><th data-i="dcaInvCum">Ingelegd totaal</th><th data-i="dcaBtcCum">BTC totaal</th><th data-i="eqAvg">Gem. prijs</th><th data-i="dcaValYe">Waarde eind jaar</th></tr></thead><tbody id="dca-years"></tbody></table></div>
+        </div>
+        <p class="note" data-i="dcaNote">Gewone DCA: elk interval hetzelfde bedrag. EQM-DCA: hetzelfde schema, bedrag × DCA-factor van de kwantielband op die dag (3× bij fire sale tot 0× bij FOMO en bubbel; vóór 17 aug 2013 factor 1×). Eenmalig: het totaal van de gewone DCA in één keer op de startdatum. Toekomstige koersen zijn Monte Carlo-scenario's rond je conservatieve Power Law; bedragen daar zijn medianen. Geen financieel advies.</p>
+      </div>
+    </div>
+  </div>
+
   <footer>
     <span id="fresh">Koersdata laden…</span>
     <span><span data-i="source">Bron:</span> <a href="https://github.com/rcaljouw/btc-price-history" target="_blank" rel="noopener">rcaljouw/btc-price-history</a> <span data-i="sourceTail">(dagelijkse close, UTC). Model en extrapolatie zijn een scenario, geen voorspelling of financieel advies.</span></span>
@@ -459,6 +504,15 @@ const I18N={
 nl:{
   formula:'Prijs = 4,42 × 10⁻¹⁷ × (dagen sinds 3 jan 2009)<sup>5,6</sup>',
   tag:'Conservatieve versie',tabsAria:'Weergave',tabModel:'Model',tabFire:'FIRE-plan',tabMc:'Monte Carlo',
+  tabDca:'DCA',dcaPlan:'Aankoopplan',dcaStart:'Startdatum',dcaEnd:'Einddatum',dcaAmt:'Bedrag per aankoop',dcaFreq:'Hoe vaak',dcaFd:'Dag',dcaFw:'Week',dcaF2w:'2 weken',dcaFm:'Maand',dcaFee:'Kosten per aankoop',
+  dcaChipLast:'Laatste koers',dcaChip2034:'Eind 2034',dcaMsgStart:'Kies een datum vanaf 18 aug 2011.',dcaMsgEnd:'Na de startdatum en uiterlijk 31 dec 2034.',dcaMsgAmt:'Vul een bedrag groter dan 0 in.',
+  dcaFormNote:'Aankoop op de slotkoers (UTC) van elke aankoopdag. Na de laatste koers rekent de app verder met de Monte Carlo-paden (instellingen in die tab).',
+  dcaRunning:'DCA wordt berekend…',dcaFix:'Controleer de invoer links.',dcaCompare:'Vergelijking',dcaValEnd:'Waarde eind',dcaChart:'Waarde van je stack',dcaChartAria:'Lijngrafiek van de waarde van de opgebouwde bitcoin per strategie en het ingelegde bedrag door de tijd.',
+  dcaPerYear:'Per jaar (gewone DCA)',dcaBuys:'Aankopen',dcaInvCum:'Ingelegd totaal',dcaBtcCum:'BTC totaal',dcaValYe:'Waarde eind jaar',dcaLump:'Eenmalig',dcaInvested:'Ingelegd',dcaBand:'90% van de paden',
+  dcaFq_d:'per dag',dcaFq_w:'per week',dcaFq_2w:'per twee weken',dcaFq_m:'per maand',
+  dcaHead1:'Met {0} {1} van {2} t/m {3} ({4} aankopen) leg je {5} in en koop je {6}.',dcaHeadH:'Op {0} is dat {1} waard ({2}× je inleg).',dcaHeadF:'Op {0} is dat in de mediaan {1} waard (90% van de paden: {2} – {3}), {4}× je inleg.',
+  dcaBuysS:'{0} historisch · {1} gesimuleerd',dcaFeeS:'incl. {0}% kosten',dcaAvgS:'gem. prijs {0}',dcaMedS:'mediaan Monte Carlo',dcaCnoteF:'mediaan, met daaronder 90% van de paden · * EQM-inleg verschilt per pad',dcaYnote:'* na {0}: mediaan van de Monte Carlo-paden',
+  dcaNote:'Gewone DCA: elk interval hetzelfde bedrag. EQM-DCA: hetzelfde schema, bedrag × DCA-factor van de kwantielband op die dag (3× bij fire sale tot 0× bij FOMO en bubbel; vóór 17 aug 2013 factor 1×). Eenmalig: het totaal van de gewone DCA in één keer op de startdatum. Toekomstige koersen zijn Monte Carlo-scenario\'s rond je conservatieve Power Law; bedragen daar zijn medianen. Geen financieel advies.',
   tabEqm:'Kwantielen',eqSettings:'Instellingen',eqTrend:'Trendlijn',eqTrFit:'Eigen fit',eqTrPl:'Conservatieve PL',eqWeight:'Weging historie',eqWEq:'Gelijk',eqW4:'Recent (4 jr)',
   eqSetNote:'Eigen fit: elke week een nieuwe power law-fit op alleen de data tot dat moment. Conservatieve PL: je vaste lijn 4,42 × 10⁻¹⁷ × dagen^5,6. Recent: oudere afwijkingen tellen minder mee (halvering na 4 jaar), zodat de bubbels van 2011–2013 de bands minder oprekken.',
   eqDiag:'Betrouwbaarheid',eqDiagNote:'R² en centering zijn walk-forward gemeten: elke dag vergeleken met een mediaan die alleen eerdere data kende. Centering rond 50% betekent een goed gekalibreerde mediaan.',
@@ -583,6 +637,15 @@ nl:{
 en:{
   formula:'Price = 4.42 × 10⁻¹⁷ × (days since 3 Jan 2009)<sup>5.6</sup>',
   tag:'Conservative version',tabsAria:'View',tabModel:'Model',tabFire:'FIRE plan',tabMc:'Monte Carlo',
+  tabDca:'DCA',dcaPlan:'Purchase plan',dcaStart:'Start date',dcaEnd:'End date',dcaAmt:'Amount per purchase',dcaFreq:'How often',dcaFd:'Day',dcaFw:'Week',dcaF2w:'2 weeks',dcaFm:'Month',dcaFee:'Cost per purchase',
+  dcaChipLast:'Latest price',dcaChip2034:'End 2034',dcaMsgStart:'Pick a date from 18 Aug 2011.',dcaMsgEnd:'After the start date and no later than 31 Dec 2034.',dcaMsgAmt:'Enter an amount above 0.',
+  dcaFormNote:'Purchases at the daily close (UTC) of each purchase day. After the latest price the app continues with the Monte Carlo paths (settings in that tab).',
+  dcaRunning:'Computing DCA…',dcaFix:'Check the inputs on the left.',dcaCompare:'Comparison',dcaValEnd:'Value at end',dcaChart:'Value of your stack',dcaChartAria:'Line chart of the value of the accumulated bitcoin per strategy and the invested amount over time.',
+  dcaPerYear:'Per year (plain DCA)',dcaBuys:'Purchases',dcaInvCum:'Invested total',dcaBtcCum:'BTC total',dcaValYe:'Value at year end',dcaLump:'Lump sum',dcaInvested:'Invested',dcaBand:'90% of paths',
+  dcaFq_d:'per day',dcaFq_w:'per week',dcaFq_2w:'every two weeks',dcaFq_m:'per month',
+  dcaHead1:'With {0} {1} from {2} to {3} ({4} purchases) you invest {5} and buy {6}.',dcaHeadH:'On {0} that is worth {1} ({2}× your investment).',dcaHeadF:'On {0} that is worth {1} in the median (90% of paths: {2} – {3}), {4}× your investment.',
+  dcaBuysS:'{0} historical · {1} simulated',dcaFeeS:'incl. {0}% costs',dcaAvgS:'avg price {0}',dcaMedS:'Monte Carlo median',dcaCnoteF:'median, with 90% of paths below · * EQM amount differs per path',dcaYnote:'* after {0}: median of the Monte Carlo paths',
+  dcaNote:'Plain DCA: the same amount every interval. EQM DCA: the same schedule, amount × the DCA factor of the quantile band on that day (3× in fire sale down to 0× in FOMO and bubble; factor 1× before 17 Aug 2013). Lump sum: the plain DCA total at once on the start date. Future prices are Monte Carlo scenarios around your conservative Power Law; amounts there are medians. Not financial advice.',
   tabEqm:'Quantiles',eqSettings:'Settings',eqTrend:'Trend line',eqTrFit:'Own fit',eqTrPl:'Conservative PL',eqWeight:'History weighting',eqWEq:'Equal',eqW4:'Recent (4 yr)',
   eqSetNote:'Own fit: a fresh power law fit every week, using only data up to that point. Conservative PL: your fixed line 4.42 × 10⁻¹⁷ × days^5.6. Recent: older deviations count less (half-life 4 years), so the 2011–2013 bubbles stretch the bands less.',
   eqDiag:'Reliability',eqDiagNote:'R² and centering are measured walk-forward: each day against a median that only knew earlier data. Centering near 50% means a well-calibrated median.',
@@ -1410,6 +1473,7 @@ function mcRecompute(){
   if(!mcRead())return;
   runMC();mcSave();renderMC();
   if(lastRes)renderFire();
+  if(typeof dcaSchedule==='function')dcaSchedule();
 }
 function mcSchedule(){clearTimeout(mcTimer);mcTimer=setTimeout(mcRecompute,180)}
 function fillMcDates(){const el=$('mc-date'),keep=el.value;el.textContent='';for(let yy=Y0;yy<=2035;yy++)opt(el,yy,T('dateOpt',yy));el.value=keep||'2030';if(!el.value)el.value=String(Y0)}
@@ -1612,11 +1676,11 @@ function eqCompute(){
   const last=prices.get(ms[n-1]);const bt=[{k:'eqFixed',inv:0,btc:0},{k:'eqDyn',inv:0,btc:0}];
   for(let t=EQ_MIN;t<n;t+=7){const p=prices.get(ms[t]),f=eqBand(riskA[t]).m;bt[0].inv+=100;bt[0].btc+=100/p;bt[1].inv+=100*f;bt[1].btc+=100*f/p}
   bt.forEach(r=>{r.val=r.btc*last;r.avg=r.btc?r.inv/r.btc:0;r.x=r.inv?r.val/r.inv:0});
-  return {ms,n,Q,risk,riskA,r2:1-sse/sst,cent:above/cnt,bt,start:ms[EQ_MIN]};
+  return {ms,n,Q,risk,riskA,r2:1-sse/sst,cent:above/cnt,bt,start:ms[EQ_MIN],last:{a,b,rs,cw}};
 }
 function eqRecompute(){
   if(dataState!=='ok'){$('eq-head').textContent=dataState==='fail'?T('eqFail'):T('eqRunning');return}
-  eq=eqCompute();renderEq();
+  eq=eqCompute();renderEq();dcaSchedule();
 }
 function eqSchedule(){clearTimeout(eqTimer);$('eq-head').textContent=T('eqRunning');eqTimer=setTimeout(eqRecompute,30)}
 function renderEq(){
@@ -1745,19 +1809,177 @@ $('eq-z-reset').addEventListener('click',()=>{const L=eqLim();eqSetRange(L.min,L
 eqHint();
 eqLoad();eqSync();
 
+/* ---------- DCA-simulatie ---------- */
+const DCAS={start:'2022-01-01',end:'',amt:100,freq:'w',fee:0};
+let dca=null, dcaChart=null, dcaTimer=null;
+const DCA_MAXEND=Date.UTC(2034,11,31);
+function dcaLoad(){try{const o=JSON.parse(localStorage.getItem('bpl-dca')||'null');if(!o)return;if(typeof o.start==='string')DCAS.start=o.start;if(typeof o.end==='string')DCAS.end=o.end;if(typeof o.amt==='number'&&o.amt>0)DCAS.amt=o.amt;if(['d','w','2w','m'].includes(o.freq))DCAS.freq=o.freq;if(typeof o.fee==='number'&&o.fee>=0&&o.fee<=10)DCAS.fee=o.fee}catch(e){}}
+function dcaSave(){try{localStorage.setItem('bpl-dca',JSON.stringify(DCAS))}catch(e){}}
+function dcaFillInputs(){
+  $('dca-start').value=DCAS.start;$('dca-end').value=DCAS.end||(lastMs?iso(lastMs):'');
+  $('dca-amt').value=String(DCAS.amt).replace('.',DECS());$('dca-fee').value=String(DCAS.fee).replace('.',DECS());
+  document.querySelectorAll('[data-dcaf]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.dcaf===DCAS.freq)));
+}
+function dcaRead(){
+  const first=prices.size?prices.keys().next().value:Date.UTC(2011,7,18);
+  const s=parseIso($('dca-start').value),eRaw=$('dca-end').value,e=eRaw?parseIso(eRaw):(lastMs??NaN);
+  const okS=!isNaN(s)&&s>=first&&s<=DCA_MAXEND,okE=!isNaN(e)&&okS&&e>=s&&e<=DCA_MAXEND;
+  $('dca-start-w').classList.toggle('bad',!okS);$('dca-start-w').querySelector('.msg').hidden=okS;
+  $('dca-end-w').classList.toggle('bad',!okE&&okS);$('dca-end-w').querySelector('.msg').hidden=okE||!okS;
+  const a=field('dca-amt',{min:.01,max:1e9}),f=field('dca-fee',{min:0,max:10,optional:true});
+  if(!(okS&&okE&&a.ok&&f.ok)||a.v==null)return null;
+  DCAS.start=$('dca-start').value;DCAS.end=eRaw&&e!==lastMs?eRaw:'';DCAS.amt=a.v;DCAS.fee=f.v||0;
+  return {s,e,amt:a.v,fee:(f.v||0)/100,freq:DCAS.freq};
+}
+function dcaDates(s,e,freq){
+  const out=[];
+  if(freq==='m'){const d=new Date(s),y=d.getUTCFullYear(),m=d.getUTCMonth(),D=d.getUTCDate();
+    for(let k=0;;k++){const t=Date.UTC(y,m+k,Math.min(D,dim(y+Math.floor((m+k)/12),(m+k)%12)));if(t>e)break;out.push(t)}}
+  else{const st=(freq==='d'?1:freq==='w'?7:14)*DAY;for(let t=s;t<=e;t+=st)out.push(t)}
+  return out;
+}
+function dcaCompute(inp){
+  const pk=[...prices.keys()],last=lastMs;
+  const histPrice=t=>{let lo=0,hi=pk.length-1;if(t<pk[0])return null;while(lo<hi){const m=(lo+hi+1)>>1;if(pk[m]<=t)lo=m;else hi=m-1}return prices.get(pk[lo])};
+  const eqIdxOf=new Map();if(eq)for(let t=EQ_MIN;t<eq.n;t++)eqIdxOf.set(eq.ms[t],t);
+  const eqFactor=t=>{if(!eq)return 1;const i=eqIdxOf.get(t);if(i!=null)return eqBand(eq.riskA[i]).m;if(t<eq.start)return 1;
+    // geen koers op die dag: dichtstbijzijnde eerdere dag
+    let lo=EQ_MIN,hi=eq.n-1;while(lo<hi){const m=(lo+hi+1)>>1;if(eq.ms[m]<=t)lo=m;else hi=m-1}return eqBand(eq.riskA[lo]).m};
+  const dates=dcaDates(inp.s,inp.e,inp.freq),fk=1-inp.fee,amt=inp.amt;
+  const hist=dates.filter(t=>t<=last),fut=dates.filter(t=>t>last);
+  const future=inp.e>last;
+  if(future&&!mc)return {wait:true};
+  // historisch deel (exact)
+  let invD=0,btcD=0,invE=0,btcE=0;const curve=[];const yearly=new Map();
+  const lumpTotal=amt*dates.length;
+  const p0=inp.s<=last?histPrice(inp.s):null;let lumpBtc=p0?lumpTotal*fk/p0:0;
+  const step=Math.max(1,Math.ceil(hist.length/400));
+  hist.forEach((t,i)=>{const p=histPrice(t);invD+=amt;btcD+=amt*fk/p;const f=eqFactor(t);invE+=amt*f;btcE+=amt*f*fk/p;
+    const r=yearly.get(new Date(t).getUTCFullYear())||{y:new Date(t).getUTCFullYear(),n:0};r.n++;yearly.set(r.y,r);
+    if(i%step===0||i===hist.length-1)curve.push({t,inv:invD,d:btcD*p,e:btcE*p,l:lumpBtc*p})});
+  // jaarwaarden historisch: waarde op 31 dec (of laatste koersdag binnen het bereik)
+  for(const r of yearly.values()){const ye=Math.min(Date.UTC(r.y,11,31),inp.e,last);if(ye<inp.s)continue;const p=histPrice(ye);
+    let iv=0,bt=0;for(const t of hist){if(t>ye)break;iv+=amt;bt+=amt*fk/histPrice(t)}r.inv=iv;r.btc=bt;r.val=bt*p;r.f=false}
+  if(!future){
+    const pe=histPrice(inp.e);
+    const one=(inv,btc)=>({inv,btc,avg:btc?inv/btc:0,val:btc*pe,x:inv?btc*pe/inv:0});
+    if(hist.length&&curve[curve.length-1].t!==inp.e)curve.push({t:inp.e,inv:invD,d:btcD*pe,e:btcE*pe,l:lumpBtc*pe});
+    return {inp,n:dates.length,nh:hist.length,future:false,res:{d:one(invD,btcD),e:one(invE,btcE),l:one(lumpTotal,lumpBtc)},curve,years:[...yearly.values()].sort((a,b)=>a.y-b.y),pe};
+  }
+  // toekomst: per Monte Carlo-pad
+  const N=mc.N,grid=mc.grid,X=mc.X,X0=mc.X0,sm=mc.startMs,L=eq?eq.last:null;
+  const gOf=t=>{let lo=0,hi=mc.nMonthly-1;while(lo<hi){const m=(lo+hi)>>1;if(grid[m]<t)lo=m+1;else hi=m}return lo};
+  const priceAt=(t,i)=>{const g=gOf(t),tp=g?grid[g-1]:sm,xp=g?X[(g-1)*N+i]:X0,xn=X[g*N+i],w=Math.min(1,Math.max(0,(t-tp)/(grid[g]-tp)));return model(daysOf(t))*Math.exp(xp+(xn-xp)*w)};
+  const futFactor=(t,P)=>{if(!L)return 1;const r=Math.log10(P)-(L.a+L.b*Math.log10(daysOf(t)));let lo=0,hi=L.rs.length;while(lo<hi){const m=(lo+hi)>>1;if(L.rs[m]<=r)lo=m+1;else hi=m}return eqBand(lo?L.cw[lo-1]:0).m};
+  const bD=new Float64Array(N).fill(btcD),bE=new Float64Array(N).fill(btcE),iE=new Float64Array(N).fill(invE),bL=new Float64Array(N);
+  if(p0)bL.fill(lumpBtc);
+  // checkpoints: maandgrid, 31 dec en einddatum
+  const cps=new Set();for(let g=0;g<mc.nMonthly;g++)if(grid[g]>last&&grid[g]<inp.e)cps.add(grid[g]);
+  for(let y=new Date(last).getUTCFullYear();y<=new Date(inp.e).getUTCFullYear();y++){const t=Date.UTC(y,11,31);if(t>last&&t<inp.e)cps.add(t)}
+  cps.add(inp.e);
+  const ev=[...fut.map(t=>({t,k:0})),...[...cps].map(t=>({t,k:1}))].sort((a,b)=>a.t-b.t||a.k-b.k);
+  const buf=new Float64Array(N),qs=(arr,qq)=>{buf.set(arr);buf.sort();return qq.map(q=>buf[Math.round(q*(N-1))])};
+  const vD=new Float64Array(N),vE=new Float64Array(N),vL=new Float64Array(N);
+  let invDf=invD,nf=0;
+  if(!p0){for(let i=0;i<N;i++)bL[i]=lumpTotal*fk/priceAt(inp.s,i)}
+  let endStats=null;
+  for(const o of ev){
+    if(o.k===0){invDf+=amt;nf++;const y=new Date(o.t).getUTCFullYear(),r=yearly.get(y)||{y,n:0};r.n++;yearly.set(y,r);
+      for(let i=0;i<N;i++){const P=priceAt(o.t,i);bD[i]+=amt*fk/P;const f=futFactor(o.t,P);bE[i]+=amt*f*fk/P;iE[i]+=amt*f}}
+    else{
+      for(let i=0;i<N;i++){const P=priceAt(o.t,i);vD[i]=bD[i]*P;vE[i]=bE[i]*P;vL[i]=bL[i]*P}
+      const [d5,d50,d95]=qs(vD,[.05,.5,.95]),[e50]=qs(vE,[.5]),[l50]=qs(vL,[.5]);
+      curve.push({t:o.t,inv:invDf,d:d50,d5,d95,e:e50,l:l50,f:true});
+      const y=new Date(o.t).getUTCFullYear();
+      if(o.t===Date.UTC(y,11,31)||o.t===inp.e){const r=yearly.get(y)||{y,n:0};r.inv=invDf;r.btc=qs(bD,[.5])[0];r.val=d50;r.f=true;yearly.set(y,r)}
+      if(o.t===inp.e){
+        const xD=new Float64Array(N),xE=new Float64Array(N),aE=new Float64Array(N);
+        for(let i=0;i<N;i++){xD[i]=vD[i]/invDf;xE[i]=iE[i]?vE[i]/iE[i]:0;aE[i]=bE[i]?iE[i]/bE[i]:0}
+        const xL=new Float64Array(N);for(let i=0;i<N;i++)xL[i]=vL[i]/lumpTotal;
+        const aD=new Float64Array(N),aL=new Float64Array(N);for(let i=0;i<N;i++){aD[i]=invDf/bD[i];aL[i]=lumpTotal/bL[i]}
+        const pack=(inv,b,v,x,a)=>{const [v5,v50,v95]=qs(v,[.05,.5,.95]);return {inv,btc:qs(b,[.5])[0],avg:qs(a,[.5])[0],val:v50,v5,v95,x:qs(x,[.5])[0]}};
+        endStats={d:pack(invDf,bD,vD,xD,aD),e:pack(qs(iE,[.5])[0],bE,vE,xE,aE),l:pack(lumpTotal,bL,vL,xL,aL)};
+        endStats.e.invVar=true;
+      }
+    }
+  }
+  return {inp,n:dates.length,nh:hist.length,nf,future:true,res:endStats,curve,years:[...yearly.values()].filter(r=>r.inv!=null).sort((a,b)=>a.y-b.y)};
+}
+function dcaRecompute(){
+  if(dataState!=='ok'){$('dca-head').textContent=dataState==='fail'?T('eqFail'):T('dcaRunning');return}
+  if(!$('dca-end').value&&lastMs&&!DCAS.end)$('dca-end').value=iso(lastMs);
+  const inp=dcaRead();if(!inp){$('dca-head').textContent=T('dcaFix');return}
+  dcaSave();
+  const r=dcaCompute(inp);if(r.wait){$('dca-head').textContent=T('dcaRunning');return}
+  dca=r;renderDca();
+}
+function dcaSchedule(){clearTimeout(dcaTimer);dcaTimer=setTimeout(dcaRecompute,150)}
+function renderDca(){
+  if(!dca)return;const {inp,res}=dca;
+  const fq=T('dcaFq_'+inp.freq),btcF=v=>fx(v,v>=10?2:4,v>=10?2:4);
+  const endD=longDate(inp.e),startD=longDate(inp.s),d=res.d;
+  const p={amt:money(inp.amt),fq,s:startD,e:endD,n:num.format(dca.n),inv:money(d.inv),btc:btcF(d.btc),val:money(d.val),x:fx(d.x,2,2)};
+  let h=T('dcaHead1',p.amt,p.fq,p.s,p.e,p.n,'<b>'+p.inv+'</b>','<b>'+p.btc+' BTC</b>');
+  h+=' '+(dca.future?T('dcaHeadF',p.e,'<b>'+p.val+'</b>',money(d.v5),money(d.v95),p.x):T('dcaHeadH',p.e,'<b>'+p.val+'</b>',p.x));
+  $('dca-head').innerHTML=h;
+  const tiles=[[T('dcaBuys'),p.n,dca.future?T('dcaBuysS',num.format(dca.nh),num.format(dca.nf)):T('dcaFq_'+inp.freq)],[T('eqInv'),p.inv,inp.fee?T('dcaFeeS',fx(inp.fee*100,2,2)):''],
+    ['BTC',p.btc,T('dcaAvgS',money(d.avg))],[T('dcaValEnd'),p.val,dca.future?T('dcaMedS'):endD]];
+  $('dca-tiles').innerHTML=tiles.map(([a,b,c])=>'<div class="tile"><dt>'+a+'</dt><dd>'+b+'<small>'+c+'</small></dd></div>').join('');
+  const row=(k,o)=>'<tr><td>'+T(k)+'</td><td>'+money(o.inv)+(o.invVar?'*':'')+'</td><td>'+btcF(o.btc)+'</td><td>'+money(o.avg)+'</td><td>'+money(o.val)+(dca.future?'<br><span class="pt" style="font-size:11px;color:var(--muted)">'+money(o.v5)+' – '+money(o.v95)+'</span>':'')+'</td><td>'+fx(o.x,2,2)+'×</td></tr>';
+  $('dca-cmp').innerHTML=row('eqFixed',res.d)+row('eqDyn',res.e)+row('dcaLump',res.l);
+  $('dca-cnote').textContent=dca.future?T('dcaCnoteF'):'';
+  $('dca-years').innerHTML=dca.years.map(r=>'<tr'+(r.f?' class="empty"':'')+'><td>'+r.y+(r.f?' *':'')+'</td><td>'+num.format(r.n||0)+'</td><td>'+money(r.inv)+'</td><td>'+btcF(r.btc)+'</td><td>'+(r.btc?money(r.inv/r.btc):'–')+'</td><td>'+money(r.val)+'</td></tr>').join('');
+  $('dca-ynote').textContent=dca.future?T('dcaYnote',longDate(lastMs)):'';
+  drawDca();
+}
+function drawDca(){
+  if(!dca||!window.Chart||$('view-dca').hidden)return;
+  if(dcaChart){dcaChart.destroy();dcaChart=null}
+  const grid=css('--line'),muted=css('--muted'),btc=css('--btc'),good=css('--good'),price=css('--price'),bl=css('--band-line');
+  const C=dca.curve,X=o=>toYear(o.t);
+  const fut=C.filter(o=>o.f);const lastH=C.filter(o=>!o.f).pop();
+  const band=fut.length?[...(lastH?[{x:X(lastH),y:lastH.d}]:[]),...fut.map(o=>({x:X(o),y:o.d95}))]:[];
+  const band5=fut.length?[...(lastH?[{x:X(lastH),y:lastH.d}]:[]),...fut.map(o=>({x:X(o),y:o.d5}))]:[];
+  const NOWX=lastMs?toYear(lastMs):Infinity,dash={borderDash:c=>c.p0.parsed.x>=NOWX-1e-9?[5,4]:undefined};
+  const ds=[
+    {label:T('eqFixed'),data:C.map(o=>({x:X(o),y:o.d})),borderColor:btc,borderWidth:2,pointRadius:0,segment:dash,order:1},
+    {label:T('eqDyn'),data:C.map(o=>({x:X(o),y:o.e})),borderColor:good,borderWidth:1.6,pointRadius:0,segment:dash,order:2},
+    {label:T('dcaLump'),data:C.map(o=>({x:X(o),y:o.l})),borderColor:price,borderWidth:1.6,pointRadius:0,segment:dash,order:3},
+    {label:T('dcaInvested'),data:C.map(o=>({x:X(o),y:o.inv})),borderColor:bl,borderWidth:1.2,borderDash:[2,3],pointRadius:0,stepped:false,order:4},
+    {label:'p95',data:band,borderWidth:0,pointRadius:0,fill:'+1',backgroundColor:color(btc.startsWith('#')?btc:'#f2860f',.14),order:5},
+    {label:'p5',data:band5,borderWidth:0,pointRadius:0,order:5}];
+  const lg=[[btc,T('eqFixed')],[good,T('eqDyn')],[price,T('dcaLump')],[bl,T('dcaInvested'),true]];
+  $('dca-legend').innerHTML=lg.map(([c,t,d])=>'<span><i class="sw" style="border-color:'+c+(d?';border-top-style:dotted':'')+'"></i>'+t+'</span>').join('')+(fut.length?'<span><i class="sw band" style="background:color-mix(in srgb,var(--btc) 14%,transparent);border-color:transparent"></i>'+T('dcaBand')+'</span>':'');
+  const xmin=X(C[0]),xmax=X(C[C.length-1]),span=Math.max(xmax-xmin,.1);
+  dcaChart=new Chart($('ch-dca'),{type:'line',data:{datasets:ds},
+    options:{responsive:true,maintainAspectRatio:false,animation:false,parsing:false,normalized:true,
+      interaction:{mode:'nearest',axis:'x',intersect:false},
+      plugins:{legend:{display:false},decimation:{enabled:false},tooltip:{displayColors:true,filter:it=>it.datasetIndex<4,callbacks:{title:it=>it.length?longDate(msOfYear(it[0].raw.x)):'',label:it=>it.dataset.label+': '+money(it.raw.y)}}},
+      scales:{x:{type:'linear',min:xmin,max:xmax,afterBuildTicks:eqXTicks,ticks:{color:muted,maxRotation:0,autoSkipPadding:10,callback:eqTickCb},grid:{display:false},border:{color:grid}},
+        y:{type:'linear',beginAtZero:true,ticks:{color:muted,callback:v=>axisUsd(v)},grid:{color:grid},border:{display:false}}}}});
+}
+$('dca-form').addEventListener('input',dcaSchedule);
+$('dca-form').addEventListener('change',dcaSchedule);
+$('dca-form').addEventListener('submit',e=>e.preventDefault());
+document.querySelectorAll('[data-dcaf]').forEach(b=>b.addEventListener('click',()=>{DCAS.freq=b.dataset.dcaf;document.querySelectorAll('[data-dcaf]').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));dcaSchedule()}));
+document.querySelectorAll('[data-dcas]').forEach(b=>b.addEventListener('click',()=>{$('dca-start').value=b.dataset.dcas==='last'?iso(lastMs??TODAY):b.dataset.dcas;dcaSchedule()}));
+document.querySelectorAll('[data-dcae]').forEach(b=>b.addEventListener('click',()=>{$('dca-end').value=b.dataset.dcae==='last'?iso(lastMs??TODAY):b.dataset.dcae;dcaSchedule()}));
+dcaLoad();dcaFillInputs();
+
 function showView(v){
-  ['model','fire','mc','eqm'].forEach(k=>{$('view-'+k).hidden=k!==v;$('tab-'+k).setAttribute('aria-selected',String(k===v))});
+  ['model','fire','mc','eqm','dca'].forEach(k=>{$('view-'+k).hidden=k!==v;$('tab-'+k).setAttribute('aria-selected',String(k===v))});
   try{history.replaceState(null,'','#'+v)}catch(e){}
-  if(v==='fire')drawFire();else if(v==='mc')drawMC();else if(v==='eqm')drawEq();else if(chart)chart.resize();
+  if(v==='fire')drawFire();else if(v==='mc')drawMC();else if(v==='eqm')drawEq();else if(v==='dca')drawDca();else if(chart)chart.resize();
 }
 $('tab-model').addEventListener('click',()=>showView('model'));
 $('tab-fire').addEventListener('click',()=>showView('fire'));
 $('tab-mc').addEventListener('click',()=>showView('mc'));
 $('tab-eqm').addEventListener('click',()=>showView('eqm'));
+$('tab-dca').addEventListener('click',()=>showView('dca'));
 
 loadState();
 setMode(mode);
-if(location.hash==='#fire')showView('fire');else if(location.hash==='#mc')showView('mc');else if(location.hash==='#eqm')showView('eqm');
+if(location.hash==='#fire')showView('fire');else if(location.hash==='#mc')showView('mc');else if(location.hash==='#eqm')showView('eqm');else if(location.hash==='#dca')showView('dca');
 window.addEventListener('load',()=>{if(!$('view-fire').hidden)drawFire()});
 
 const rebuild=()=>{
@@ -1767,12 +1989,13 @@ const rebuild=()=>{
   if(lastRes)renderFire();
   if(mc)renderMC();
   if(eq)renderEq();
+  if(dca)renderDca();
 };
 mq.addEventListener&&mq.addEventListener('change',rebuild);
 new MutationObserver(rebuild).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
 
 /* ---------- Taal wisselen ---------- */
-const NUMIDS=['f-btc','f-yrs','f-p0','f-p1','f-pn','f-pf','f-usd','f-inf','f-min','f-max','mc-mid','mc-hl','mc-sig','mc-seed','mc-thr'];
+const NUMIDS=['f-btc','f-yrs','f-p0','f-p1','f-pn','f-pf','f-usd','f-inf','f-min','f-max','mc-mid','mc-hl','mc-sig','mc-seed','mc-thr','dca-amt','dca-fee'];
 function setLang(l){
   if(l===LANG||!I18N[l])return;
   const vals={};NUMIDS.forEach(id=>{vals[id]=pnum($(id).value,LANG)});
