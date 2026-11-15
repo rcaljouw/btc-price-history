@@ -1407,7 +1407,7 @@ function riskCfg(){
   return {type:'line',data:{datasets:[{data:I.map(t=>({x:X(t),y:eq.riskA[t]*100})),borderColor:ink,borderWidth:1.1,pointRadius:0}]},
     options:{parsing:false,normalized:true,plugins:{legend:{display:false},tooltip:{enabled:false}},
       scales:{x:{type:'linear',min:Math.floor(X(EQ_MIN)),max:X(eq.n-1)+.1,ticks:{color:muted,stepSize:1,maxRotation:0,callback:v=>Math.round(v)},grid:{display:false},border:{color:grid}},
-        y:{min:0,max:100,ticks:{color:muted,stepSize:20,callback:v=>v+'%'},grid:{color:grid},border:{display:false}}}},plugins:[zones]};
+        y:{min:-2,max:102,afterBuildTicks:sc=>{sc.ticks=[0,20,40,60,80,100].map(v=>({value:v}))},ticks:{color:muted,callback:v=>v+'%'},grid:{color:grid},border:{display:false}}}},plugins:[zones]};
 }
 function pdfMarket(doc,M,W,INK,MUTED,ORANGE){
   const t=eq.n-1,dms=eq.ms[t],p=prices.get(dms),pl=model(daysOf(dms)),mid=eq.Q[6][t],rA=eq.riskA[t],r=eq.risk[t],bd=eqBand(rA);
@@ -1464,7 +1464,7 @@ function pdfMarket(doc,M,W,INK,MUTED,ORANGE){
   doc.addImage(rkImg.url,'PNG',M,y+2,fw,rh);
   doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(...MUTED);
   const lg2=doc.splitTextToSize(pdfTxt(T('pRiskLeg')),fw);doc.text(lg2,M,y+rh+6);y+=rh+7+lg2.length*3.6+3;
-  if(y+60>280){doc.addPage();y=20}
+  if(y+88>280){doc.addPage();y=20}
   const q=k=>money(eq.Q[k][t]);
   const rows=[[T('eqRail')+' 99,9%','99–99,9%',q(11),q(12),'0×',10]];
   for(let k=9;k>=0;k--)rows.push([T(EQ_B[k][0]),fx(EQ_Q[k+1]*100,0,0)+'–'+fx(EQ_Q[k+2]*100,0,0)+'%',q(k+1),q(k+2),fx(EQ_B[k][1],2,2)+'×',k]);
@@ -1492,7 +1492,7 @@ function rbPdfCfg(){
   const tEnd=eq.n-1,from=eq.ms[tEnd]-3*365.25*DAY;let t0=EQ_MIN;while(t0<tEnd&&eq.ms[t0]<from)t0++;
   const I=[];for(let t=t0;t<=tEnd;t+=2)I.push(t);if(I[I.length-1]!==tEnd)I.push(tEnd);
   const X=t=>toYear(eq.ms[t]);
-  const strip={id:'rbPdfStrip',afterDatasetsDraw(c){const a=c.chartArea,sx=c.scales.x,h=9,y=a.bottom-h,g=c.ctx;g.save();
+  const strip={id:'rbPdfStrip',afterDatasetsDraw(c){const a=c.chartArea,sx=c.scales.x,h=9,y=a.bottom+3,g=c.ctx;g.save();g.beginPath();g.rect(a.left,a.bottom,a.right-a.left,h+4);g.clip();
     let t=t0;while(t<=tEnd){let u=t;while(u+1<=tEnd&&R.st[u+1]===R.st[t])u++;const x0=sx.getPixelForValue(X(t)),x1=sx.getPixelForValue(u+1<=tEnd?X(u+1):X(u)+1/365);
       g.fillStyle=RB_COL[R.st[t]];g.fillRect(x0,y,Math.max(1,x1-x0),h);t=u+1}g.restore()}};
   return {type:'line',data:{datasets:[
@@ -1500,8 +1500,8 @@ function rbPdfCfg(){
     {data:I.map(t=>({x:X(t),y:R.f[t]*100})),borderColor:'#e07b39',borderWidth:1.6,pointRadius:0,fill:'+1',backgroundColor:'rgba(224,123,57,.18)',order:2},
     {data:I.map(t=>({x:X(t),y:R.s[t]*100})),borderColor:'#8a8f98',borderWidth:1.6,pointRadius:0,order:3}]},
     options:{parsing:false,normalized:true,plugins:{legend:{display:false},tooltip:{enabled:false}},
-      scales:{x:{type:'linear',min:X(t0),max:X(tEnd)+.02,ticks:{color:muted,stepSize:.5,maxRotation:0,callback:v=>Math.abs(v-Math.round(v))<1e-6?String(Math.round(v)):monLabel(v)},grid:{display:false},border:{color:grid}},
-        y:{min:0,max:100,ticks:{color:muted,stepSize:20,callback:v=>v+'%'},grid:{color:grid},border:{display:false}}}},plugins:[strip]};
+      scales:{x:{type:'linear',min:X(t0),max:X(tEnd)+.02,ticks:{color:muted,stepSize:.5,maxRotation:0,padding:16,callback:v=>Math.abs(v-Math.round(v))<1e-6?String(Math.round(v)):monLabel(v)},grid:{display:false},border:{color:grid}},
+        y:{min:-2,max:102,afterBuildTicks:sc=>{sc.ticks=[0,20,40,60,80,100].map(v=>({value:v}))},ticks:{color:muted,callback:v=>v+'%'},grid:{color:grid},border:{display:false}}}},plugins:[strip]};
 }
 function pdfRibbon(doc,M,W,INK,MUTED,ORANGE){
   const R=eq.rb,t=eq.n-1,cur=R.st[t],grp=v=>v===1||v===3?1:v,fw=W-2*M;
@@ -2083,7 +2083,7 @@ function drawEq(){
   ds.push({label:'mid',data:[],borderColor:'rgba(255,255,255,.9)',borderWidth:1.3,pointRadius:0,fill:false,order:2});
   ds.push({label:'price',data:[],borderColor:ink,borderWidth:1.6,pointRadius:0,fill:false,order:1});
   const pi=ds.length-1,L=eqLim();
-  const xs=()=>({type:'linear',min:eqView.min,max:eqView.max,afterBuildTicks:eqXTicks,ticks:{color:muted,autoSkip:true,autoSkipPadding:10,maxRotation:0,callback:eqTickCb},grid:{display:false},border:{color:grid}});
+  const xs=()=>({type:'linear',min:eqView.min,max:eqView.max,afterBuildTicks:eqXTicks,ticks:{color:muted,autoSkip:true,autoSkipPadding:10,maxRotation:0,padding:14,callback:eqTickCb},grid:{display:false},border:{color:grid}});
   const after=({chart:c})=>{cancelAnimationFrame(eqRaf);eqRaf=0;eqSetRange(c.scales.x.min,c.scales.x.max)};
   const live=({chart:c})=>{if(eqRaf)return;eqRaf=requestAnimationFrame(()=>{eqRaf=0;if(!eqChart)return;const a=c.scales.x.min,b=c.scales.x.max,m=(b-a)*.25;
     if((a-m<eqSpan[0]&&eqSpan[0]>L.min+1e-6)||(b+m>eqSpan[1]&&eqSpan[1]<eqX[eq.n-1]-1e-6)||b-a<(eqView.max-eqView.min)*.6){eqView={min:a,max:b};eqFill();eqChart.update('none')}
@@ -2105,7 +2105,7 @@ function drawEq(){
     options:{responsive:true,maintainAspectRatio:false,animation:false,parsing:false,normalized:true,
       interaction:{mode:'nearest',axis:'x',intersect:false},
       plugins:{legend:{display:false},decimation:{enabled:false},tooltip:{displayColors:false,filter:it=>it.datasetIndex===0,callbacks:{title:it=>it.length?longDate(eq.ms[it[0].raw.t]):'',label:it=>{const t=it.raw.t,o=[fx(it.raw.y,1,1)+'% · '+eqBand(it.raw.y/100).name];if(eq.rb&&eq.rb.st[t]>=0)o.push('Ribbon: '+rbName(eq.rb.st[t])+' ('+T('rbFast').toLowerCase()+' '+fx(eq.rb.f[t]*100,1,1)+' · '+T('rbSlow').toLowerCase()+' '+fx(eq.rb.s[t]*100,1,1)+')');return o}}}},
-      scales:{x:xs(),y:{min:0,max:100,ticks:{color:muted,stepSize:20,callback:v=>v+'%'},grid:{color:grid},border:{display:false}}}},
+      scales:{x:xs(),y:{min:-2,max:102,afterBuildTicks:sc=>{sc.ticks=[0,20,40,60,80,100].map(v=>({value:v}))},ticks:{color:muted,callback:v=>v+'%'},grid:{color:grid},border:{display:false}}}},
     plugins:[rbStrip,{id:'eqZones',beforeDatasetsDraw(c){const g=c.ctx,a=c.chartArea,sy=c.scales.y;g.save();for(let k=0;k<12;k++){const y0=sy.getPixelForValue(EQ_Q[k]*100),y1=sy.getPixelForValue(EQ_Q[k+1]*100);g.fillStyle=color(EQ_COL[k],.28);g.fillRect(a.left,y1,a.right-a.left,y0-y1)}g.restore()}}]});
   if(hasZoom)eqChart.canvas.style.touchAction='pan-y';
   eqSetRange(eqView.min,eqView.max);
@@ -2338,8 +2338,8 @@ function renderRbProb(){
 }
 // strook met de ribbon-toestand onderin een grafiek; volgt zoom en schuiven
 const rbStrip={id:'rbStrip',afterDatasetsDraw(c){
-  if(!eq||!eq.rb||!eqX)return;const a=c.chartArea,sx=c.scales.x,h=7,y=a.bottom-h,st=eq.rb.st;
-  const g=c.ctx;g.save();g.beginPath();g.rect(a.left,a.top,a.right-a.left,a.bottom-a.top);g.clip();
+  if(!eq||!eq.rb||!eqX)return;const a=c.chartArea,sx=c.scales.x,h=7,y=a.bottom+3,st=eq.rb.st;
+  const g=c.ctx;g.save();g.beginPath();g.rect(a.left,a.bottom,a.right-a.left,h+4);g.clip();
   let t=Math.max(EQ_MIN,eqIdx(sx.min)-1);const t1=Math.min(eq.n-1,eqIdx(sx.max)+1);
   while(t<=t1){let u=t;while(u+1<=t1&&st[u+1]===st[t])u++;
     const x0=sx.getPixelForValue(eqX[t]),x1=sx.getPixelForValue(u+1<eq.n?eqX[u+1]:eqX[u]+1/365);
