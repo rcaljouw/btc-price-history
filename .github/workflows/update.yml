@@ -3,7 +3,12 @@ name: Update BTC price data
 on:
   schedule:
     - cron: "15 1 * * *"   # daily at 01:15 UTC, after the daily close
-  workflow_dispatch:         # allows a manual run (used for the first backfill)
+  workflow_dispatch:         # manual run (used for the first backfill)
+    inputs:
+      test_notification:
+        description: "Send a test ribbon notification (ntfy)"
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -25,14 +30,24 @@ jobs:
       - name: Fetch missing days
         run: python scripts/update.py
 
+      # EQM Ribbon: same formulas as the app; push via ntfy only when the state changes.
+      # A failed notification must not block the data commit; the state file is then
+      # left unchanged so the next run retries.
+      - name: Ribbon check and notification
+        continue-on-error: true
+        env:
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+          RIBBON_TEST: ${{ github.event.inputs.test_notification == 'true' && '1' || '0' }}
+        run: python scripts/ribbon_notify.py
+
       - name: Commit if changed
         run: |
-          if git diff --quiet; then
-            echo "No new data."
+          git add data/btc-usd-daily.csv data/ribbon-state.json 2>/dev/null || git add data/btc-usd-daily.csv
+          if git diff --cached --quiet; then
+            echo "No changes."
             exit 0
           fi
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/btc-usd-daily.csv
           git commit -m "data: update BTC/USD daily ($(date -u +%F))"
           git push

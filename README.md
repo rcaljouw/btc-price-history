@@ -35,6 +35,12 @@ Run locally (Python 3.10+, standard library only):
 python scripts/update.py
 ```
 
+## Ribbon notification
+
+After the update, `scripts/ribbon_notify.py` computes the EQM Ribbon (long / transition / cash) with the same formulas and default settings as the app (EMA 7 / 120 of the walk-forward EQM risk, thresholds +2.5 / −2.0 points). When the state differs from the last one stored in `data/ribbon-state.json`, it sends a push notification via [ntfy](https://ntfy.sh) to the topic in the repository secret `NTFY_TOPIC`. If the secret is not set, the state is still tracked but nothing is sent.
+
+Test it under **Actions → Update BTC price data → Run workflow** with *Send a test ribbon notification* ticked.
+
 ## Data sources & terms
 
 | Source | Period | Terms |
