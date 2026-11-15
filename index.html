@@ -697,7 +697,7 @@ nl:{
   eInputs:'Vul eerst geldige gegevens in.',csvDone:'CSV gemaakt.',pdfBusy:'PDF wordt gemaakt…',pdfLib:'De PDF-bibliotheek kon niet laden. Controleer je internetverbinding.',pdfDone:'PDF-rapport gemaakt.',pdfFail:'Het rapport kon niet worden gemaakt.',
   mtDecl:(o)=>'Aflopend %: '+o.p0+'% naar '+o.p1+'% in '+o.n+' jaar',mtPct:(o)=>'Vast %: '+o.pf+'% van de stack per jaar',
   mtUsd:(o)=>'Vast bedrag: '+o.usd+' per jaar'+(o.real?', meegroeiend met inflatie (in $ van nu)':', vast nominaal bedrag'),
-  pdfTitle:'Bitcoin: marktbeeld, FIRE-plan en Monte Carlo',pFireTitle:'FIRE-plan',pRbChart:'Risk met snelle en trage lijn, laatste 3 jaar',pRbChartLeg:'Zwart = EQM-risk op de slotkoers, oranje = snelle lijn, grijs = trage lijn. Strook onderin: oranje = long, licht = transitie, grijs = cash.',
+  pdfTitle:'Bitcoin: marktbeeld, FIRE-plan en Monte Carlo',pFireTitle:'FIRE-plan',pRiskT:'Risk door de tijd (asymmetrisch, walk-forward) · nu {0}',pRiskLeg:'Percentiel van de afwijking van de trend, elke dag berekend met alleen eerdere data. Achtergrond = kwantielbanden: blauw goedkoop (onder 10%), groen en geel rond het midden, rood duur (boven 90%).',pRbChart:'Risk met snelle en trage lijn, laatste 3 jaar',pRbChartLeg:'Zwart = EQM-risk op de slotkoers, oranje = snelle lijn, grijs = trage lijn. Strook onderin: oranje = long, licht = transitie, grijs = cash.',
   pMkTitle:'Marktbeeld vandaag',pMkSub:'Slotkoers {0}: {1}',pMkModel:'Model: conservatieve Power Law',pMkQuant:'Kwantielen (Empirical Quantile Model)',
   pMkPl:'Modelwaarde (conservatieve versie)',pMkRatio:'Koers / model',pMkBand:'Band 0,5× – 2×',pMkPos:'Positie',posBelow:'onder de band (< 0,5×)',posIn:'binnen de band',posAbove:'boven de band (> 2×)',
   pMkRisk:'Risk asymmetrisch (op close)',pMkBandQ:'Band en DCA-factor',pMkMid:'Mediaan (fair)',pMkCheap:'Goedkoper dan',pMkCheapV:'{0} van de historie',pMkSet:'Instellingen',pMkSetV:'trendlijn: {0}; weging: {1}',pMkRel:'Betrouwbaarheid',pMkRelV:'walk-forward R² {0}; centering {1}',
@@ -853,7 +853,7 @@ en:{
   eInputs:'Enter valid inputs first.',csvDone:'CSV created.',pdfBusy:'Creating PDF…',pdfLib:'The PDF library could not load. Check your internet connection.',pdfDone:'PDF report created.',pdfFail:'The report could not be created.',
   mtDecl:(o)=>'Declining %: '+o.p0+'% to '+o.p1+'% over '+o.n+' years',mtPct:(o)=>'Fixed %: '+o.pf+'% of the stack per year',
   mtUsd:(o)=>'Fixed amount: '+o.usd+' per year'+(o.real?', growing with inflation (in today’s $)':', fixed nominal amount'),
-  pdfTitle:'Bitcoin: market view, FIRE plan and Monte Carlo',pFireTitle:'FIRE plan',pRbChart:'Risk with fast and slow line, last 3 years',pRbChartLeg:'Black = EQM risk on the close, orange = fast line, grey = slow line. Strip at the bottom: orange = long, light = transition, grey = cash.',
+  pdfTitle:'Bitcoin: market view, FIRE plan and Monte Carlo',pFireTitle:'FIRE plan',pRiskT:'Risk over time (asymmetric, walk-forward) · now {0}',pRiskLeg:'Percentile of the deviation from trend, computed each day with earlier data only. Background = quantile bands: blue cheap (below 10%), green and yellow around the middle, red expensive (above 90%).',pRbChart:'Risk with fast and slow line, last 3 years',pRbChartLeg:'Black = EQM risk on the close, orange = fast line, grey = slow line. Strip at the bottom: orange = long, light = transition, grey = cash.',
   pMkTitle:'Market view today',pMkSub:'Close {0}: {1}',pMkModel:'Model: conservative Power Law',pMkQuant:'Quantiles (Empirical Quantile Model)',
   pMkPl:'Model value (conservative version)',pMkRatio:'Price / model',pMkBand:'Band 0.5× – 2×',pMkPos:'Position',posBelow:'below the band (< 0.5×)',posIn:'within the band',posAbove:'above the band (> 2×)',
   pMkRisk:'Risk asymmetric (on close)',pMkBandQ:'Band and DCA factor',pMkMid:'Median (fair)',pMkCheap:'Cheaper than',pMkCheapV:'{0} of history',pMkSet:'Settings',pMkSetV:'trend line: {0}; weighting: {1}',pMkRel:'Reliability',pMkRelV:'walk-forward R² {0}; centering {1}',
@@ -1341,6 +1341,16 @@ function eqCfg(){
       scales:{x:{type:'linear',min:Math.floor(X(EQ_MIN)),max:X(eq.n-1)+.1,ticks:{color:muted,stepSize:1,maxRotation:0,callback:v=>Math.round(v)},grid:{display:false},border:{color:grid}},
         y:{type:'logarithmic',ticks:{color:muted,callback:v=>[1,10,100,1e3,1e4,1e5,1e6,1e7].includes(v)?axisUsd(v):''},grid:{color:grid},border:{display:false}}}}};
 }
+function riskCfg(){
+  const grid=css('--line'),muted=css('--muted'),ink=css('--ink');
+  const I=[];for(let t=EQ_MIN;t<eq.n;t+=3)I.push(t);if(I[I.length-1]!==eq.n-1)I.push(eq.n-1);
+  const X=t=>toYear(eq.ms[t]);
+  const zones={id:'pdfZones',beforeDatasetsDraw(c){const g=c.ctx,a=c.chartArea,sy=c.scales.y;g.save();for(let k=0;k<12;k++){const y0=sy.getPixelForValue(EQ_Q[k]*100),y1=sy.getPixelForValue(EQ_Q[k+1]*100);g.fillStyle=color(EQ_COL[k],.3);g.fillRect(a.left,y1,a.right-a.left,y0-y1)}g.restore()}};
+  return {type:'line',data:{datasets:[{data:I.map(t=>({x:X(t),y:eq.riskA[t]*100})),borderColor:ink,borderWidth:1.1,pointRadius:0}]},
+    options:{parsing:false,normalized:true,plugins:{legend:{display:false},tooltip:{enabled:false}},
+      scales:{x:{type:'linear',min:Math.floor(X(EQ_MIN)),max:X(eq.n-1)+.1,ticks:{color:muted,stepSize:1,maxRotation:0,callback:v=>Math.round(v)},grid:{display:false},border:{color:grid}},
+        y:{min:0,max:100,ticks:{color:muted,stepSize:20,callback:v=>v+'%'},grid:{color:grid},border:{display:false}}}},plugins:[zones]};
+}
 function pdfMarket(doc,M,W,INK,MUTED,ORANGE){
   const t=eq.n-1,dms=eq.ms[t],p=prices.get(dms),pl=model(daysOf(dms)),mid=eq.Q[6][t],rA=eq.riskA[t],r=eq.risk[t],bd=eqBand(rA);
   const pc=v=>fx(v*100,1,1)+'%',ratio=p/pl;
@@ -1359,7 +1369,8 @@ function pdfMarket(doc,M,W,INK,MUTED,ORANGE){
     [T('pMkPos'),pos]],1);
   // PL-grafiek
   let plImg=null,eqImg=null;
-  PDFMODE=true;try{plImg=offImg(plCfg(),860,330);eqImg=offImg(eqCfg(),860,400)}finally{PDFMODE=false}
+  let rkImg=null;
+  PDFMODE=true;try{plImg=offImg(plCfg(),860,330);eqImg=offImg(eqCfg(),860,400);rkImg=offImg(riskCfg(),860,250)}finally{PDFMODE=false}
   const fw=W-2*M;
   doc.setFont('helvetica','bold');doc.setFontSize(10);doc.setTextColor(...INK);doc.text(pdfTxt(T('pMkChPl')),M,y);
   const ph=fw*plImg.ratio;doc.addImage(plImg.url,'PNG',M,y+2,fw,ph);
@@ -1387,7 +1398,14 @@ function pdfMarket(doc,M,W,INK,MUTED,ORANGE){
   doc.setFont('helvetica','bold');doc.setFontSize(10);doc.setTextColor(...INK);doc.text(pdfTxt(T('pMkChEq')),M,y);
   const eh=fw*eqImg.ratio;doc.addImage(eqImg.url,'PNG',M,y+2,fw,eh);
   doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(...MUTED);
-  const lg=doc.splitTextToSize(pdfTxt(T('pMkChEqLeg')),fw);doc.text(lg,M,y+eh+6);y+=eh+7+lg.length*3.6;
+  const lg=doc.splitTextToSize(pdfTxt(T('pMkChEqLeg')),fw);doc.text(lg,M,y+eh+6);y+=eh+7+lg.length*3.6+4;
+  // risk door de tijd
+  const rh=fw*rkImg.ratio;if(y+rh+14>280){doc.addPage();y=20}
+  doc.setFont('helvetica','bold');doc.setFontSize(10);doc.setTextColor(...INK);doc.text(pdfTxt(T('pRiskT',pc(rA))),M,y);
+  doc.addImage(rkImg.url,'PNG',M,y+2,fw,rh);
+  doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(...MUTED);
+  const lg2=doc.splitTextToSize(pdfTxt(T('pRiskLeg')),fw);doc.text(lg2,M,y+rh+6);y+=rh+7+lg2.length*3.6+3;
+  if(y+60>280){doc.addPage();y=20}
   const q=k=>money(eq.Q[k][t]);
   const rows=[[T('eqRail')+' 99,9%','99–99,9%',q(11),q(12),'0×',10]];
   for(let k=9;k>=0;k--)rows.push([T(EQ_B[k][0]),fx(EQ_Q[k+1]*100,0,0)+'–'+fx(EQ_Q[k+2]*100,0,0)+'%',q(k+1),q(k+2),fx(EQ_B[k][1],2,2)+'×',k]);
