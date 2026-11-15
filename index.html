@@ -1328,7 +1328,10 @@ $('exp-csv').addEventListener('click',async()=>{
 });
 const libs={};
 function loadLib(src){return libs[src]||(libs[src]=new Promise((res,rej)=>{const e=document.createElement('script');e.src=src;e.onload=res;e.onerror=()=>{delete libs[src];rej(new Error('load'))};document.head.appendChild(e)}))}
-const pdfTxt=v=>String(v).replace(/²/g,'2').replace(/−/g,'-').replace(/≈/g,'~').replace(/[   ]/g,' ').replace(/≥/g,'>=').replace(/[‘’]/g,"'");
+// jsPDF-standaardfonts kennen alleen WinAnsi; andere tekens laten de hele regel ontsporen
+const PDF_OK=new Set([...'€‚ƒ„…†‡ˆ‰Š‹ŒŽ‘’“”•–—˜™š›œžŸ']);
+const pdfTxt=v=>String(v).replace(/²/g,'2').replace(/−/g,'-').replace(/≈/g,'~').replace(/[\u2000-\u200B\u202F\u205F]/g,' ').replace(/≥/g,'>=').replace(/≤/g,'<=').replace(/→/g,'->').replace(/←/g,'<-').replace(/σ/g,' sigma').replace(/  +/g,' ')
+  .replace(/[^\n]/g,c=>{const k=c.charCodeAt(0);return (k>=32&&k<127)||(k>=160&&k<=255)||PDF_OK.has(c)?c:'?'});
 function chartImg(ch){const c=ch.canvas,o=document.createElement('canvas');o.width=c.width;o.height=c.height;const g=o.getContext('2d');g.fillStyle='#ffffff';g.fillRect(0,0,o.width,o.height);g.drawImage(c,0,0);return {url:o.toDataURL('image/png'),ratio:c.height/c.width}}
 
 const SOURCES=[
