@@ -177,6 +177,8 @@ tr.empty td{color:var(--muted)}
 .eq-l{text-transform:none;letter-spacing:0;font-size:12px}
 .sg-box{display:grid;gap:14px;margin-top:18px;padding-top:6px;border-top:1px solid var(--line)}
 .sg-box>*,.rb-box>*{min-width:0}
+.sgg{text-align:center!important;border-bottom:1px solid var(--line)}
+.sgx{text-align:center!important;color:var(--muted);font-style:italic}
 .rb-box{display:grid;gap:14px;padding-top:6px;border-top:1px solid var(--line)}
 .rb-title{font:600 18px var(--f-body);margin:6px 0 0}
 .rb-head{font-size:16px;line-height:1.45;margin:0}
@@ -305,7 +307,7 @@ tr.cur td{background:color-mix(in srgb,var(--btc) 12%,transparent);font-weight:5
     </section>
     <div class="tbl-wrap">
       <div class="tbl-head"><h3 data-i="sgExtT">Toppen en bodems per halveringscyclus</h3><span class="note" data-i="sgExtNote">koers/model = t.o.v. je conservatieve Power Law</span></div>
-      <div class="tbl-scroll"><table><thead><tr><th></th><th data-i="sgDate">Datum</th><th data-i="rbPrice">Koers</th><th data-i="priceModel">Koers / model</th><th>Sigma</th></tr></thead><tbody id="sg-ext"></tbody></table></div>
+      <div class="tbl-scroll"><table><thead><tr><th></th><th colspan="4" class="sgg" data-i="sgGrpR">Extreem in koers/model</th><th colspan="4" class="sgg" data-i="sgGrpZ">Extreem in sigma</th></tr><tr><th></th><th data-i="sgDate">Datum</th><th data-i="rbPrice">Koers</th><th>× model</th><th>σ</th><th data-i="sgDate">Datum</th><th data-i="rbPrice">Koers</th><th>× model</th><th>σ</th></tr></thead><tbody id="sg-ext"></tbody></table></div>
     </div>
     <p class="note" data-i="sgNote">Zo lees je het, in twee stappen. (1) Koers/model: hoe ver de koers van je conservatieve Power Law af staat (1× = op de lijn). (2) Sigma: hoe uitzonderlijk die afwijking is, vergeleken met de laatste vier jaar. 0σ is de gemiddelde afwijking van die vier jaar; één sigma is de gebruikelijke schommeling daaromheen (in log-schaal, dus een vermenigvuldigingsfactor). Bij een normale verdeling zit 68% van de tijd binnen ±1σ en 95% binnen ±2σ. Let op: het nulpunt schuift mee met de laatste vier jaar. Buigt de Power Law structureel af, dan zakt dat gemiddelde mee en lijkt de sigma normaal terwijl de koers onder de lijn wegzakt; sigma kan een trendbreuk dus verbergen. Geen voorspelling of financieel advies.</p>
   </section>
@@ -618,7 +620,7 @@ nl:{
   sgHead:'Op {0} staat de koers op {1} je conservatieve Power Law. Dat is {2} ten opzichte van de gemiddelde afwijking van de vier jaar ervoor (0σ ≈ {3}).',
   sgHeadF:'{0} ligt na de laatste koers. Met de vierjaarsstatistiek van {4} ligt 0σ dan op {1}, −1σ op {2} en −2σ op {3}.',sgHeadNA:'Voor {0} is er nog geen sigma: daarvoor is minstens circa drie jaar historie nodig (eerste waarde {1}).',sgRecS:'Laagste ooit: {0} op {1}.',sgTModel:'Modelwaarde (conservatief)',sgChosen:'Gekozen datum',
   sgTRatioS:'{0} t.o.v. {1} (conservatief)',sgTZ:'Sigma (4 jaar)',sgTZS:'1σ = factor {0}',sgTMid:'0σ (gemiddelde)',sgTMidS:'{0}× model',
-  sgExtT:'Toppen en bodems per halveringscyclus',sgExtNote:'koers/model = t.o.v. je conservatieve Power Law',sgDate:'Datum',sgTop:'Top',sgBot:'Bodem',sgNow:'tot nu',sgRecLo:'Laagste sigma ooit',sgRecHi:'Hoogste sigma ooit',
+  sgExtT:'Toppen en bodems per halveringscyclus',sgGrpR:'Extreem in koers/model',sgGrpZ:'Extreem in sigma',sgSame:'zelfde dag',sgExtNote:'koers/model = t.o.v. je conservatieve Power Law',sgDate:'Datum',sgTop:'Top',sgBot:'Bodem',sgNow:'tot nu',sgRecLo:'Laagste sigma ooit',sgRecHi:'Hoogste sigma ooit',
   sgNote:'Zo lees je het, in twee stappen. (1) Koers/model: hoe ver de koers van je conservatieve Power Law af staat (1× = op de lijn). (2) Sigma: hoe uitzonderlijk die afwijking is, vergeleken met de laatste vier jaar. 0σ is de gemiddelde afwijking van die vier jaar; één sigma is de gebruikelijke schommeling daaromheen (in log-schaal, dus een vermenigvuldigingsfactor). Bij een normale verdeling zit 68% van de tijd binnen ±1σ en 95% binnen ±2σ. Let op: het nulpunt schuift mee met de laatste vier jaar. Buigt de Power Law structureel af, dan zakt dat gemiddelde mee en lijkt de sigma normaal terwijl de koers onder de lijn wegzakt; sigma kan een trendbreuk dus verbergen. Geen voorspelling of financieel advies.',
   rbSettings:'Ribbon',rbNf:'Snelle lijn (dagen)',rbNs:'Trage lijn (dagen)',rbMsgNs:'Langer dan de snelle lijn, max. 365.',rbMu:'Long bevestigd vanaf (punten)',rbMd:'Cash bevestigd vanaf (punten)',rbShare:'Deel van je stack via ribbon',rbReset:'Standaard (7 / 120 / 2,5 / 2)',
   rbSetNote:'Snelle en trage lijn zijn exponentiële gemiddelden van het EQM-risk (op de slotkoers). Het verschil tussen beide, in risk-punten, bepaalt de toestand. De standaardwaarden zijn afgestemd op de signalen van @btcanalytica en dus op de geschiedenis.',
@@ -785,7 +787,7 @@ en:{
   sgHead:'On {0} the price is at {1} your conservative Power Law. That is {2} relative to the average deviation of the four years before (0σ ≈ {3}).',
   sgHeadF:'{0} is after the latest price. With the four-year statistics of {4}, 0σ is then at {1}, −1σ at {2} and −2σ at {3}.',sgHeadNA:'There is no sigma yet for {0}: it needs roughly three years of history (first value {1}).',sgRecS:'Lowest ever: {0} on {1}.',sgTModel:'Model value (conservative)',sgChosen:'Chosen date',
   sgTRatioS:'{0} vs {1} (conservative)',sgTZ:'Sigma (4 years)',sgTZS:'1σ = factor {0}',sgTMid:'0σ (average)',sgTMidS:'{0}× model',
-  sgExtT:'Tops and bottoms per halving cycle',sgExtNote:'price/model = vs your conservative Power Law',sgDate:'Date',sgTop:'Top',sgBot:'Bottom',sgNow:'so far',sgRecLo:'Lowest sigma ever',sgRecHi:'Highest sigma ever',
+  sgExtT:'Tops and bottoms per halving cycle',sgGrpR:'Extreme in price/model',sgGrpZ:'Extreme in sigma',sgSame:'same day',sgExtNote:'price/model = vs your conservative Power Law',sgDate:'Date',sgTop:'Top',sgBot:'Bottom',sgNow:'so far',sgRecLo:'Lowest sigma ever',sgRecHi:'Highest sigma ever',
   sgNote:'How to read it, in two steps. (1) Price/model: how far the price is from your conservative Power Law (1× = on the line). (2) Sigma: how unusual that deviation is compared with the last four years. 0σ is the average deviation of those four years; one sigma is the usual swing around it (in log scale, so a multiplication factor). With a normal distribution 68% of the time falls within ±1σ and 95% within ±2σ. Note: the zero point moves with the last four years. If the Power Law bends structurally, that average drops too and sigma looks normal while the price sinks below the line; sigma can therefore hide a trend break. Not a forecast or financial advice.',
   rbSettings:'Ribbon',rbNf:'Fast line (days)',rbNs:'Slow line (days)',rbMsgNs:'Longer than the fast line, max. 365.',rbMu:'Long confirmed from (points)',rbMd:'Cash confirmed from (points)',rbShare:'Share of your stack via ribbon',rbReset:'Default (7 / 120 / 2.5 / 2)',
   rbSetNote:'The fast and slow lines are exponential averages of the EQM risk (on the close). The gap between them, in risk points, sets the state. The defaults are tuned to the signals of @btcanalytica and thus to history.',
@@ -1577,10 +1579,12 @@ function pdfSigma(doc,M,W,INK,MUTED,ORANGE,y0=20){
   let img=null;PDFMODE=true;try{img=offImg(sgPdfCfg(),860,280)}finally{PDFMODE=false}
   const ih=fw*img.ratio;doc.addImage(img.url,'PNG',M,y,fw,ih);y+=ih+6;
   doc.setFont('helvetica','bold');doc.setFontSize(10);doc.setTextColor(...INK);doc.text(pdfTxt(T('sgExtT')+' ('+T('sgExtNote')+')'),M,y);
-  const rows=sg.ext.map(e=>[(e.k==='top'?T('sgTop'):T('sgBot'))+(e.i===t?' ('+T('sgNow')+')':''),longDate(sg.ms[e.i]),money(prices.get(sg.ms[e.i])),fx(Math.pow(10,sg.r[e.i]),2,2)+'x',z(sg.z[e.i])]);
-  for(const [k,i] of [['sgRecLo',sg.zmin],['sgRecHi',sg.zmax]])rows.push([T(k),longDate(sg.ms[i]),money(prices.get(sg.ms[i])),fx(Math.pow(10,sg.r[i]),2,2)+'x',z(sg.z[i])]);
-  doc.autoTable({startY:y+2,head:[['',T('sgDate'),T('rbPrice'),T('priceModel'),'Sigma'].map(pdfTxt)],body:rows.map(r=>r.map(pdfTxt)),theme:'grid',margin:{left:M,right:M},
-    styles:{fontSize:8.2,cellPadding:1.4,textColor:INK},headStyles:{fillColor:ORANGE,textColor:255},columnStyles:{2:{halign:'right'},3:{halign:'right'},4:{halign:'right'}},
+  const pc=i=>i<0?['-','','','']:[shortD(sg.ms[i]),money(prices.get(sg.ms[i])),fx(Math.pow(10,sg.r[i]),2,2)+'x',z(sg.z[i])];
+  const shortD=ms=>{const d=new Date(ms);return d.getUTCDate()+'-'+(d.getUTCMonth()+1)+'-'+d.getUTCFullYear()};
+  const rows=sg.ext.map(e=>[(e.k==='top'?T('sgTop'):T('sgBot'))+' '+new Date(sg.ms[e.i]).getUTCFullYear()+(e.i===t||e.j===t?' ('+T('sgNow')+')':''),...pc(e.i),...(e.j===e.i?[{content:T('sgSame'),colSpan:4,styles:{halign:'center',fontStyle:'italic',textColor:MUTED}}]:pc(e.j))]);
+  doc.autoTable({startY:y+2,head:[[{content:'',rowSpan:1},{content:pdfTxt(T('sgGrpR')),colSpan:4,styles:{halign:'center'}},{content:pdfTxt(T('sgGrpZ')),colSpan:4,styles:{halign:'center'}}],['',T('sgDate'),T('rbPrice'),'x model','sigma',T('sgDate'),T('rbPrice'),'x model','sigma'].map(pdfTxt)],
+    body:rows.map(r=>r.map(c=>typeof c==='object'?{...c,content:pdfTxt(c.content)}:pdfTxt(c))),theme:'grid',margin:{left:M,right:M},
+    styles:{fontSize:7.4,cellPadding:1.2,textColor:INK},headStyles:{fillColor:ORANGE,textColor:255},columnStyles:{2:{halign:'right'},3:{halign:'right'},4:{halign:'right'},6:{halign:'right'},7:{halign:'right'},8:{halign:'right'}},
     didParseCell:d2=>{if(d2.section==='body'&&rows[d2.row.index][0].includes(T('sgNow')))d2.cell.styles.fillColor=[253,237,216]}});
   y=doc.lastAutoTable.finalY+5;
   doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(...MUTED);
@@ -2131,8 +2135,9 @@ function sgCompute(){
   // extremen per halveringscyclus (op koers/model), plus sigma-records
   const bounds=[...HALVINGS,Infinity],ext=[];
   for(let c=0;c<bounds.length-1;c++){
-    let lo=-1,hi=-1;for(let i=0;i<n;i++){if(ms[i]<bounds[c]||ms[i]>=bounds[c+1])continue;if(lo<0||r[i]<r[lo])lo=i;if(hi<0||r[i]>r[hi])hi=i}
-    if(hi>=0)ext.push({k:'top',i:hi});if(lo>=0)ext.push({k:'bot',i:lo});
+    let lo=-1,hi=-1,zl=-1,zh=-1;for(let i=0;i<n;i++){if(ms[i]<bounds[c]||ms[i]>=bounds[c+1])continue;if(lo<0||r[i]<r[lo])lo=i;if(hi<0||r[i]>r[hi])hi=i;
+      if(!isNaN(z[i])){if(zl<0||z[i]<z[zl])zl=i;if(zh<0||z[i]>z[zh])zh=i}}
+    if(hi>=0)ext.push({k:'top',i:hi,j:zh});if(lo>=0)ext.push({k:'bot',i:lo,j:zl});
   }
   let zmin=-1,zmax=-1;for(let i=first;i<n;i++){if(isNaN(z[i]))continue;if(zmin<0||z[i]<z[zmin])zmin=i;if(zmax<0||z[i]>z[zmax])zmax=i}
   ext.sort((a,b)=>a.i-b.i);
@@ -2141,7 +2146,8 @@ function sgCompute(){
 const sgPrice=(i,k,ms)=>Math.pow(10,sg.mu[i]+k*sg.sd[i])*model(daysOf(ms??sg.ms[i]));
 const sgZ=v=>isNaN(v)?'–':(v<0?'−':'+')+fx(Math.abs(v),2,2)+'σ';
 // welke dag hoort bij de gekozen datum in Model: laatste koersdag op of vóór die datum; null = toekomst
-function sgSel(){const s=sel??lastMs;if(lastMs!=null&&s>lastMs)return {fut:true,ms:s,i:sg.n-1};
+function sgSel(){let s=sel??lastMs;if(lastMs!=null&&s>lastMs&&s-lastMs<=3*DAY)s=lastMs; // 'vandaag' zonder slotkoers: laatste koersdag
+  if(lastMs!=null&&s>lastMs)return {fut:true,ms:s,i:sg.n-1};
   let lo=0,hi=sg.n-1;if(s<sg.ms[0])return {i:-1,ms:s};while(lo<hi){const m=(lo+hi+1)>>1;if(sg.ms[m]<=s)lo=m;else hi=m-1}return {i:lo,ms:s}}
 function renderSg(){
   if(!sg){$('sg-head').textContent=dataState==='fail'?T('eqFail'):T('eqRunning');return}
@@ -2168,9 +2174,10 @@ function renderSg(){
   }
   $('sg-tiles').innerHTML=tiles.map(([a,b,c])=>'<div class="tile"><dt>'+a+'</dt><dd>'+b+'<small>'+c+'</small></dd></div>').join('');
   const last=sg.n-1,selI=S.fut?-1:t;
-  const rows=sg.ext.map(e=>{const i=e.i,cur=i===last;return '<tr'+(cur?' class="cur"':'')+'><td>'+(e.k==='top'?T('sgTop'):T('sgBot'))+(cur?' ('+T('sgNow')+')':'')+'</td><td>'+longDate(sg.ms[i])+'</td><td>'+money(prices.get(sg.ms[i]))+'</td><td>'+fx(Math.pow(10,sg.r[i]),2,2)+'×</td><td>'+sgZ(sg.z[i])+'</td></tr>'});
-  for(const [k,i] of [['sgRecLo',sg.zmin],['sgRecHi',sg.zmax]])rows.push('<tr class="empty"><td>'+T(k)+'</td><td>'+longDate(sg.ms[i])+'</td><td>'+money(prices.get(sg.ms[i]))+'</td><td>'+fx(Math.pow(10,sg.r[i]),2,2)+'×</td><td>'+sgZ(sg.z[i])+'</td></tr>');
-  if(selI>=0&&selI!==last&&!isNaN(sg.z[selI]))rows.push('<tr class="cur"><td>'+T('sgChosen')+'</td><td>'+longDate(sg.ms[selI])+'</td><td>'+money(prices.get(sg.ms[selI]))+'</td><td>'+fx(Math.pow(10,sg.r[selI]),2,2)+'×</td><td>'+sgZ(sg.z[selI])+'</td></tr>');
+  const cell=i=>i<0?'<td colspan="4" class="sgx">–</td>':'<td>'+longDate(sg.ms[i])+'</td><td>'+money(prices.get(sg.ms[i]))+'</td><td>'+fx(Math.pow(10,sg.r[i]),2,2)+'×</td><td'+(i===sg.zmin||i===sg.zmax?' style="font-weight:700"':'')+'>'+sgZ(sg.z[i])+'</td>';
+  const rows=sg.ext.map(e=>{const cur=e.i===last||e.j===last;
+    return '<tr'+(cur?' class="cur"':'')+'><td>'+(e.k==='top'?T('sgTop'):T('sgBot'))+' '+new Date(sg.ms[e.i]).getUTCFullYear()+(cur?' ('+T('sgNow')+')':'')+'</td>'+cell(e.i)+(e.j===e.i?'<td colspan="4" class="sgx">'+T('sgSame')+'</td>':cell(e.j))+'</tr>'});
+  if(selI>=0&&selI!==last&&!isNaN(sg.z[selI]))rows.push('<tr class="cur"><td>'+T('sgChosen')+'</td>'+cell(selI)+'<td colspan="4"></td></tr>');
   $('sg-ext').innerHTML=rows.join('');
   if(sgChart)sgChart.update('none');else drawSg();
 }
