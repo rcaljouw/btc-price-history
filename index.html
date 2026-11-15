@@ -615,7 +615,8 @@ nl:{
   dcaBuysS:'{0} historisch · {1} gesimuleerd',dcaFeeS:'incl. {0}% kosten',dcaAvgS:'gem. prijs {0}',dcaMedS:'mediaan Monte Carlo',dcaCnoteF:'mediaan, met daaronder 90% van de paden · * EQM-inleg verschilt per pad',dcaYnote:'* na {0}: mediaan van de Monte Carlo-paden',
   dcaNote:'EQM-DCA: op elk aankoopmoment het basisbedrag × de DCA-factor van de kwantielband op die dag (instelbaar per band; vóór 17 aug 2013 factor 1×). Is de factor 0×, dan sla je die aankoop over. EQM-DCA met buffer: dezelfde factoren, betaald uit een buffer die je met het vaste bedrag aanvult. Vaste DCA (elk moment hetzelfde bedrag) en Eenmalig (het totaal van vaste DCA in één keer op de startdatum) staan er ter vergelijking bij. Toekomstige koersen zijn Monte Carlo-scenario\'s rond je conservatieve Power Law; bedragen daar zijn medianen. Geen financieel advies.',
   sgTitle:'Sigma: hoe uitzonderlijk is de afwijking?',sg10y:'10 jaar',sg4y:'4 jaar',sgAria:'Lijngrafiek van het aantal standaardafwijkingen van de koers ten opzichte van het vierjaarsgemiddelde van de afwijking van de conservatieve Power Law, met banden van plus en min 1, 2 en 3 sigma.',
-  sgHead:'Op {0} staat de koers op {1} je conservatieve Power Law. Dat is {2} ten opzichte van de gemiddelde afwijking van de laatste vier jaar (0σ ≈ {3}). Het laagste punt sinds 2014 was {4} op {5}.',
+  sgHead:'Op {0} staat de koers op {1} je conservatieve Power Law. Dat is {2} ten opzichte van de gemiddelde afwijking van de vier jaar ervoor (0σ ≈ {3}).',
+  sgHeadF:'{0} ligt na de laatste koers. Met de vierjaarsstatistiek van {4} ligt 0σ dan op {1}, −1σ op {2} en −2σ op {3}.',sgHeadNA:'Voor {0} is er nog geen sigma: daarvoor is minstens circa drie jaar historie nodig (eerste waarde {1}).',sgRecS:'Laagste ooit: {0} op {1}.',sgTModel:'Modelwaarde (conservatief)',sgChosen:'Gekozen datum',
   sgTRatioS:'{0} t.o.v. {1} (conservatief)',sgTZ:'Sigma (4 jaar)',sgTZS:'1σ = factor {0}',sgTMid:'0σ (gemiddelde)',sgTMidS:'{0}× model',
   sgExtT:'Toppen en bodems per halveringscyclus',sgExtNote:'koers/model = t.o.v. je conservatieve Power Law',sgDate:'Datum',sgTop:'Top',sgBot:'Bodem',sgNow:'tot nu',sgRecLo:'Laagste sigma ooit',sgRecHi:'Hoogste sigma ooit',
   sgNote:'Zo lees je het, in twee stappen. (1) Koers/model: hoe ver de koers van je conservatieve Power Law af staat (1× = op de lijn). (2) Sigma: hoe uitzonderlijk die afwijking is, vergeleken met de laatste vier jaar. 0σ is de gemiddelde afwijking van die vier jaar; één sigma is de gebruikelijke schommeling daaromheen (in log-schaal, dus een vermenigvuldigingsfactor). Bij een normale verdeling zit 68% van de tijd binnen ±1σ en 95% binnen ±2σ. Let op: het nulpunt schuift mee met de laatste vier jaar. Buigt de Power Law structureel af, dan zakt dat gemiddelde mee en lijkt de sigma normaal terwijl de koers onder de lijn wegzakt; sigma kan een trendbreuk dus verbergen. Geen voorspelling of financieel advies.',
@@ -781,7 +782,8 @@ en:{
   dcaBuysS:'{0} historical · {1} simulated',dcaFeeS:'incl. {0}% costs',dcaAvgS:'avg price {0}',dcaMedS:'Monte Carlo median',dcaCnoteF:'median, with 90% of paths below · * EQM amount differs per path',dcaYnote:'* after {0}: median of the Monte Carlo paths',
   dcaNote:'EQM DCA: at each purchase moment the base amount × the DCA factor of the quantile band on that day (adjustable per band; factor 1× before 17 Aug 2013). With a factor of 0× the purchase is skipped. EQM DCA with buffer: same factors, paid from a buffer you top up with the fixed amount. Fixed DCA (the same amount every time) and Lump sum (the fixed DCA total at once on the start date) are shown for comparison. Future prices are Monte Carlo scenarios around your conservative Power Law; amounts there are medians. Not financial advice.',
   sgTitle:'Sigma: how unusual is the deviation?',sg10y:'10 years',sg4y:'4 years',sgAria:'Line chart of the number of standard deviations of the price relative to the four-year average deviation from the conservative Power Law, with bands of plus and minus 1, 2 and 3 sigma.',
-  sgHead:'On {0} the price is at {1} your conservative Power Law. That is {2} relative to the average deviation of the last four years (0σ ≈ {3}). The lowest point since 2014 was {4} on {5}.',
+  sgHead:'On {0} the price is at {1} your conservative Power Law. That is {2} relative to the average deviation of the four years before (0σ ≈ {3}).',
+  sgHeadF:'{0} is after the latest price. With the four-year statistics of {4}, 0σ is then at {1}, −1σ at {2} and −2σ at {3}.',sgHeadNA:'There is no sigma yet for {0}: it needs roughly three years of history (first value {1}).',sgRecS:'Lowest ever: {0} on {1}.',sgTModel:'Model value (conservative)',sgChosen:'Chosen date',
   sgTRatioS:'{0} vs {1} (conservative)',sgTZ:'Sigma (4 years)',sgTZS:'1σ = factor {0}',sgTMid:'0σ (average)',sgTMidS:'{0}× model',
   sgExtT:'Tops and bottoms per halving cycle',sgExtNote:'price/model = vs your conservative Power Law',sgDate:'Date',sgTop:'Top',sgBot:'Bottom',sgNow:'so far',sgRecLo:'Lowest sigma ever',sgRecHi:'Highest sigma ever',
   sgNote:'How to read it, in two steps. (1) Price/model: how far the price is from your conservative Power Law (1× = on the line). (2) Sigma: how unusual that deviation is compared with the last four years. 0σ is the average deviation of those four years; one sigma is the usual swing around it (in log scale, so a multiplication factor). With a normal distribution 68% of the time falls within ±1σ and 95% within ±2σ. Note: the zero point moves with the last four years. If the Power Law bends structurally, that average drops too and sigma looks normal while the price sinks below the line; sigma can therefore hide a trend break. Not a forecast or financial advice.',
@@ -971,6 +973,7 @@ function applyStatic(){
 applyStatic();
 
 const hiLo=new Map();
+let sg=null, sgChart=null, sgView=null;
 let prices=new Map(), lastMs=null, chart=null, sel=null, dataState='loading', libOk=true;
 const now=new Date(), TODAY=Date.UTC(now.getUTCFullYear(),now.getUTCMonth(),now.getUTCDate());
 const END=Date.UTC(2034,11,31);
@@ -1000,6 +1003,7 @@ function render(){
     $('r-price').textContent='–'; $('r-ratio').textContent='–'; $('r-ratio').style.color='';
   }
   chips.forEach(b=>b.setAttribute('aria-pressed',String(chipMs(b)===sel)));
+  if(sg)renderSg();
   if(chart){
     const x=toYear(sel);
     chart.data.datasets[4].data=[{x,y:m}];
@@ -1558,7 +1562,7 @@ function pdfSigma(doc,M,W,INK,MUTED,ORANGE,y0=20){
   let y=y0;
   doc.setFont('helvetica','bold');doc.setFontSize(14);doc.setTextColor(...INK);doc.text(pdfTxt(T('sgTitle')),M,y);
   doc.setFont('helvetica','normal');doc.setFontSize(10);
-  const head=pdfTxt(T('sgHead',longDate(d),fx(Math.pow(10,sg.r[t]),2,2)+'x',z(sg.z[t]),money(sgPrice(t,0)),z(sg.z[sg.zmin]),longDate(sg.ms[sg.zmin])).replace(/σ/g,' sigma'));
+  const head=pdfTxt(T('sgHead',longDate(d),fx(Math.pow(10,sg.r[t]),2,2)+'x',z(sg.z[t]),money(sgPrice(t,0)))+' '+T('sgRecS',z(sg.z[sg.zmin]),longDate(sg.ms[sg.zmin])).replace(/σ/g,' sigma'));
   const hl=doc.splitTextToSize(head,fw);doc.text(hl,M,y+7);y+=7+hl.length*4.6;
   doc.autoTable({startY:y,showHead:'never',body:[
       [T('priceModel'),fx(Math.pow(10,sg.r[t]),2,2)+'x ('+T('sgTRatioS',money(prices.get(d)),money(model(daysOf(d))))+')'],
@@ -2112,7 +2116,6 @@ eqLoad();eqSync();
 // r = log10(koers / modelwaarde); z = (r - gemiddelde van 4 jaar) / standaardafwijking van 4 jaar
 const SG_WIN=1461, SG_MINP=1000;
 const HALVINGS=[Date.UTC(2012,10,28),Date.UTC(2016,6,9),Date.UTC(2020,4,11),Date.UTC(2024,3,20)];
-let sg=null, sgChart=null, sgView=null;
 function sgCompute(){
   const ms=[...prices.keys()],n=ms.length;if(n<SG_MINP+10)return null;
   const r=new Float64Array(n),mu=new Float64Array(n).fill(NaN),sd=new Float64Array(n).fill(NaN),z=new Float64Array(n).fill(NaN);
@@ -2132,22 +2135,41 @@ function sgCompute(){
   ext.sort((a,b)=>a.i-b.i);
   return {ms,n,r,mu,sd,z,first,ext,zmin,zmax};
 }
-const sgPrice=(i,k)=>Math.pow(10,sg.mu[i]+k*sg.sd[i])*model(daysOf(sg.ms[i]));
+const sgPrice=(i,k,ms)=>Math.pow(10,sg.mu[i]+k*sg.sd[i])*model(daysOf(ms??sg.ms[i]));
 const sgZ=v=>isNaN(v)?'–':(v<0?'−':'+')+fx(Math.abs(v),2,2)+'σ';
+// welke dag hoort bij de gekozen datum in Model: laatste koersdag op of vóór die datum; null = toekomst
+function sgSel(){const s=sel??lastMs;if(lastMs!=null&&s>lastMs)return {fut:true,ms:s,i:sg.n-1};
+  let lo=0,hi=sg.n-1;if(s<sg.ms[0])return {i:-1,ms:s};while(lo<hi){const m=(lo+hi+1)>>1;if(sg.ms[m]<=s)lo=m;else hi=m-1}return {i:lo,ms:s}}
 function renderSg(){
   if(!sg){$('sg-head').textContent=dataState==='fail'?T('eqFail'):T('eqRunning');return}
-  const t=sg.n-1,d=sg.ms[t],p=prices.get(d),ratio=Math.pow(10,sg.r[t]);
-  $('sg-head').innerHTML=T('sgHead',longDate(d),'<b>'+fx(ratio,2,2)+'×</b>','<b>'+sgZ(sg.z[t])+'</b>',money(sgPrice(t,0)),sgZ(sg.z[sg.zmin]),longDate(sg.ms[sg.zmin]));
-  const tiles=[[T('priceModel'),fx(ratio,2,2)+'×',T('sgTRatioS',money(p),money(model(daysOf(d))))],
-    [T('sgTZ'),sgZ(sg.z[t]),T('sgTZS',fx(Math.pow(10,sg.sd[t]),2,2))],
-    ['<span style="text-transform:none">'+T('sgTMid')+'</span>',money(sgPrice(t,0)),T('sgTMidS',fx(Math.pow(10,sg.mu[t]),2,2))],
-    ['<span style="text-transform:none">−2σ</span>',money(sgPrice(t,-2)),fx(Math.pow(10,sg.mu[t]-2*sg.sd[t]),2,2)+'× model'],
-    ['<span style="text-transform:none">−3σ</span>',money(sgPrice(t,-3)),fx(Math.pow(10,sg.mu[t]-3*sg.sd[t]),2,2)+'× model']];
+  const S=sgSel(),t=S.i,nu=' <span class="pt" style="font-size:12px;color:var(--muted)">'+T('sgRecS',sgZ(sg.z[sg.zmin]),longDate(sg.ms[sg.zmin]))+'</span>';
+  const sml='<span style="text-transform:none">';
+  let tiles;
+  if(S.fut){
+    const ms=S.ms,m=model(daysOf(ms));
+    $('sg-head').innerHTML=T('sgHeadF',longDate(ms),'<b>'+money(sgPrice(t,0,ms))+'</b>',money(sgPrice(t,-1,ms)),money(sgPrice(t,-2,ms)),longDate(sg.ms[t]))+nu;
+    tiles=[[T('sgTModel'),money(m),longDate(ms)],[sml+T('sgTMid')+'</span>',money(sgPrice(t,0,ms)),T('sgTMidS',fx(Math.pow(10,sg.mu[t]),2,2))],
+      [sml+'−1σ</span>',money(sgPrice(t,-1,ms)),fx(Math.pow(10,sg.mu[t]-sg.sd[t]),2,2)+'× model'],
+      [sml+'−2σ</span>',money(sgPrice(t,-2,ms)),fx(Math.pow(10,sg.mu[t]-2*sg.sd[t]),2,2)+'× model'],
+      [sml+'−3σ</span>',money(sgPrice(t,-3,ms)),fx(Math.pow(10,sg.mu[t]-3*sg.sd[t]),2,2)+'× model']];
+  }else if(t<0||isNaN(sg.z[t])){
+    $('sg-head').innerHTML=T('sgHeadNA',longDate(S.ms),longDate(sg.ms[sg.first]))+nu;tiles=[];
+  }else{
+    const d=sg.ms[t],p=prices.get(d),ratio=Math.pow(10,sg.r[t]);
+    $('sg-head').innerHTML=T('sgHead',longDate(d),'<b>'+fx(ratio,2,2)+'×</b>','<b>'+sgZ(sg.z[t])+'</b>',money(sgPrice(t,0)))+nu;
+    tiles=[[T('priceModel'),fx(ratio,2,2)+'×',T('sgTRatioS',money(p),money(model(daysOf(d))))],
+      [T('sgTZ'),sgZ(sg.z[t]),T('sgTZS',fx(Math.pow(10,sg.sd[t]),2,2))],
+      [sml+T('sgTMid')+'</span>',money(sgPrice(t,0)),T('sgTMidS',fx(Math.pow(10,sg.mu[t]),2,2))],
+      [sml+'−2σ</span>',money(sgPrice(t,-2)),fx(Math.pow(10,sg.mu[t]-2*sg.sd[t]),2,2)+'× model'],
+      [sml+'−3σ</span>',money(sgPrice(t,-3)),fx(Math.pow(10,sg.mu[t]-3*sg.sd[t]),2,2)+'× model']];
+  }
   $('sg-tiles').innerHTML=tiles.map(([a,b,c])=>'<div class="tile"><dt>'+a+'</dt><dd>'+b+'<small>'+c+'</small></dd></div>').join('');
-  const rows=sg.ext.map(e=>{const i=e.i,cur=i===t;return '<tr'+(cur?' class="cur"':'')+'><td>'+(e.k==='top'?T('sgTop'):T('sgBot'))+(cur?' ('+T('sgNow')+')':'')+'</td><td>'+longDate(sg.ms[i])+'</td><td>'+money(prices.get(sg.ms[i]))+'</td><td>'+fx(Math.pow(10,sg.r[i]),2,2)+'×</td><td>'+sgZ(sg.z[i])+'</td></tr>'});
+  const last=sg.n-1,selI=S.fut?-1:t;
+  const rows=sg.ext.map(e=>{const i=e.i,cur=i===last;return '<tr'+(cur?' class="cur"':'')+'><td>'+(e.k==='top'?T('sgTop'):T('sgBot'))+(cur?' ('+T('sgNow')+')':'')+'</td><td>'+longDate(sg.ms[i])+'</td><td>'+money(prices.get(sg.ms[i]))+'</td><td>'+fx(Math.pow(10,sg.r[i]),2,2)+'×</td><td>'+sgZ(sg.z[i])+'</td></tr>'});
   for(const [k,i] of [['sgRecLo',sg.zmin],['sgRecHi',sg.zmax]])rows.push('<tr class="empty"><td>'+T(k)+'</td><td>'+longDate(sg.ms[i])+'</td><td>'+money(prices.get(sg.ms[i]))+'</td><td>'+fx(Math.pow(10,sg.r[i]),2,2)+'×</td><td>'+sgZ(sg.z[i])+'</td></tr>');
+  if(selI>=0&&selI!==last&&!isNaN(sg.z[selI]))rows.push('<tr class="cur"><td>'+T('sgChosen')+'</td><td>'+longDate(sg.ms[selI])+'</td><td>'+money(prices.get(sg.ms[selI]))+'</td><td>'+fx(Math.pow(10,sg.r[selI]),2,2)+'×</td><td>'+sgZ(sg.z[selI])+'</td></tr>');
   $('sg-ext').innerHTML=rows.join('');
-  drawSg();
+  if(sgChart)sgChart.update('none');else drawSg();
 }
 function sgLim(){return {min:toYear(sg.ms[sg.first]),max:toYear(sg.ms[sg.n-1])+.05}}
 function sgPreset(k){const L=sgLim(),now=toYear(sg.ms[sg.n-1]);return k==='10y'?[Math.max(L.min,now-10),L.max]:k==='4y'?[now-4,L.max]:[L.min,L.max]}
@@ -2166,7 +2188,10 @@ function drawSg(){
   const pts=[];for(let i=sg.first;i<sg.n;i++)if(!isNaN(sg.z[i]))pts.push({x:toYear(sg.ms[i]),y:sg.z[i],i});
   const zones={id:'sgZones',beforeDatasetsDraw(c){const g=c.ctx,a=c.chartArea,sy=c.scales.y;g.save();
     [[3,.1],[2,.18],[1,.28]].forEach(([k,al])=>{const y0=sy.getPixelForValue(k),y1=sy.getPixelForValue(-k);g.fillStyle='rgba(176,96,96,'+al+')';g.fillRect(a.left,y0,a.right-a.left,y1-y0)});
-    const y=sy.getPixelForValue(0);g.strokeStyle=muted;g.setLineDash([4,3]);g.beginPath();g.moveTo(a.left,y);g.lineTo(a.right,y);g.stroke();g.restore()}};
+    const y=sy.getPixelForValue(0);g.strokeStyle=muted;g.setLineDash([4,3]);g.beginPath();g.moveTo(a.left,y);g.lineTo(a.right,y);g.stroke();g.restore()},
+    afterDatasetsDraw(c){const S=sgSel();if(S.fut||S.i<0||isNaN(sg.z[S.i]))return;const g=c.ctx,a=c.chartArea,x=c.scales.x.getPixelForValue(toYear(sg.ms[S.i])),y=c.scales.y.getPixelForValue(sg.z[S.i]);
+      if(x<a.left||x>a.right)return;g.save();g.strokeStyle=css('--btc');g.lineWidth=1;g.setLineDash([3,3]);g.beginPath();g.moveTo(x,a.top);g.lineTo(x,a.bottom);g.stroke();g.setLineDash([]);
+      g.fillStyle=css('--btc');g.beginPath();g.arc(x,y,4.5,0,2*Math.PI);g.fill();g.restore()}};
   const after=({chart:c})=>sgSet(c.scales.x.min,c.scales.x.max);
   sgChart=new Chart($('ch-sg'),{type:'line',data:{datasets:[{data:pts,borderColor:ink,borderWidth:1.2,pointRadius:0}]},
     options:{responsive:true,maintainAspectRatio:false,animation:false,parsing:false,normalized:true,
@@ -2565,7 +2590,7 @@ const rebuild=()=>{
   if(mc)renderMC();
   if(eq)renderEq();
   if(dca)renderDca();
-  if(sg)renderSg();
+  if(sg){if(sgChart){sgChart.destroy();sgChart=null}renderSg()}
 };
 mq.addEventListener&&mq.addEventListener('change',rebuild);
 new MutationObserver(rebuild).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
