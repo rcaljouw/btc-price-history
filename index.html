@@ -178,7 +178,8 @@ tr.empty td{color:var(--muted)}
 .facgrid{display:grid;grid-template-columns:1fr 78px;gap:6px 10px;align-items:center;margin-top:12px}
 .facgrid label{font-size:13px;color:var(--ink);display:flex;align-items:center;gap:0;line-height:1.2}
 .facgrid label small{color:var(--muted);margin-left:6px;font-size:11px}
-.facgrid .in{height:36px}
+.facgrid .in{min-height:36px;width:auto}
+.facgrid .in input{font-size:15px;padding:6px 4px 6px 10px}
 .facgrid .in input{text-align:right;padding-right:4px}
 .facgrid .bad .in,.facgrid .in.bad{border-color:var(--bad,#d33)}
 .eq-meter{position:relative;height:14px;margin:4px 0 2px}
@@ -479,7 +480,7 @@ tr.cur td{background:color-mix(in srgb,var(--btc) 12%,transparent);font-weight:5
             <button type="button" data-dcap="s60" aria-pressed="false" data-i="dcaP60">Stop vanaf 60%</button>
             <button type="button" data-dcap="s80" aria-pressed="false" data-i="dcaP80">Stop vanaf 80%</button>
           </div>
-          <div class="facgrid" id="dca-facs"></div>
+          <div class="facgrid fld" id="dca-facs"></div>
           <p class="note" data-i="dcaFacNote">Geldt voor EQM-DCA hier, in de Kwantielen-tab en in het PDF-rapport. Onder 1% geldt de factor van Fire sale; boven 99% altijd 0×.</p>
         </div>
         <div class="fgroup">
