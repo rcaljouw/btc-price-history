@@ -243,7 +243,7 @@ tr.cur td{background:color-mix(in srgb,var(--btc) 12%,transparent);font-weight:5
         <button class="chip" type="button" id="y-next" data-i="yNext" data-ia="yNextAria" aria-label="Eén jaar vooruit">+ 1 jaar</button>
       </div>
       <div class="chips" role="group" data-ia="quickAria" aria-label="Snelkeuze">
-        <button class="chip" type="button" data-date="today" data-i="today">Vandaag</button>
+        <button class="chip" type="button" data-date="today" data-i="today">Laatste koers</button>
         <button class="chip" type="button" data-date="2030-01-01" data-i="jan2030">1 jan 2030</button>
         <button class="chip" type="button" data-date="2034-12-31" data-i="end2034">Eind 2034</button>
       </div>
@@ -648,7 +648,7 @@ nl:{
   bLow:'Onder 1%',bFire:'Fire sale',bAcc:'Accumulate',bCheap:'Goedkoop',bValue:'Waarde',bBelow:'Onder midden',bAbove:'Boven midden',bWarm:'Warm',bHot:'Heet',bFomo:'FOMO',bBubble:'Bubbel',bHigh:'Boven 99%',
   panelAria:'Berekening voor een datum',pickDate:'Kies een datum',day:'Dag',month:'Maand',year:'Jaar',
   yPrev:'− 1 jaar',yNext:'+ 1 jaar',yPrevAria:'Eén jaar terug',yNextAria:'Eén jaar vooruit',quickAria:'Snelkeuze',
-  today:'Vandaag',jan2030:'1 jan 2030',end2034:'Eind 2034',tapHint:'Of tik in de grafiek op een moment.',
+  today:'Laatste koers',jan2030:'1 jan 2030',end2034:'Eind 2034',tapHint:'Of tik in de grafiek op een moment.',
   modelValue:'modelwaarde (conservatief)',daysGen:'Dagen sinds genesis',bandLo:'Band 0,5×',bandHi:'Band 2×',actualClose:'Werkelijke close',priceModel:'Koers / model',
   chartAria:'Grafiek',lgPrice:'Koers (Bitstamp)',lgBand:'Band 0,5× – 2×',extrap:'Extrapolatie',periodAria:'Periode',rAll:'Alles',r5y:'Laatste 5 jaar',rFut:'Nu – 2034',
   zoomOut:'Uitzoomen',zoomIn:'Inzoomen',reset:'Beginstand',
@@ -815,7 +815,7 @@ en:{
   bLow:'Below 1%',bFire:'Fire sale',bAcc:'Accumulate',bCheap:'Cheap',bValue:'Value',bBelow:'Below mid',bAbove:'Above mid',bWarm:'Warm',bHot:'Hot',bFomo:'FOMO',bBubble:'Bubble',bHigh:'Above 99%',
   panelAria:'Calculation for a date',pickDate:'Pick a date',day:'Day',month:'Month',year:'Year',
   yPrev:'− 1 year',yNext:'+ 1 year',yPrevAria:'One year back',yNextAria:'One year forward',quickAria:'Quick picks',
-  today:'Today',jan2030:'1 Jan 2030',end2034:'End of 2034',tapHint:'Or tap a moment in the chart.',
+  today:'Latest close',jan2030:'1 Jan 2030',end2034:'End of 2034',tapHint:'Or tap a moment in the chart.',
   modelValue:'model value (conservative)',daysGen:'Days since genesis',bandLo:'Band 0.5×',bandHi:'Band 2×',actualClose:'Actual close',priceModel:'Price / model',
   chartAria:'Chart',lgPrice:'Price (Bitstamp)',lgBand:'Band 0.5× – 2×',extrap:'Extrapolation',periodAria:'Period',rAll:'All',r5y:'Last 5 years',rFut:'Now – 2034',
   zoomOut:'Zoom out',zoomIn:'Zoom in',reset:'Reset',
@@ -980,7 +980,7 @@ let prices=new Map(), lastMs=null, chart=null, sel=null, dataState='loading', li
 const now=new Date(), TODAY=Date.UTC(now.getUTCFullYear(),now.getUTCMonth(),now.getUTCDate());
 const END=Date.UTC(2034,11,31);
 const chips=[...document.querySelectorAll('.chip[data-date]')];
-const chipMs=b=>b.dataset.date==='today'?TODAY:parseIso(b.dataset.date);
+const chipMs=b=>b.dataset.date==='today'?(lastMs??TODAY):parseIso(b.dataset.date);
 function freshText(){
   $('fresh').textContent=(dataState==='ok'?T('fresh',longDate(lastMs),num.format(prices.size)):dataState==='fail'?T('freshFail'):T('loading'))+(libOk?'':T('libFail'));
 }
@@ -1137,6 +1137,8 @@ fetch('data/btc-usd-daily.csv',{cache:'no-cache'}).then(r=>{if(!r.ok)throw new E
   const rows=t.trim().split('\n');const h=rows.shift().split(',');const di=h.indexOf('date'),ci=h.indexOf('close'),hi=h.indexOf('high'),li=h.indexOf('low');
   for(const line of rows){const c=line.split(',');const ms=parseIso(c[di]);const v=+c[ci];if(!isNaN(ms)&&v>0){prices.set(ms,v);const H=hi>=0?+c[hi]:v,L=li>=0?+c[li]:v;hiLo.set(ms,[H>0?H:v,L>0?L:v])}}
   lastMs=[...prices.keys()].pop();dataState='ok';
+  // standaarddatum = laatste slotkoers (de slotkoers van vandaag bestaat nog niet)
+  if(sel===TODAY&&lastMs<TODAY){sel=lastMs;syncSelects(sel)}
 }).catch(()=>{dataState='fail'}).finally(()=>{
   if(window.Chart)buildChart(); else libOk=false;
   freshText();
