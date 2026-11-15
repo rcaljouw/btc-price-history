@@ -175,6 +175,11 @@ tr.empty td{color:var(--muted)}
 .lang button[aria-pressed="true"]{background:var(--ink);color:var(--surface)}
 .lang button:focus-visible{outline:2px solid var(--btc);outline-offset:2px}
 .eq-l{text-transform:none;letter-spacing:0;font-size:12px}
+.rb-box{display:grid;gap:14px;padding-top:6px;border-top:1px solid var(--line)}
+.rb-title{font:600 18px var(--f-body);margin:6px 0 0}
+.rb-head{font-size:16px;line-height:1.45;margin:0}
+.rb-st{display:inline-block;padding:1px 8px;border-radius:999px;font-weight:600;font-size:12px;color:#1b1b1b}
+#rb-reset{justify-self:start;margin-top:4px}
 .facgrid{display:grid;grid-template-columns:1fr 78px;gap:6px 10px;align-items:center;margin-top:12px}
 .facgrid label{font-size:13px;color:var(--ink);display:flex;align-items:center;gap:0;line-height:1.2}
 .facgrid label small{color:var(--muted);margin-left:6px;font-size:11px}
@@ -419,6 +424,16 @@ tr.cur td{background:color-mix(in srgb,var(--btc) 12%,transparent);font-weight:5
           <dl class="tiles" id="eq-diag" style="grid-template-columns:1fr 1fr"></dl>
           <p class="note" data-i="eqDiagNote">R² en centering zijn walk-forward gemeten: elke dag vergeleken met een mediaan die alleen eerdere data kende. Centering rond 50% betekent een goed gekalibreerde mediaan.</p>
         </div>
+        <div class="fgroup">
+          <h2 data-i="rbSettings">Ribbon</h2>
+          <div class="fld" id="rb-nf-w"><label for="rb-nf" data-i="rbNf">Snelle lijn (dagen)</label><div class="in"><input id="rb-nf" inputmode="numeric" autocomplete="off" value="7"></div><p class="msg" hidden>2–60</p></div>
+          <div class="fld" id="rb-ns-w"><label for="rb-ns" data-i="rbNs">Trage lijn (dagen)</label><div class="in"><input id="rb-ns" inputmode="numeric" autocomplete="off" value="120"></div><p class="msg" hidden data-i="rbMsgNs">Langer dan de snelle lijn, max. 365.</p></div>
+          <div class="fld" id="rb-mu-w"><label for="rb-mu" data-i="rbMu">Long bevestigd vanaf (punten)</label><div class="in"><input id="rb-mu" inputmode="decimal" autocomplete="off" value="2,5"><span class="u">pt</span></div><p class="msg" hidden>0–20</p></div>
+          <div class="fld" id="rb-md-w"><label for="rb-md" data-i="rbMd">Cash bevestigd vanaf (punten)</label><div class="in"><input id="rb-md" inputmode="decimal" autocomplete="off" value="2"><span class="u">pt</span></div><p class="msg" hidden>0–20</p></div>
+          <div class="fld" id="rb-share-w"><label for="rb-share" data-i="rbShare">Deel van je stack via ribbon</label><div class="in"><input id="rb-share" inputmode="decimal" autocomplete="off" value="25"><span class="u">%</span></div><p class="msg" hidden>0–100%</p></div>
+          <button type="button" class="chip" id="rb-reset" data-i="rbReset">Standaard (7 / 120 / 2,5 / 2)</button>
+          <p class="note" data-i="rbSetNote">Snelle en trage lijn zijn exponentiële gemiddelden van het EQM-risk (op de slotkoers). Het verschil tussen beide, in risk-punten, bepaalt de toestand. De standaardwaarden zijn afgestemd op de signalen van @btcanalytica en dus op de geschiedenis.</p>
+        </div>
       </form>
       <div class="out">
         <p class="headline" id="eq-head" data-i="eqRunning">Kwantielmodel wordt berekend…</p>
@@ -444,7 +459,25 @@ tr.cur td{background:color-mix(in srgb,var(--btc) 12%,transparent);font-weight:5
           <div class="tbl-head"><h3 data-i="eqBandsToday">Bands vandaag</h3><span class="note" id="eq-bnote"></span></div>
           <div class="tbl-scroll"><table><thead><tr><th>Band</th><th data-i="eqPct">Kwantiel</th><th data-i="eqFrom">Van</th><th data-i="eqTo">Tot</th><th data-i="eqDca">DCA-factor</th></tr></thead><tbody id="eq-tbody"></tbody></table></div>
         </div>
-        <section class="chart-box"><h3 data-i="eqRiskHist">Risk door de tijd</h3><div class="canvas sm"><canvas id="ch-eqr" role="img" data-ia="eqRiskAria" aria-label="Lijngrafiek van het asymmetrische risk-percentiel van 0 tot 100 procent door de tijd."></canvas></div></section>
+        <section class="chart-box"><h3 data-i="eqRiskHist">Risk en ribbon door de tijd</h3><div class="legend" id="rb-legend"></div><div class="canvas sm"><canvas id="ch-eqr" role="img" data-ia="eqRiskAria" aria-label="Lijngrafiek van het asymmetrische risk-percentiel van 0 tot 100 procent door de tijd."></canvas></div></section>
+        <section class="rb-box" aria-labelledby="rb-title">
+          <h3 class="rb-title" id="rb-title">EQM Ribbon</h3>
+          <p class="rb-head" id="rb-head"></p>
+          <dl class="tiles t3" id="rb-tiles"></dl>
+          <div class="tbl-wrap">
+            <div class="tbl-head"><h3 data-i="rbFlipT">Flip-tabel: koers blijft gelijk</h3><span class="note" id="rb-fnote"></span></div>
+            <div class="tbl-scroll"><table><thead><tr><th data-i="rbPrice">Koers</th><th>Risk</th><th data-i="rbD7">Na 7 d</th><th data-i="rbD14">Na 14 d</th><th data-i="rbD28">Na 28 d</th><th data-i="rbFirst">Eerste wissel</th></tr></thead><tbody id="rb-flip"></tbody></table></div>
+          </div>
+          <div class="tbl-wrap">
+            <div class="tbl-head"><h3 data-i="rbProbT">Kans op toestand (Monte Carlo per dag)</h3><span class="note" id="rb-pnote"></span></div>
+            <div class="tbl-scroll"><table><thead><tr><th data-i="rbHor">Horizon</th><th data-i="rbMrL">Terugkeer: long</th><th data-i="rbMrC">Terugkeer: cash</th><th data-i="rbDrL">Doordrijven: long</th><th data-i="rbDrC">Doordrijven: cash</th></tr></thead><tbody id="rb-prob"></tbody></table></div>
+          </div>
+          <div class="tbl-wrap">
+            <div class="tbl-head"><h3 data-i="rbBtT">Backtest ribbon</h3><span class="note" id="rb-btnote"></span></div>
+            <div class="tbl-scroll"><table><thead><tr><th data-i="rbPer">Periode</th><th>Ribbon</th><th id="rb-mixh">Mix</th><th data-i="rbHold">Vasthouden</th><th data-i="rbDD">Max. daling R / M / V</th><th data-i="rbTime">Tijd long</th><th>Trades</th></tr></thead><tbody id="rb-bt"></tbody></table></div>
+          </div>
+          <p class="note" data-i="rbNote">Long: snelle lijn duidelijk boven de trage. Transitie: gekruist maar nog niet bevestigd; een lopende positie houd je vast. Cash: bevestigde uitstap. Het signaal volgt de trend en reageert dus altijd achteraf. Bedoeld voor het deel van je bezit dat je actief beheert of voor hefboom, niet voor je vaste DCA-inleg. Geen financieel advies.</p>
+        </section>
         <div class="tbl-wrap">
           <div class="tbl-head"><h3 data-i="eqBt">DCA-backtest</h3><span class="note" id="eq-btnote"></span></div>
           <div class="tbl-scroll"><table><thead><tr><th data-i="eqStrat">Strategie</th><th data-i="eqInv">Ingelegd</th><th>BTC</th><th data-i="eqAvg">Gem. prijs</th><th data-i="eqVal">Waarde nu</th><th data-i="eqMult">× inleg</th></tr></thead><tbody id="eq-bt"></tbody></table></div>
@@ -501,7 +534,7 @@ tr.cur td{background:color-mix(in srgb,var(--btc) 12%,transparent);font-weight:5
               <button type="button" data-dcafr="0.5" aria-pressed="false">50%</button>
               <button type="button" data-dcafr="1" aria-pressed="false">100%</button>
             </div></div>
-          <p class="note" data-i="dcaPotNote">Elke periode gaat precies het vaste bedrag in de pot, net als bij gewone DCA. Je koopt bedrag × factor zolang de pot het toelaat; de rest spaart op. Staat het risk onder de drempel, dan zet je per aankoop ook een deel van de pot in. Ongebruikt geld telt mee als kas, zonder rente.</p>
+          <p class="note" data-i="dcaPotNote">Zo werkt het: (1) elke aankoopdag gaat het vaste bedrag in de pot, ook als je niets koopt. (2) Je koopt bedrag × DCA-factor, maar nooit meer dan er in de pot zit. (3) Staat het risk onder de drempel, dan koop je daarnaast een deel van wat er over is. Voorbeeld met $100 per week: in een dure week (0×) blijft de $100 staan; na twee dure weken zit er $300 in. In een goedkope week (2×, risk onder 20%) koop je $200 plus 25% van de rest. Totaal leg je nooit meer in dan bij gewone DCA; je verschuift geld van dure naar goedkope weken. Wat aan het eind over is, telt mee als kas (zonder rente).</p>
         </div>
       </form>
       <div class="out">
@@ -547,7 +580,7 @@ nl:{
   tabDca:'DCA',dcaFacTitle:'DCA-factoren per band',dcaPresetAria:'Voorinstelling',dcaP60:'Stop vanaf 60%',dcaP80:'Stop vanaf 80%',
   dcaFacNote:'Geldt voor EQM-DCA hier, in de Kwantielen-tab en in het PDF-rapport. Onder 1% geldt de factor van Fire sale; boven 99% altijd 0×.',
   dcaPotTitle:'Spaarpot',dcaOff:'Uit',dcaOn:'Aan',dcaThr:'Pot inzetten als risk onder',dcaFrac:'Per aankoop inzetten',dcaFr25:'25% van de pot',
-  dcaPotNote:'Elke periode gaat precies het vaste bedrag in de pot, net als bij gewone DCA. Je koopt bedrag × factor zolang de pot het toelaat; de rest spaart op. Staat het risk onder de drempel, dan zet je per aankoop ook een deel van de pot in. Ongebruikt geld telt mee als kas, zonder rente.',
+  dcaPotNote:'Zo werkt het: (1) elke aankoopdag gaat het vaste bedrag in de pot, ook als je niets koopt. (2) Je koopt bedrag × DCA-factor, maar nooit meer dan er in de pot zit. (3) Staat het risk onder de drempel, dan koop je daarnaast een deel van wat er over is. Voorbeeld met $100 per week: in een dure week (0×) blijft de $100 staan; na twee dure weken zit er $300 in. In een goedkope week (2×, risk onder 20%) koop je $200 plus 25% van de rest. Totaal leg je nooit meer in dan bij gewone DCA; je verschuift geld van dure naar goedkope weken. Wat aan het eind over is, telt mee als kas (zonder rente).',
   dcaPot:'EQM + spaarpot',dcaCash:'waarvan kas {0}',
   dcaPlan:'Aankoopplan',dcaStart:'Startdatum',dcaEnd:'Einddatum',dcaAmt:'Bedrag per aankoop',dcaFreq:'Hoe vaak',dcaFd:'Dag',dcaFw:'Week',dcaF2w:'2 weken',dcaFm:'Maand',dcaFee:'Kosten per aankoop',
   dcaChipLast:'Laatste koers',dcaChip2034:'Eind 2034',dcaMsgStart:'Kies een datum vanaf 18 aug 2011.',dcaMsgEnd:'Na de startdatum en uiterlijk 31 dec 2034.',dcaMsgAmt:'Vul een bedrag groter dan 0 in.',
@@ -558,12 +591,22 @@ nl:{
   dcaHead1:'Met {0} {1} van {2} t/m {3} ({4} aankopen) leg je {5} in en koop je {6}.',dcaHeadH:'Op {0} is dat {1} waard ({2}× je inleg).',dcaHeadF:'Op {0} is dat in de mediaan {1} waard (90% van de paden: {2} – {3}), {4}× je inleg.',
   dcaBuysS:'{0} historisch · {1} gesimuleerd',dcaFeeS:'incl. {0}% kosten',dcaAvgS:'gem. prijs {0}',dcaMedS:'mediaan Monte Carlo',dcaCnoteF:'mediaan, met daaronder 90% van de paden · * EQM-inleg verschilt per pad',dcaYnote:'* na {0}: mediaan van de Monte Carlo-paden',
   dcaNote:'Gewone DCA: elk interval hetzelfde bedrag. EQM-DCA: hetzelfde schema, bedrag × DCA-factor van de kwantielband op die dag (instelbaar per band; vóór 17 aug 2013 factor 1×). EQM + spaarpot: zelfde factoren, maar met precies hetzelfde budget als gewone DCA. Eenmalig: het totaal van de gewone DCA in één keer op de startdatum. Toekomstige koersen zijn Monte Carlo-scenario\'s rond je conservatieve Power Law; bedragen daar zijn medianen. Geen financieel advies.',
+  rbSettings:'Ribbon',rbNf:'Snelle lijn (dagen)',rbNs:'Trage lijn (dagen)',rbMsgNs:'Langer dan de snelle lijn, max. 365.',rbMu:'Long bevestigd vanaf (punten)',rbMd:'Cash bevestigd vanaf (punten)',rbShare:'Deel van je stack via ribbon',rbReset:'Standaard (7 / 120 / 2,5 / 2)',
+  rbSetNote:'Snelle en trage lijn zijn exponentiële gemiddelden van het EQM-risk (op de slotkoers). Het verschil tussen beide, in risk-punten, bepaalt de toestand. De standaardwaarden zijn afgestemd op de signalen van @btcanalytica en dus op de geschiedenis.',
+  rbLong:'Long',rbTr:'Transitie',rbCash:'Cash',rbFast:'Snelle lijn',rbSlow:'Trage lijn',rbRisk:'Risk (asymmetrisch)',
+  rbHead:'De ribbon staat op {0} sinds {1} ({2} dagen). Verschil snelle − trage lijn: {3} punten; long vanaf +{4}, cash vanaf −{5}.',
+  rbTState:'Toestand',rbTSince:'sinds {0}',rbTSpread:'Verschil snel − traag',rbTSpreadS:'snel {0} · traag {1}',rbTNeed:'Koers voor long',rbTNeedS:'vasthouden: long binnen {0} dagen',rbTNeedNone:'boven {0}',
+  rbFlipT:'Flip-tabel: koers blijft gelijk',rbPrice:'Koers',rbD7:'Na 7 d',rbD14:'Na 14 d',rbD28:'Na 28 d',rbFirst:'Eerste wissel',rbFnote:'bands van {0} bevroren, trend loopt door',rbDay:'{0} op dag {1}',rbNone:'geen (60 d)',
+  rbProbT:'Kans op toestand (Monte Carlo per dag)',rbHor:'Horizon',rbMrL:'Terugkeer: long',rbMrC:'Terugkeer: cash',rbDrL:'Doordrijven: long',rbDrC:'Doordrijven: cash',rbDays:'{0} dagen',
+  rbPnote:'{0} paden per lezing · dagvolatiliteit {1} (90 d) · terugkeer met halveringstijd {2} mnd naar {3}× model (Monte Carlo-tab)',
+  rbBtT:'Backtest ribbon',rbPer:'Periode',rbHold:'Vasthouden',rbDD:'Max. daling R / M / V',rbTime:'Tijd long',rbTotal:'Totaal',rbNow:'nu',rbBtNote:'dagelijks op de slotkoers, cash zonder rente · Mix = {0}% ribbon, rest vasthouden',
+  rbNote:'Long: snelle lijn duidelijk boven de trage. Transitie: gekruist maar nog niet bevestigd; een lopende positie houd je vast. Cash: bevestigde uitstap. Het signaal volgt de trend en reageert dus altijd achteraf. Bedoeld voor het deel van je bezit dat je actief beheert of voor hefboom, niet voor je vaste DCA-inleg. Geen financieel advies.',
   tabEqm:'Kwantielen',eqSettings:'Instellingen',eqTrend:'Trendlijn',eqTrFit:'Eigen fit',eqTrPl:'Conservatieve PL',eqWeight:'Weging historie',eqWEq:'Gelijk',eqW4:'Recent (4 jr)',
   eqSetNote:'Eigen fit: elke week een nieuwe power law-fit op alleen de data tot dat moment. Conservatieve PL: je vaste lijn 4,42 × 10⁻¹⁷ × dagen^5,6. Recent: oudere afwijkingen tellen minder mee (halvering na 4 jaar), zodat de bubbels van 2011–2013 de bands minder oprekken.',
   eqDiag:'Betrouwbaarheid',eqDiagNote:'R² en centering zijn walk-forward gemeten: elke dag vergeleken met een mediaan die alleen eerdere data kende. Centering rond 50% betekent een goed gekalibreerde mediaan.',
   eqRunning:'Kwantielmodel wordt berekend…',eqFail:'Geen koersdata beschikbaar.',eqChartAria:'Kwantielgrafiek',eqAll:'Alles',eq5y:'5 jaar',eq2y:'2 jaar',
   eqCanvas:'Logaritmische grafiek van de bitcoin-koers met walk-forward kwantielbanden in regenboogkleuren.',
-  eqBandsToday:'Bands vandaag',eqPct:'Kwantiel',eqFrom:'Van',eqTo:'Tot',eqDca:'DCA-factor',eqRiskHist:'Risk door de tijd',eqRiskAria:'Lijngrafiek van het asymmetrische risk-percentiel van 0 tot 100 procent door de tijd.',
+  eqBandsToday:'Bands vandaag',eqPct:'Kwantiel',eqFrom:'Van',eqTo:'Tot',eqDca:'DCA-factor',eqRiskHist:'Risk en ribbon door de tijd',eqRiskAria:'Lijngrafiek van het asymmetrische risk-percentiel van 0 tot 100 procent door de tijd.',
   eqBt:'DCA-backtest',eqStrat:'Strategie',eqInv:'Ingelegd',eqAvg:'Gem. prijs',eqVal:'Waarde nu',eqMult:'× inleg',
   eqNote:'Gebaseerd op het Empirical Quantile Model van @btcanalytica, eigen implementatie. Trend: power law in log-log. Bands: empirische kwantielen van de afwijkingen van die trend, walk-forward (geen look-ahead). Risk = percentiel van de afwijking van vandaag; asymmetrisch: boven de mediaan telt de daghoogste koers, eronder de daglaagste. Zegt hoe goedkoop of duur de koers historisch is, niet wanneer de bodem komt. Geen financieel advies.',
   eqHead:'Op {0} staat bitcoin op {1}: band {2}, goedkoper dan {3} van de historie.',
@@ -624,15 +667,22 @@ nl:{
         'Weging "Recent (4 jr)": oudere afwijkingen krijgen een exponentieel afnemend gewicht met een halveringstijd van 4 jaar, zoals in de hybride historische simulatie van Boudoukh, Richardson & Whitelaw (1998). Zo rekken de extreme bubbels van 2011-2013 de bovenste banden minder op.',
         'Betrouwbaarheid: walk-forward R² meet hoe goed de mediaan de koers volgt op data die het model nog niet kende; centering is het aandeel dagen boven de mediaan (rond 50% is goed gekalibreerd). De DCA-factoren per band zijn een eigen keuze, geen onderdeel van het model. In dit rapport: {facs}.',
         'In dit rapport: trendlijn {eqtr}, weging {eqw}, walk-forward R² {r2}, centering {cent}.']},
-      {h:'6. Beperkingen',ps:[
+      {h:'6. EQM Ribbon (long / transitie / cash)',ps:[
+        'De ribbon is een trendvolgend signaal op het EQM-risk, nagebouwd naar de beschrijving van @btcanalytica. Een snelle en een trage exponentieel voortschrijdend gemiddelde van het dagelijkse risk (op de slotkoers) vormen samen het lint. Het verschil tussen beide, in risk-punten, bepaalt de toestand:'],
+       mono:['d(t) = snel(t) - traag(t)','long:      d >= +{rbmu} punten (of d > 0 vanuit een lopende long)','transitie: gekruist maar nog niet bevestigd','cash:      d <= -{rbmd} punten (of d < 0 vanuit cash)'],
+       ps2:['In transitie houd je een lopende positie vast; pas bij bevestiging wissel je. Die drempel voorkomt dat het signaal bij elke schommeling heen en weer springt. Instellingen in dit rapport: snelle lijn {rbnf} dagen, trage lijn {rbns} dagen. De standaardwaarden (7 / 120 / 2,5 / 2) zijn met een rasterzoektocht afgestemd op de signaaldata van @btcanalytica.',
+        'Flip-tabel: wat de toestand wordt als de koers N dagen op een vast niveau blijft, met de bands van vandaag bevroren en de trend doorgetrokken. Kansen per dag: per lezing {rbN} paden met dagelijkse schokken op de gerealiseerde volatiliteit van 90 dagen; "terugkeer" laat de koers terugtrekken naar de modellijn (instellingen van de Monte Carlo-tab), "doordrijven" heeft geen trek.',
+        'De ribbon gaat over het aanhouden of afbouwen van bezit, niet over de DCA-inleg. Trendvolgen is in veel markten onderzocht (Moskowitz, Ooi & Pedersen, 2012; Faber, 2007); het beperkt vooral grote dalingen, ten koste van gemiste stijgingen.']},
+      {h:'7. Beperkingen',ps:[
         '- Het model gaat ervan uit dat de Power Law blijft gelden. Het risico dat die relatie breekt, zit er niet in.',
         '- De schokken zijn normaal verdeeld. Bitcoin heeft dikkere staarten: extreme bubbels en crashes komen in werkelijkheid vaker voor dan in deze simulatie.',
         '- Halveringstijd en schok zijn constant verondersteld; in werkelijkheid verschillen ze per periode.',
         '- Kwantielen beschrijven het verleden. Een "fire sale" kan nog goedkoper worden: in 2022 zakte de koers onder alle banden van dat moment.',
         '- De bovenste banden worden sterk bepaald door de vroege bubbels; boven 90% zeggen ze weinig.',
         '- Historische kwantielen reageren traag op veranderend risico (Pritsker, 2001).',
+        '- De ribbon reageert altijd achteraf en is met weinig wissels (circa 19 sinds 2014) op de geschiedenis afgestemd; in 2018-2021 deed vasthouden het beter.',
         '- De uitkomsten zijn scenario\'s binnen het model, geen voorspelling of financieel advies.']}],
-    srcTitle:'7. Bronnen'},
+    srcTitle:'8. Bronnen'},
   loading:'Koersdata laden…',source:'Bron:',sourceTail:'(dagelijkse close, UTC). Model en extrapolatie zijn een scenario, geen voorspelling of financieel advies.',
   months:['januari','februari','maart','april','mei','juni','juli','augustus','september','oktober','november','december'],
   mshort:['jan','feb','mrt','apr','mei','jun','jul','aug','sep','okt','nov','dec'],
@@ -651,7 +701,7 @@ nl:{
   eInputs:'Vul eerst geldige gegevens in.',csvDone:'CSV gemaakt.',pdfBusy:'PDF wordt gemaakt…',pdfLib:'De PDF-bibliotheek kon niet laden. Controleer je internetverbinding.',pdfDone:'PDF-rapport gemaakt.',pdfFail:'Het rapport kon niet worden gemaakt.',
   mtDecl:(o)=>'Aflopend %: '+o.p0+'% naar '+o.p1+'% in '+o.n+' jaar',mtPct:(o)=>'Vast %: '+o.pf+'% van de stack per jaar',
   mtUsd:(o)=>'Vast bedrag: '+o.usd+' per jaar'+(o.real?', meegroeiend met inflatie (in $ van nu)':', vast nominaal bedrag'),
-  pdfTitle:'Bitcoin: marktbeeld, FIRE-plan en Monte Carlo',pFireTitle:'FIRE-plan',
+  pdfTitle:'Bitcoin: marktbeeld, FIRE-plan en Monte Carlo',pFireTitle:'FIRE-plan',pRbChart:'Risk met snelle en trage lijn, laatste 3 jaar',pRbChartLeg:'Zwart = EQM-risk op de slotkoers, oranje = snelle lijn, grijs = trage lijn. Strook onderin: oranje = long, licht = transitie, grijs = cash.',
   pMkTitle:'Marktbeeld vandaag',pMkSub:'Slotkoers {0}: {1}',pMkModel:'Model: conservatieve Power Law',pMkQuant:'Kwantielen (Empirical Quantile Model)',
   pMkPl:'Modelwaarde (conservatieve versie)',pMkRatio:'Koers / model',pMkBand:'Band 0,5× – 2×',pMkPos:'Positie',posBelow:'onder de band (< 0,5×)',posIn:'binnen de band',posAbove:'boven de band (> 2×)',
   pMkRisk:'Risk asymmetrisch (op close)',pMkBandQ:'Band en DCA-factor',pMkMid:'Mediaan (fair)',pMkCheap:'Goedkoper dan',pMkCheapV:'{0} van de historie',pMkSet:'Instellingen',pMkSetV:'trendlijn: {0}; weging: {1}',pMkRel:'Betrouwbaarheid',pMkRelV:'walk-forward R² {0}; centering {1}',
@@ -685,7 +735,7 @@ en:{
   tabDca:'DCA',dcaFacTitle:'DCA factors per band',dcaPresetAria:'Preset',dcaP60:'Stop from 60%',dcaP80:'Stop from 80%',
   dcaFacNote:'Applies to EQM DCA here, in the Quantiles tab and in the PDF report. Below 1% the Fire sale factor applies; above 99% always 0×.',
   dcaPotTitle:'Savings pot',dcaOff:'Off',dcaOn:'On',dcaThr:'Deploy pot when risk below',dcaFrac:'Deploy per purchase',dcaFr25:'25% of the pot',
-  dcaPotNote:'Each period exactly the fixed amount goes into the pot, as with plain DCA. You buy amount × factor as far as the pot allows; the rest is saved. When risk is below the threshold you also deploy part of the pot with each purchase. Unused money counts as cash, without interest.',
+  dcaPotNote:'How it works: (1) each purchase day the fixed amount goes into the pot, even if you buy nothing. (2) You buy amount × DCA factor, but never more than the pot holds. (3) When risk is below the threshold, you also buy part of what is left. Example with $100 a week: in an expensive week (0×) the $100 stays; after two expensive weeks the pot holds $300. In a cheap week (2×, risk below 20%) you buy $200 plus 25% of the rest. In total you never invest more than with plain DCA; you move money from expensive to cheap weeks. What is left at the end counts as cash (no interest).',
   dcaPot:'EQM + savings pot',dcaCash:'of which cash {0}',
   dcaPlan:'Purchase plan',dcaStart:'Start date',dcaEnd:'End date',dcaAmt:'Amount per purchase',dcaFreq:'How often',dcaFd:'Day',dcaFw:'Week',dcaF2w:'2 weeks',dcaFm:'Month',dcaFee:'Cost per purchase',
   dcaChipLast:'Latest price',dcaChip2034:'End 2034',dcaMsgStart:'Pick a date from 18 Aug 2011.',dcaMsgEnd:'After the start date and no later than 31 Dec 2034.',dcaMsgAmt:'Enter an amount above 0.',
@@ -696,12 +746,22 @@ en:{
   dcaHead1:'With {0} {1} from {2} to {3} ({4} purchases) you invest {5} and buy {6}.',dcaHeadH:'On {0} that is worth {1} ({2}× your investment).',dcaHeadF:'On {0} that is worth {1} in the median (90% of paths: {2} – {3}), {4}× your investment.',
   dcaBuysS:'{0} historical · {1} simulated',dcaFeeS:'incl. {0}% costs',dcaAvgS:'avg price {0}',dcaMedS:'Monte Carlo median',dcaCnoteF:'median, with 90% of paths below · * EQM amount differs per path',dcaYnote:'* after {0}: median of the Monte Carlo paths',
   dcaNote:'Plain DCA: the same amount every interval. EQM DCA: the same schedule, amount × the DCA factor of the quantile band on that day (adjustable per band; factor 1× before 17 Aug 2013). EQM + savings pot: same factors, but with exactly the same budget as plain DCA. Lump sum: the plain DCA total at once on the start date. Future prices are Monte Carlo scenarios around your conservative Power Law; amounts there are medians. Not financial advice.',
+  rbSettings:'Ribbon',rbNf:'Fast line (days)',rbNs:'Slow line (days)',rbMsgNs:'Longer than the fast line, max. 365.',rbMu:'Long confirmed from (points)',rbMd:'Cash confirmed from (points)',rbShare:'Share of your stack via ribbon',rbReset:'Default (7 / 120 / 2.5 / 2)',
+  rbSetNote:'The fast and slow lines are exponential averages of the EQM risk (on the close). The gap between them, in risk points, sets the state. The defaults are tuned to the signals of @btcanalytica and thus to history.',
+  rbLong:'Long',rbTr:'Transition',rbCash:'Cash',rbFast:'Fast line',rbSlow:'Slow line',rbRisk:'Risk (asymmetric)',
+  rbHead:'The ribbon has been {0} since {1} ({2} days). Gap fast − slow line: {3} points; long from +{4}, cash from −{5}.',
+  rbTState:'State',rbTSince:'since {0}',rbTSpread:'Gap fast − slow',rbTSpreadS:'fast {0} · slow {1}',rbTNeed:'Price for long',rbTNeedS:'hold: long within {0} days',rbTNeedNone:'above {0}',
+  rbFlipT:'Flip table: price stays flat',rbPrice:'Price',rbD7:'After 7 d',rbD14:'After 14 d',rbD28:'After 28 d',rbFirst:'First flip',rbFnote:'bands of {0} frozen, trend moves on',rbDay:'{0} on day {1}',rbNone:'none (60 d)',
+  rbProbT:'Chance of state (daily Monte Carlo)',rbHor:'Horizon',rbMrL:'Reversion: long',rbMrC:'Reversion: cash',rbDrL:'Drift: long',rbDrC:'Drift: cash',rbDays:'{0} days',
+  rbPnote:'{0} paths per reading · daily volatility {1} (90 d) · reversion with half-life {2} mo to {3}× model (Monte Carlo tab)',
+  rbBtT:'Ribbon backtest',rbPer:'Period',rbHold:'Hold',rbDD:'Max. drawdown R / M / H',rbTime:'Time long',rbTotal:'Total',rbNow:'now',rbBtNote:'daily at the close, cash without interest · Mix = {0}% ribbon, rest held',
+  rbNote:'Long: fast line clearly above the slow one. Transition: crossed but not yet confirmed; an open position is held. Cash: confirmed exit. The signal follows the trend and therefore always reacts after the fact. Meant for the part of your holdings you manage actively or for leverage, not for your regular DCA. Not financial advice.',
   tabEqm:'Quantiles',eqSettings:'Settings',eqTrend:'Trend line',eqTrFit:'Own fit',eqTrPl:'Conservative PL',eqWeight:'History weighting',eqWEq:'Equal',eqW4:'Recent (4 yr)',
   eqSetNote:'Own fit: a fresh power law fit every week, using only data up to that point. Conservative PL: your fixed line 4.42 × 10⁻¹⁷ × days^5.6. Recent: older deviations count less (half-life 4 years), so the 2011–2013 bubbles stretch the bands less.',
   eqDiag:'Reliability',eqDiagNote:'R² and centering are measured walk-forward: each day against a median that only knew earlier data. Centering near 50% means a well-calibrated median.',
   eqRunning:'Computing quantile model…',eqFail:'No price data available.',eqChartAria:'Quantile chart',eqAll:'All',eq5y:'5 years',eq2y:'2 years',
   eqCanvas:'Log chart of the bitcoin price with walk-forward quantile bands in rainbow colours.',
-  eqBandsToday:'Bands today',eqPct:'Quantile',eqFrom:'From',eqTo:'To',eqDca:'DCA factor',eqRiskHist:'Risk over time',eqRiskAria:'Line chart of the asymmetric risk percentile from 0 to 100 percent over time.',
+  eqBandsToday:'Bands today',eqPct:'Quantile',eqFrom:'From',eqTo:'To',eqDca:'DCA factor',eqRiskHist:'Risk and ribbon over time',eqRiskAria:'Line chart of the asymmetric risk percentile from 0 to 100 percent over time.',
   eqBt:'DCA backtest',eqStrat:'Strategy',eqInv:'Invested',eqAvg:'Avg price',eqVal:'Value now',eqMult:'× invested',
   eqNote:'Based on the Empirical Quantile Model by @btcanalytica, own implementation. Trend: power law in log-log. Bands: empirical quantiles of the deviations from that trend, walk-forward (no look-ahead). Risk = percentile of today\'s deviation; asymmetric: above the median the daily high counts, below it the daily low. Shows how cheap or expensive the price is historically, not when the bottom comes. Not financial advice.',
   eqHead:'On {0} bitcoin is at {1}: band {2}, cheaper than {3} of history.',
@@ -762,15 +822,22 @@ en:{
         'Weighting "Recent (4 yr)": older deviations get an exponentially declining weight with a half-life of 4 years, as in the hybrid historical simulation of Boudoukh, Richardson & Whitelaw (1998). This way the extreme 2011-2013 bubbles stretch the upper bands less.',
         'Reliability: walk-forward R² measures how well the median follows the price on data the model had not yet seen; centering is the share of days above the median (around 50% is well calibrated). The DCA factors per band are an own choice, not part of the model. In this report: {facs}.',
         'In this report: trend line {eqtr}, weighting {eqw}, walk-forward R² {r2}, centering {cent}.']},
-      {h:'6. Limitations',ps:[
+      {h:'6. EQM Ribbon (long / transition / cash)',ps:[
+        'The ribbon is a trend-following signal on the EQM risk, rebuilt from the description by @btcanalytica. A fast and a slow exponential moving average of the daily risk (on the close) form the ribbon. The gap between them, in risk points, sets the state:'],
+       mono:['d(t) = fast(t) - slow(t)','long:       d >= +{rbmu} points (or d > 0 from an open long)','transition: crossed but not yet confirmed','cash:       d <= -{rbmd} points (or d < 0 from cash)'],
+       ps2:['In transition an open position is held; you switch only on confirmation. That threshold stops the signal from flipping on every wobble. Settings in this report: fast line {rbnf} days, slow line {rbns} days. The defaults (7 / 120 / 2.5 / 2) were tuned with a grid search to the signal dates of @btcanalytica.',
+        'Flip table: the state if the price stays at a fixed level for N days, with today\'s bands frozen and the trend moving on. Daily chances: {rbN} paths per reading with daily shocks at the 90-day realised volatility; "reversion" pulls the price back towards the model line (Monte Carlo tab settings), "drift" has no pull.',
+        'The ribbon is about holding or reducing holdings, not about DCA amounts. Trend following has been studied in many markets (Moskowitz, Ooi & Pedersen, 2012; Faber, 2007); it mainly limits large drawdowns, at the cost of missed rallies.']},
+      {h:'7. Limitations',ps:[
         '- The model assumes the Power Law keeps holding. The risk that the relationship breaks is not included.',
         '- The shocks are normally distributed. Bitcoin has fatter tails: extreme bubbles and crashes happen more often in reality than in this simulation.',
         '- Half-life and shock are assumed constant; in reality they differ between periods.',
         '- Quantiles describe the past. A "fire sale" can get cheaper still: in 2022 the price fell below all bands of that moment.',
         '- The upper bands are largely driven by the early bubbles; above 90% they say little.',
         '- Historical quantiles respond slowly to changing risk (Pritsker, 2001).',
+        '- The ribbon always reacts after the fact and was tuned to history with few switches (about 19 since 2014); in 2018-2021 holding did better.',
         '- The results are scenarios within the model, not a forecast or financial advice.']}],
-    srcTitle:'7. Sources'},
+    srcTitle:'8. Sources'},
   loading:'Loading price data…',source:'Source:',sourceTail:'(daily close, UTC). Model and extrapolation are a scenario, not a forecast or financial advice.',
   months:['January','February','March','April','May','June','July','August','September','October','November','December'],
   mshort:['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],
@@ -789,7 +856,7 @@ en:{
   eInputs:'Enter valid inputs first.',csvDone:'CSV created.',pdfBusy:'Creating PDF…',pdfLib:'The PDF library could not load. Check your internet connection.',pdfDone:'PDF report created.',pdfFail:'The report could not be created.',
   mtDecl:(o)=>'Declining %: '+o.p0+'% to '+o.p1+'% over '+o.n+' years',mtPct:(o)=>'Fixed %: '+o.pf+'% of the stack per year',
   mtUsd:(o)=>'Fixed amount: '+o.usd+' per year'+(o.real?', growing with inflation (in today’s $)':', fixed nominal amount'),
-  pdfTitle:'Bitcoin: market view, FIRE plan and Monte Carlo',pFireTitle:'FIRE plan',
+  pdfTitle:'Bitcoin: market view, FIRE plan and Monte Carlo',pFireTitle:'FIRE plan',pRbChart:'Risk with fast and slow line, last 3 years',pRbChartLeg:'Black = EQM risk on the close, orange = fast line, grey = slow line. Strip at the bottom: orange = long, light = transition, grey = cash.',
   pMkTitle:'Market view today',pMkSub:'Close {0}: {1}',pMkModel:'Model: conservative Power Law',pMkQuant:'Quantiles (Empirical Quantile Model)',
   pMkPl:'Model value (conservative version)',pMkRatio:'Price / model',pMkBand:'Band 0.5× – 2×',pMkPos:'Position',posBelow:'below the band (< 0.5×)',posIn:'within the band',posAbove:'above the band (> 2×)',
   pMkRisk:'Risk asymmetric (on close)',pMkBandQ:'Band and DCA factor',pMkMid:'Median (fair)',pMkCheap:'Cheaper than',pMkCheapV:'{0} of history',pMkSet:'Settings',pMkSetV:'trend line: {0}; weighting: {1}',pMkRel:'Reliability',pMkRelV:'walk-forward R² {0}; centering {1}',
@@ -1227,12 +1294,14 @@ const SOURCES=[
   ['Hyndman, R.J. & Fan, Y. (1996). Sample quantiles in statistical packages. The American Statistician 50(4), 361-365.','https://doi.org/10.2307/2684934'],
   ['Boudoukh, J., Richardson, M. & Whitelaw, R. (1998). The best of both worlds: a hybrid approach to calculating value at risk. Risk 11(5), 64-67.','https://faculty.runi.ac.il/kobi/thebestrisk.pdf'],
   ['Pritsker, M. (2001). The hidden dangers of historical simulation. Federal Reserve Board, FEDS 2001-27.','https://www.federalreserve.gov/econres/feds/the-hidden-dangers-of-historical-simulation.htm'],
+  ['Moskowitz, T.J., Ooi, Y.H. & Pedersen, L.H. (2012). Time series momentum. Journal of Financial Economics 104(2), 228-250.','https://doi.org/10.1016/j.jfineco.2011.11.003'],
+  ['Faber, M.T. (2007). A quantitative approach to tactical asset allocation. The Journal of Wealth Management 9(4), 69-79.','https://papers.ssrn.com/sol3/papers.cfm?abstract_id=962461'],
   ['Pardo, R. (2008). The Evaluation and Optimization of Trading Strategies, 2nd ed. Wiley (walk-forward analysis).',null],
   ['Price data: rcaljouw/btc-price-history (Bitstamp daily closes).','https://github.com/rcaljouw/btc-price-history']];
 function pdfInfo(doc,M,W,INK,MUTED,ORANGE){
   const I=T('info'),st=mc?mc.st:MCS,N=mc?mc.N:MCS.n;
   const phi=Math.pow(.5,1/st.hl),sd=st.sig/100/Math.sqrt(1-phi*phi);
-  const fill=t=>t.replace(/\{(\w+)\}/g,(_,k)=>({N:num.format(N),seed:st.seed,mid:f1(st.mid),hl:f1(st.hl),sig:f1(st.sig),dec:fx((1-phi)*100,1,1),lo:fx(Math.exp(-1.645*sd),2,2),hi:fx(Math.exp(1.645*sd),2,2),eqtr:EQS.trend==='pl'?T('eqTrPl'):T('eqTrFit'),eqw:EQS.hl?T('eqW4'):T('eqWEq'),r2:eq?fx(eq.r2,3,3):'-',facs:EQ_B.map((b,k)=>fx(EQ_Q[k+1]*100,0,0)+'-'+fx(EQ_Q[k+2]*100,0,0)+'%: '+fx(b[1],2,2)+'x').join('; '),cent:eq?fx(eq.cent*100,1,1)+'%':'-'})[k]??'');
+  const fill=t=>t.replace(/\{(\w+)\}/g,(_,k)=>({N:num.format(N),seed:st.seed,mid:f1(st.mid),hl:f1(st.hl),sig:f1(st.sig),dec:fx((1-phi)*100,1,1),lo:fx(Math.exp(-1.645*sd),2,2),hi:fx(Math.exp(1.645*sd),2,2),eqtr:EQS.trend==='pl'?T('eqTrPl'):T('eqTrFit'),eqw:EQS.hl?T('eqW4'):T('eqWEq'),r2:eq?fx(eq.r2,3,3):'-',rbnf:RBS.nf,rbns:RBS.ns,rbmu:fx(RBS.mu,1,1),rbmd:fx(RBS.md,1,1),rbN:num.format(2000),facs:EQ_B.map((b,k)=>fx(EQ_Q[k+1]*100,0,0)+'-'+fx(EQ_Q[k+2]*100,0,0)+'%: '+fx(b[1],2,2)+'x').join('; '),cent:eq?fx(eq.cent*100,1,1)+'%':'-'})[k]??'');
   doc.addPage();let y=20;const need=h=>{if(y+h>278){doc.addPage();y=20}};
   const para=(t,size,color,font,lh,indent)=>{doc.setFont(font||'helvetica','normal');doc.setFontSize(size);doc.setTextColor(...color);const ls=doc.splitTextToSize(pdfTxt(fill(t)),W-2*M-(indent||0));ls.forEach(l=>{need(lh);doc.text(l,M+(indent||0),y);y+=lh})};
   doc.setFont('helvetica','bold');doc.setFontSize(16);doc.setTextColor(...INK);doc.text(pdfTxt(I.title),M,y);y+=7;
@@ -1343,6 +1412,70 @@ function pdfMarket(doc,M,W,INK,MUTED,ORANGE){
   doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(...MUTED);
   doc.text(doc.splitTextToSize(pdfTxt(T('pMkBtNote',longDate(eq.start))),fw),M,y+2);
 }
+/* ---------- PDF: EQM Ribbon ---------- */
+function rbPdfCfg(){
+  const grid=css('--line'),muted=css('--muted'),ink=css('--ink'),R=eq.rb;
+  const tEnd=eq.n-1,from=eq.ms[tEnd]-3*365.25*DAY;let t0=EQ_MIN;while(t0<tEnd&&eq.ms[t0]<from)t0++;
+  const I=[];for(let t=t0;t<=tEnd;t+=2)I.push(t);if(I[I.length-1]!==tEnd)I.push(tEnd);
+  const X=t=>toYear(eq.ms[t]);
+  const strip={id:'rbPdfStrip',afterDatasetsDraw(c){const a=c.chartArea,sx=c.scales.x,h=9,y=a.bottom-h,g=c.ctx;g.save();
+    let t=t0;while(t<=tEnd){let u=t;while(u+1<=tEnd&&R.st[u+1]===R.st[t])u++;const x0=sx.getPixelForValue(X(t)),x1=sx.getPixelForValue(u+1<=tEnd?X(u+1):X(u)+1/365);
+      g.fillStyle=RB_COL[R.st[t]];g.fillRect(x0,y,Math.max(1,x1-x0),h);t=u+1}g.restore()}};
+  return {type:'line',data:{datasets:[
+    {data:I.map(t=>({x:X(t),y:eq.risk[t]*100})),borderColor:ink,borderWidth:1.1,pointRadius:0,order:1},
+    {data:I.map(t=>({x:X(t),y:R.f[t]*100})),borderColor:'#e07b39',borderWidth:1.6,pointRadius:0,fill:'+1',backgroundColor:'rgba(224,123,57,.18)',order:2},
+    {data:I.map(t=>({x:X(t),y:R.s[t]*100})),borderColor:'#8a8f98',borderWidth:1.6,pointRadius:0,order:3}]},
+    options:{parsing:false,normalized:true,plugins:{legend:{display:false},tooltip:{enabled:false}},
+      scales:{x:{type:'linear',min:X(t0),max:X(tEnd)+.02,ticks:{color:muted,stepSize:.5,maxRotation:0,callback:v=>Math.abs(v-Math.round(v))<1e-6?String(Math.round(v)):monLabel(v)},grid:{display:false},border:{color:grid}},
+        y:{min:0,max:100,ticks:{color:muted,stepSize:20,callback:v=>v+'%'},grid:{color:grid},border:{display:false}}}},plugins:[strip]};
+}
+function pdfRibbon(doc,M,W,INK,MUTED,ORANGE){
+  const R=eq.rb,t=eq.n-1,cur=R.st[t],grp=v=>v===1||v===3?1:v,fw=W-2*M;
+  let i=t;while(i>EQ_MIN&&grp(R.st[i-1])===grp(cur))i--;
+  const since=eq.ms[i],days=Math.round((eq.ms[t]-since)/DAY)+1,d=(R.f[t]-R.s[t])*100,pt=v=>(v>0?'+':v<0?'-':'')+fx(Math.abs(v),1,1);
+  let y=20;
+  doc.setFont('helvetica','bold');doc.setFontSize(14);doc.setTextColor(...INK);doc.text('EQM Ribbon',M,y);
+  doc.setFont('helvetica','normal');doc.setFontSize(10);doc.setTextColor(...INK);
+  const head=pdfTxt(T('rbHead',rbName(cur),longDate(since),num.format(days),pt(d),fx(RBS.mu,1,1),fx(RBS.md,1,1)));
+  const hl=doc.splitTextToSize(head,fw);doc.text(hl,M,y+7);y+=7+hl.length*4.6;
+  const need=cur===2?null:rbNeedPrice(14);
+  doc.autoTable({startY:y,showHead:'never',body:[
+      [T('rbTState'),rbName(cur)+' · '+T('rbTSince',longDate(since))],
+      [T('rbTSpread'),pt(d)+' pt ('+T('rbTSpreadS',fx(R.f[t]*100,1,1),fx(R.s[t]*100,1,1))+')'],
+      [T('rbTNeed'),cur===2?'-':(need?money(need)+' ('+T('rbTNeedS',14)+')':T('rbTNeedNone',money(prices.get(eq.ms[t])*4)))],
+      [T('rbSettings'),RBS.nf+' / '+RBS.ns+' d · long +'+fx(RBS.mu,1,1)+' · cash -'+fx(RBS.md,1,1)+' pt']].map(r=>r.map(pdfTxt)),
+    theme:'grid',margin:{left:M,right:M},styles:{fontSize:9,cellPadding:1.9,textColor:INK},headStyles:{fillColor:ORANGE,textColor:255},columnStyles:{0:{cellWidth:62,fontStyle:'bold'}}});
+  y=doc.lastAutoTable.finalY+6;
+  let img=null;PDFMODE=true;try{img=offImg(rbPdfCfg(),860,300)}finally{PDFMODE=false}
+  doc.setFont('helvetica','bold');doc.setFontSize(10);doc.text(pdfTxt(T('pRbChart')),M,y);
+  const ih=fw*img.ratio;doc.addImage(img.url,'PNG',M,y+2,fw,ih);
+  doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(...MUTED);doc.text(doc.splitTextToSize(pdfTxt(T('pRbChartLeg')),fw),M,y+ih+6);
+  y+=ih+14;
+  const p=prices.get(eq.ms[t]),step=p>50000?2000:p>10000?500:50;
+  const lv=[...new Set([.85,.9,.95,1,1.05,1.1,1.15,1.2,1.25,1.3,1.4,1.5].map(m=>Math.round(p*m/step)*step))];
+  doc.setFont('helvetica','bold');doc.setFontSize(10);doc.setTextColor(...INK);doc.text(pdfTxt(T('rbFlipT')+' ('+T('rbFnote',longDate(eq.ms[t]))+')'),M,y);
+  doc.autoTable({startY:y+2,head:[[T('rbPrice'),'Risk',T('rbD7'),T('rbD14'),T('rbD28'),T('rbFirst')].map(pdfTxt)],
+    body:lv.map(P=>{const sq=rbHold(P,60),fi=sq.findIndex(v=>grp(v)!==grp(cur));return [money(P),fx(rbRiskOf(P,eq.ms[t]+DAY)*100,0,0)+'%',rbName(sq[6]),rbName(sq[13]),rbName(sq[27]),fi<0?T('rbNone'):T('rbDay',rbName(sq[fi]),fi+1)].map(pdfTxt)}),
+    theme:'grid',margin:{left:M,right:M},styles:{fontSize:8,cellPadding:1.3,textColor:INK},headStyles:{fillColor:ORANGE,textColor:255},
+    didParseCell:d2=>{if(d2.section==='body'&&d2.column.index>=2&&d2.column.index<=4){const v=d2.cell.raw;d2.cell.styles.fillColor=hexRgb(v===T('rbLong')?RB_COL[2]:v===T('rbCash')?RB_COL[0]:RB_COL[1])}}});
+  y=doc.lastAutoTable.finalY+6;
+  if(rbProb){
+    if(y+30>280){doc.addPage();y=20}
+    const pc=v=>fx(v*100,0,0)+'%';
+    doc.setFont('helvetica','bold');doc.setFontSize(10);doc.setTextColor(...INK);doc.text(pdfTxt(T('rbProbT')),M,y);
+    doc.autoTable({startY:y+2,head:[[T('rbHor'),T('rbMrL'),T('rbMrC'),T('rbDrL'),T('rbDrC')].map(pdfTxt)],
+      body:rbProb.H.map((h,k)=>[T('rbDays',h),pc(rbProb.res.mr[k][0]),pc(rbProb.res.mr[k][1]),pc(rbProb.res.dr[k][0]),pc(rbProb.res.dr[k][1])].map(pdfTxt)),
+      theme:'grid',margin:{left:M,right:M},styles:{fontSize:8.2,cellPadding:1.4,textColor:INK,halign:'right'},headStyles:{fillColor:ORANGE,textColor:255},columnStyles:{0:{halign:'left'}}});
+    y=doc.lastAutoTable.finalY+3;doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.setTextColor(...MUTED);
+    doc.text(doc.splitTextToSize(pdfTxt(T('rbPnote',num.format(rbProb.N),fx(rbProb.sd*100,1,1)+'%',fx(MCS.hl,0,1),fx(MCS.mid,2,2))),fw),M,y+2);y+=8;
+  }
+  if(y+40>280){doc.addPage();y=20}
+  const bt=rbBacktest(),x=v=>'x'+fx(v,v>=10?0:2,v>=10?0:2),pc=v=>fx(v*100,0,0)+'%';
+  doc.setFont('helvetica','bold');doc.setFontSize(10);doc.setTextColor(...INK);doc.text(pdfTxt(T('rbBtT')+' ('+T('rbBtNote',fx(RBS.share,0,0))+')'),M,y);
+  doc.autoTable({startY:y+2,head:[[T('rbPer'),'Ribbon','Mix '+fx(RBS.share,0,0)+'%',T('rbHold'),T('rbDD'),T('rbTime'),'Trades'].map(pdfTxt)],
+    body:bt.map(r=>[r.lab,x(r.R),x(r.M),x(r.H),pc(r.ddR)+' / '+pc(r.ddM)+' / '+pc(r.ddH),pc(r.time),String(r.tr)].map(pdfTxt)),
+    theme:'grid',margin:{left:M,right:M},styles:{fontSize:8.2,cellPadding:1.4,textColor:INK,halign:'right'},headStyles:{fillColor:ORANGE,textColor:255},columnStyles:{0:{halign:'left'}}});
+}
 async function makePdf(){
   if(!lastRes){expMsg(T('eInputs'),true);return}
   const btns=[$('exp-pdf')];btns.forEach(b=>b.disabled=true);expMsg(T('pdfBusy'));
@@ -1359,7 +1492,7 @@ async function makePdf(){
     doc.text(pdfTxt(T('pdfFormula')),M,26);
     doc.text(pdfTxt(T('pdfMade',longDate(TODAY))+(lastMs?T('pdfThrough',longDate(lastMs)):'')),M,31);
     let yS=40;
-    if(eq&&window.Chart){pdfMarket(doc,M,W,INK,MUTED,ORANGE);doc.addPage();doc.setFont('helvetica','bold');doc.setFontSize(14);doc.setTextColor(...INK);doc.text(pdfTxt(T('pFireTitle')),M,20);yS=29}
+    if(eq&&window.Chart){pdfMarket(doc,M,W,INK,MUTED,ORANGE);if(eq.rb){doc.addPage();pdfRibbon(doc,M,W,INK,MUTED,ORANGE)}doc.addPage();doc.setFont('helvetica','bold');doc.setFontSize(14);doc.setTextColor(...INK);doc.text(pdfTxt(T('pFireTitle')),M,20);yS=29}
     doc.setFont('helvetica','normal');doc.setFontSize(11);doc.setTextColor(...INK);
     const head=pdfTxt($('fire-head').textContent);
     const hl=doc.splitTextToSize(head,W-2*M);doc.text(hl,M,yS);
@@ -1524,6 +1657,7 @@ function mcRecompute(){
   runMC();mcSave();renderMC();
   if(lastRes)renderFire();
   if(typeof dcaSchedule==='function')dcaSchedule();
+  if(eq&&eq.rb){rbProb=null;rbRecompute(false)}
 }
 function mcSchedule(){clearTimeout(mcTimer);mcTimer=setTimeout(mcRecompute,180)}
 function fillMcDates(){const el=$('mc-date'),keep=el.value;el.textContent='';for(let yy=Y0;yy<=2035;yy++)opt(el,yy,T('dateOpt',yy));el.value=keep||'2030';if(!el.value)el.value=String(Y0)}
@@ -1737,7 +1871,7 @@ function eqBacktest({ms,n,riskA}){
 }
 function eqRecompute(){
   if(dataState!=='ok'){$('eq-head').textContent=dataState==='fail'?T('eqFail'):T('eqRunning');return}
-  eq=eqCompute();renderEq();dcaSchedule();
+  eq=eqCompute();if(eq)eq.rb=rbCompute();rbProb=null;renderEq();dcaSchedule();rbRecompute(false);
 }
 function eqSchedule(){clearTimeout(eqTimer);$('eq-head').textContent=T('eqRunning');eqTimer=setTimeout(eqRecompute,30)}
 function renderEq(){
@@ -1769,6 +1903,7 @@ function renderEq(){
   $('eq-bnote').textContent=T('eqBnote',longDate(dms));
   $('eq-bt').innerHTML=eq.bt.map(b=>'<tr><td>'+T(b.k)+'</td><td>'+money(b.inv)+'</td><td>'+fx(b.btc,4,4)+'</td><td>'+money(b.avg)+'</td><td>'+money(b.val)+'</td><td>'+fx(b.x,1,1)+'×</td></tr>').join('');
   $('eq-btnote').textContent=T('eqBtNote',longDate(eq.start));
+  if(eq.rb)renderRb();
   drawEq();
 }
 let eqX=null, eqView=null, eqPanEnd=0, eqRaf=0;
@@ -1791,6 +1926,7 @@ function eqFill(){
   eqChart.data.datasets[pi-1].data=I.map(t=>({x:eqX[t],y:eq.Q[6][t]}));
   eqChart.data.datasets[pi].data=I.map(t=>({x:eqX[t],y:prices.get(eq.ms[t]),t}));
   eqrChart.data.datasets[0].data=I.map(t=>({x:eqX[t],y:eq.riskA[t]*100,t}));
+  if(eq.rb){eqrChart.data.datasets[1].data=I.map(t=>({x:eqX[t],y:eq.rb.f[t]*100,t}));eqrChart.data.datasets[2].data=I.map(t=>({x:eqX[t],y:eq.rb.s[t]*100,t}))}
 }
 function eqYFit(sc){
   const xo=sc.chart.options.scales.x;let lo=Infinity,hi=0;const a=eqIdx(xo.min),b=Math.min(eq.n-1,eqIdx(xo.max));
@@ -1847,13 +1983,15 @@ function drawEq(){
         tooltip:{displayColors:false,filter:it=>it.datasetIndex===pi,callbacks:{
           title:it=>it.length?longDate(eq.ms[it[0].raw.t]):'',
           label:it=>{const t=it.raw.t,b=eqBand(eq.riskA[t]);return [T('eqTipPrice')+': '+money(it.raw.y),T('eqTipMid')+': '+money(eq.Q[6][t]),T('eqTipRisk')+': '+fx(eq.riskA[t]*100,1,1)+'% · '+b.name]}}}},
-      scales:{x:xs(),y:{type:'logarithmic',afterDataLimits:eqYFit,ticks:{color:muted,autoSkip:false,callback:eqYTick},grid:{color:grid},border:{display:false}}}}});
-  eqrChart=new Chart($('ch-eqr'),{type:'line',data:{datasets:[{data:[],borderColor:ink,borderWidth:1.2,pointRadius:0,fill:false}]},
+      scales:{x:xs(),y:{type:'logarithmic',afterDataLimits:eqYFit,ticks:{color:muted,autoSkip:false,callback:eqYTick},grid:{color:grid},border:{display:false}}}},plugins:[rbStrip]});
+  eqrChart=new Chart($('ch-eqr'),{type:'line',data:{datasets:[{data:[],borderColor:ink,borderWidth:1.2,pointRadius:0,fill:false,order:1},
+      {data:[],borderColor:'#e07b39',borderWidth:1.6,pointRadius:0,fill:'+1',backgroundColor:'rgba(224,123,57,.18)',order:2},
+      {data:[],borderColor:'#8a8f98',borderWidth:1.6,pointRadius:0,fill:false,order:3}]},
     options:{responsive:true,maintainAspectRatio:false,animation:false,parsing:false,normalized:true,
       interaction:{mode:'nearest',axis:'x',intersect:false},
-      plugins:{legend:{display:false},decimation:{enabled:false},tooltip:{displayColors:false,callbacks:{title:it=>it.length?longDate(eq.ms[it[0].raw.t]):'',label:it=>fx(it.raw.y,1,1)+'% · '+eqBand(it.raw.y/100).name}}},
+      plugins:{legend:{display:false},decimation:{enabled:false},tooltip:{displayColors:false,filter:it=>it.datasetIndex===0,callbacks:{title:it=>it.length?longDate(eq.ms[it[0].raw.t]):'',label:it=>{const t=it.raw.t,o=[fx(it.raw.y,1,1)+'% · '+eqBand(it.raw.y/100).name];if(eq.rb&&eq.rb.st[t]>=0)o.push('Ribbon: '+rbName(eq.rb.st[t])+' ('+T('rbFast').toLowerCase()+' '+fx(eq.rb.f[t]*100,1,1)+' · '+T('rbSlow').toLowerCase()+' '+fx(eq.rb.s[t]*100,1,1)+')');return o}}}},
       scales:{x:xs(),y:{min:0,max:100,ticks:{color:muted,stepSize:20,callback:v=>v+'%'},grid:{color:grid},border:{display:false}}}},
-    plugins:[{id:'eqZones',beforeDatasetsDraw(c){const g=c.ctx,a=c.chartArea,sy=c.scales.y;g.save();for(let k=0;k<12;k++){const y0=sy.getPixelForValue(EQ_Q[k]*100),y1=sy.getPixelForValue(EQ_Q[k+1]*100);g.fillStyle=color(EQ_COL[k],.28);g.fillRect(a.left,y1,a.right-a.left,y0-y1)}g.restore()}}]});
+    plugins:[rbStrip,{id:'eqZones',beforeDatasetsDraw(c){const g=c.ctx,a=c.chartArea,sy=c.scales.y;g.save();for(let k=0;k<12;k++){const y0=sy.getPixelForValue(EQ_Q[k]*100),y1=sy.getPixelForValue(EQ_Q[k+1]*100);g.fillStyle=color(EQ_COL[k],.28);g.fillRect(a.left,y1,a.right-a.left,y0-y1)}g.restore()}}]});
   if(hasZoom)eqChart.canvas.style.touchAction='pan-y';
   eqSetRange(eqView.min,eqView.max);
 }
@@ -1865,6 +2003,136 @@ $('eq-z-out').addEventListener('click',()=>eqZoomBy(2));
 $('eq-z-reset').addEventListener('click',()=>{const L=eqLim();eqSetRange(L.min,L.max)});
 eqHint();
 eqLoad();eqSync();
+
+/* ---------- EQM Ribbon (long / transitie / cash) ---------- */
+// toestanden: 0 cash, 1 transitie omhoog, 2 long, 3 transitie omlaag
+const RB_COL=['#c9ced6','#f3c9a0','#e0874a','#f3c9a0'];
+const RBDEF={nf:7,ns:120,mu:2.5,md:2,share:25};
+const RBS={...RBDEF};
+let rbProb=null, rbTimer=null;
+function rbLoad(){try{const o=JSON.parse(localStorage.getItem('bpl-rb')||'null');if(!o)return;for(const k in RBDEF)if(typeof o[k]==='number'&&isFinite(o[k]))RBS[k]=o[k];if(!(RBS.ns>RBS.nf))Object.assign(RBS,RBDEF)}catch(e){}}
+function rbSave(){try{localStorage.setItem('bpl-rb',JSON.stringify(RBS))}catch(e){}}
+function rbFill(){const d=v=>String(v).replace('.',DECS());$('rb-nf').value=RBS.nf;$('rb-ns').value=RBS.ns;$('rb-mu').value=d(RBS.mu);$('rb-md').value=d(RBS.md);$('rb-share').value=d(RBS.share)}
+function rbRead(){
+  const a=field('rb-nf',{min:2,max:60,int:true}),b=field('rb-ns',{min:3,max:365,int:true}),c=field('rb-mu',{min:0,max:20}),d=field('rb-md',{min:0,max:20}),e=field('rb-share',{min:0,max:100});
+  let ok=a.ok&&b.ok&&c.ok&&d.ok&&e.ok&&[a,b,c,d,e].every(x=>x.v!=null);
+  if(ok&&b.v<=a.v){ok=false;$('rb-ns-w').classList.add('bad');$('rb-ns-w').querySelector('.msg').hidden=false}
+  if(!ok)return false;
+  const chg=RBS.nf!==a.v||RBS.ns!==b.v||RBS.mu!==c.v||RBS.md!==d.v;
+  Object.assign(RBS,{nf:a.v,ns:b.v,mu:c.v,md:d.v,share:e.v});return chg?'model':'share';
+}
+const rbStep=(cur,d,mu,md)=>(cur===2||cur===3)?(d>0?2:(-d>=md?0:3)):(d<0?0:(d>=mu?2:1));
+function rbCompute(){
+  if(!eq)return null;const n=eq.n,f=new Float64Array(n).fill(NaN),s=new Float64Array(n).fill(NaN),st=new Int8Array(n).fill(-1);
+  const af=2/(RBS.nf+1),as=2/(RBS.ns+1),mu=RBS.mu/100,md=RBS.md/100;
+  let F=eq.risk[EQ_MIN],S=F,cur=0;
+  for(let t=EQ_MIN;t<n;t++){const x=eq.risk[t];F+=af*(x-F);S+=as*(x-S);cur=rbStep(cur,F-S,mu,md);f[t]=F;s[t]=S;st[t]=cur}
+  return {f,s,st,af,as,mu,md};
+}
+const rbName=v=>v===2?T('rbLong'):v===0?T('rbCash'):T('rbTr');
+const rbPill=v=>'<span class="rb-st" style="background:'+RB_COL[v]+'">'+rbName(v)+'</span>';
+// risk van een (gesimuleerde) slotkoers tegen de laatste bands, trend doorgetrokken
+function rbRiskOf(P,ms){const L=eq.last,r=Math.log10(P)-(L.a+L.b*Math.log10(daysOf(ms)));let lo=0,hi=L.rs.length;while(lo<hi){const m=(lo+hi)>>1;if(L.rs[m]<=r)lo=m+1;else hi=m}return lo?L.cw[lo-1]:0}
+function rbHold(P,days){
+  const R=eq.rb,t=eq.n-1,t0=eq.ms[t];let F=R.f[t],S=R.s[t],cur=R.st[t];const out=[];
+  for(let k=1;k<=days;k++){const x=rbRiskOf(P,t0+k*DAY);F+=R.af*(x-F);S+=R.as*(x-S);cur=rbStep(cur,F-S,R.mu,R.md);out.push(cur)}
+  return out;
+}
+function rbNeedPrice(days){ // laagste vaste koers die binnen 'days' dagen long geeft
+  const p=prices.get(eq.ms[eq.n-1]);let lo=p*.3,hi=p*4;
+  const ok=P=>rbHold(P,days).includes(2);
+  if(!ok(hi))return null;if(ok(lo))return lo;
+  for(let i=0;i<40;i++){const m=(lo+hi)/2;if(ok(m))hi=m;else lo=m}
+  return hi;
+}
+function rbSigma(){const ks=[...prices.keys()],n=ks.length,r=[];for(let i=Math.max(1,n-90);i<n;i++)r.push(Math.log(prices.get(ks[i])/prices.get(ks[i-1])));const m=r.reduce((a,b)=>a+b,0)/r.length;return Math.sqrt(r.reduce((a,b)=>a+(b-m)**2,0)/(r.length-1))}
+function rbMonteCarlo(){
+  const N=2000,H=[7,14,28],R=eq.rb,t=eq.n-1,t0=eq.ms[t],p0=prices.get(t0),sd=rbSigma();
+  const k=1-Math.exp(-Math.LN2/(MCS.hl*30.44)),mu=Math.log(MCS.mid);
+  const res={};
+  for(const mode of ['mr','dr']){
+    const rnd=rng((MCS.seed>>>0)+(mode==='mr'?1:2));const cnt=H.map(()=>[0,0,0]);
+    for(let i=0;i<N;i++){
+      let lp=Math.log(p0),F=R.f[t],S=R.s[t],cur=R.st[t];
+      for(let d=1;d<=28;d++){
+        const u1=Math.max(rnd(),1e-12),u2=rnd(),z=Math.sqrt(-2*Math.log(u1))*Math.cos(2*Math.PI*u2);
+        const ms=t0+d*DAY;
+        if(mode==='mr'){const lm=Math.log(model(daysOf(ms)));let x=lp-lm;x+=(mu-x)*k+sd*z;lp=lm+x}else lp+=sd*z;
+        const x=rbRiskOf(Math.exp(lp),ms);F+=R.af*(x-F);S+=R.as*(x-S);cur=rbStep(cur,F-S,R.mu,R.md);
+        const h=H.indexOf(d);if(h>=0)cnt[h][cur===2?0:cur===0?1:2]++;
+      }
+    }
+    res[mode]=cnt.map(c=>c.map(v=>v/N));
+  }
+  return {N,H,sd,res};
+}
+function rbBacktest(){
+  const R=eq.rb,ms=eq.ms,n=eq.n,sh=RBS.share/100;
+  const i0=Math.max(EQ_MIN+1,ms.findIndex(m=>m>=Date.UTC(2014,0,1)));
+  const per=[['2014–2017',Date.UTC(2014,0,1),Date.UTC(2018,0,1)],['2018–2021',Date.UTC(2018,0,1),Date.UTC(2022,0,1)],['2022–'+T('rbNow'),Date.UTC(2022,0,1),Infinity],[T('rbTotal'),Date.UTC(2014,0,1),Infinity]];
+  return per.map(([lab,a,b])=>{
+    let eR=1,eH=1,pkR=1,pkH=1,pkM=1,ddR=0,ddH=0,ddM=0,inn=0,tot=0,tr=0,prev=null;
+    for(let t=i0;t<n;t++){if(ms[t]<a||ms[t]>=b)continue;
+      const r=prices.get(ms[t])/prices.get(ms[t-1])-1,pos=(R.st[t-1]===2||R.st[t-1]===3)?1:0;
+      if(prev===0&&pos===1)tr++;if(prev===null&&pos===1)tr++;prev=pos;
+      eR*=1+r*pos;eH*=1+r;const eM=sh*eR+(1-sh)*eH;tot++;inn+=pos;
+      pkR=Math.max(pkR,eR);pkH=Math.max(pkH,eH);pkM=Math.max(pkM,eM);
+      ddR=Math.min(ddR,eR/pkR-1);ddH=Math.min(ddH,eH/pkH-1);ddM=Math.min(ddM,eM/pkM-1)}
+    return {lab,R:eR,H:eH,M:sh*eR+(1-sh)*eH,ddR,ddH,ddM,time:tot?inn/tot:0,tr};
+  });
+}
+function rbRecompute(model=true){
+  if(!eq)return;if(model||!eq.rb)eq.rb=rbCompute();
+  if(model||!rbProb)rbProb=null;
+  renderRb();
+  if(eqChart&&eqView)eqSetRange(eqView.min,eqView.max);
+  clearTimeout(rbTimer);rbTimer=setTimeout(()=>{if(!eq||!eq.rb||!mc)return;rbProb=rbMonteCarlo();renderRbProb()},60);
+}
+function renderRb(){
+  if(!eq||!eq.rb)return;const R=eq.rb,t=eq.n-1,cur=R.st[t],grp=v=>v===1||v===3?1:v;
+  let i=t;while(i>EQ_MIN&&grp(R.st[i-1])===grp(cur))i--;
+  const since=eq.ms[i],days=Math.round((eq.ms[t]-since)/DAY)+1,d=(R.f[t]-R.s[t])*100;
+  const pt=v=>(v>0?'+':v<0?'−':'')+fx(Math.abs(v),1,1);
+  $('rb-head').innerHTML=T('rbHead',rbPill(cur),longDate(since),num.format(days),'<b>'+pt(d)+'</b>',fx(RBS.mu,1,1),fx(RBS.md,1,1));
+  const need=rbNeedPrice(14);
+  const tiles=[[T('rbTState'),rbPill(cur),T('rbTSince',longDate(since))],[T('rbTSpread'),pt(d)+' pt',T('rbTSpreadS',fx(R.f[t]*100,1,1),fx(R.s[t]*100,1,1))],
+    [T('rbTNeed'),cur===2?'–':(need?money(need):T('rbTNeedNone',money(prices.get(eq.ms[t])*4))),cur===2?rbName(2):T('rbTNeedS',14)]];
+  $('rb-tiles').innerHTML=tiles.map(([a,b,c])=>'<div class="tile"><dt>'+a+'</dt><dd>'+b+'<small>'+c+'</small></dd></div>').join('');
+  // flip-tabel
+  const p=prices.get(eq.ms[t]),step=p>50000?2000:p>10000?500:50;
+  const lv=[...new Set([.85,.9,.95,1,1.05,1.1,1.15,1.2,1.25,1.3,1.4,1.5].map(m=>Math.round(p*m/step)*step))];
+  $('rb-flip').innerHTML=lv.map(P=>{const sq=rbHold(P,60),rk=rbRiskOf(P,eq.ms[t]+DAY);const fi=sq.findIndex(v=>grp(v)!==grp(cur));
+    const isNow=Math.abs(P-p)<step/2;
+    return '<tr'+(isNow?' class="cur"':'')+'><td>'+money(P)+'</td><td>'+fx(rk*100,0,0)+'%</td><td>'+rbPill(sq[6])+'</td><td>'+rbPill(sq[13])+'</td><td>'+rbPill(sq[27])+'</td><td>'+(fi<0?T('rbNone'):T('rbDay',rbName(sq[fi]),fi+1))+'</td></tr>'}).join('');
+  $('rb-fnote').textContent=T('rbFnote',longDate(eq.ms[t]));
+  // backtest
+  const bt=rbBacktest(),x=v=>'×'+fx(v,v>=10?0:2,v>=10?0:2),pc=v=>fx(v*100,0,0)+'%';
+  $('rb-mixh').textContent='Mix '+fx(RBS.share,0,0)+'%';
+  $('rb-bt').innerHTML=bt.map(r=>'<tr><td>'+r.lab+'</td><td>'+x(r.R)+'</td><td>'+x(r.M)+'</td><td>'+x(r.H)+'</td><td>'+pc(r.ddR)+' / '+pc(r.ddM)+' / '+pc(r.ddH)+'</td><td>'+pc(r.time)+'</td><td>'+r.tr+'</td></tr>').join('');
+  $('rb-btnote').textContent=T('rbBtNote',fx(RBS.share,0,0));
+  const lg=[[css('--ink'),T('rbRisk')],['#e07b39',T('rbFast')],['#8a8f98',T('rbSlow')]];
+  $('rb-legend').innerHTML=lg.map(([c,tx])=>'<span><i class="sw" style="border-color:'+c+'"></i>'+tx+'</span>').join('')+[2,1,0].map(v=>'<span><i class="sw band" style="background:'+RB_COL[v]+';border-color:transparent"></i>'+rbName(v)+'</span>').join('');
+  renderRbProb();
+}
+function renderRbProb(){
+  if(!rbProb){$('rb-prob').innerHTML='<tr><td colspan="5">'+T('mcRunning')+'</td></tr>';return}
+  const pc=v=>fx(v*100,0,0)+'%';
+  $('rb-prob').innerHTML=rbProb.H.map((h,i)=>'<tr><td>'+T('rbDays',h)+'</td><td>'+pc(rbProb.res.mr[i][0])+'</td><td>'+pc(rbProb.res.mr[i][1])+'</td><td>'+pc(rbProb.res.dr[i][0])+'</td><td>'+pc(rbProb.res.dr[i][1])+'</td></tr>').join('');
+  $('rb-pnote').textContent=T('rbPnote',num.format(rbProb.N),fx(rbProb.sd*100,1,1)+'%',fx(MCS.hl,0,1),fx(MCS.mid,2,2));
+}
+// strook met de ribbon-toestand onderin een grafiek; volgt zoom en schuiven
+const rbStrip={id:'rbStrip',afterDatasetsDraw(c){
+  if(!eq||!eq.rb||!eqX)return;const a=c.chartArea,sx=c.scales.x,h=7,y=a.bottom-h,st=eq.rb.st;
+  const g=c.ctx;g.save();g.beginPath();g.rect(a.left,a.top,a.right-a.left,a.bottom-a.top);g.clip();
+  let t=Math.max(EQ_MIN,eqIdx(sx.min)-1);const t1=Math.min(eq.n-1,eqIdx(sx.max)+1);
+  while(t<=t1){let u=t;while(u+1<=t1&&st[u+1]===st[t])u++;
+    const x0=sx.getPixelForValue(eqX[t]),x1=sx.getPixelForValue(u+1<eq.n?eqX[u+1]:eqX[u]+1/365);
+    g.fillStyle=RB_COL[st[t]]||'transparent';g.fillRect(x0,y,Math.max(1,x1-x0),h);t=u+1}
+  g.restore()}};
+$('eq-form').addEventListener('submit',e=>e.preventDefault());
+['rb-nf','rb-ns','rb-mu','rb-md','rb-share'].forEach(id=>$(id).addEventListener('input',()=>{const r=rbRead();if(!r)return;rbSave();rbRecompute(r==='model')}));
+$('rb-reset').addEventListener('click',()=>{Object.assign(RBS,RBDEF);rbFill();['rb-nf','rb-ns','rb-mu','rb-md','rb-share'].forEach(id=>{const w=$(id+'-w');w.classList.remove('bad');w.querySelector('.msg').hidden=true});rbSave();rbRecompute(true)});
+rbLoad();rbFill();
 
 /* ---------- DCA-simulatie ---------- */
 const DCAS={start:'2022-01-01',end:'',amt:100,freq:'w',fee:0,pot:false,thr:.2,frac:.25};
@@ -2103,7 +2371,7 @@ mq.addEventListener&&mq.addEventListener('change',rebuild);
 new MutationObserver(rebuild).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
 
 /* ---------- Taal wisselen ---------- */
-const NUMIDS=['f-btc','f-yrs','f-p0','f-p1','f-pn','f-pf','f-usd','f-inf','f-min','f-max','mc-mid','mc-hl','mc-sig','mc-seed','mc-thr','dca-amt','dca-fee'];
+const NUMIDS=['f-btc','f-yrs','f-p0','f-p1','f-pn','f-pf','f-usd','f-inf','f-min','f-max','mc-mid','mc-hl','mc-sig','mc-seed','mc-thr','dca-amt','dca-fee','rb-mu','rb-md','rb-share'];
 function setLang(l){
   if(l===LANG||!I18N[l])return;
   const vals={};NUMIDS.forEach(id=>{vals[id]=pnum($(id).value,LANG)});
